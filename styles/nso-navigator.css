@@ -278,25 +278,10 @@
   font-size: 0.95rem;
 }
 
-.edge-filters h5 {
-  margin: 0.5rem 0 0.5rem;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  font-weight: 600;
-}
-
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.filter-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 0.5rem 0;
 }
 
 .filter-checkbox {

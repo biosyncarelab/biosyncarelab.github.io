@@ -43,6 +43,9 @@
           <option value="grid">Grid</option>
           <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
         </select>
+        <button type="button" id="toggle-properties" class="ghost small">
+          <span id="properties-toggle-text">Hide Properties</span>
+        </button>
         <button type="button" id="toggle-filters" class="ghost small">Edge Filters</button>
         <button type="button" id="reset-view" class="ghost small">Reset View</button>
         <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
@@ -107,14 +110,8 @@
         <div id="cy-canvas" class="cy-canvas"></div>
 
         <div id="edge-filters" class="edge-filters hidden">
-          <h4>Visualization</h4>
+          <h4>Edge Visibility</h4>
           <div class="filter-group">
-            <label class="filter-checkbox">
-              <input type="checkbox" id="show-properties-as-nodes" checked />
-              <span>Show Properties as Nodes</span>
-            </label>
-            <div class="filter-divider"></div>
-            <h5>Edge Visibility</h5>
             <label class="filter-checkbox">
               <input type="checkbox" id="filter-subclass" checked />
               <span>Subclass/Hierarchy</span>

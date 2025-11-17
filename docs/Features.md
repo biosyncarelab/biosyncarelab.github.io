@@ -88,6 +88,11 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Export snippets for offline review or PDF.
 - Decisions: weekly RDF updates; lightweight diff visualization integrated.
 
+### 2.4 NSO-Driven Session Creator (🧩)
+- Allow users to build sessions directly from the NSO Navigator: pick an isochronous-sound concept/triple, read its definition + related links, then instantiate tracks using the isochronous model/presets.
+- Trigger a DJ-style audiovisual preview so the selected ontology bundle immediately renders as a neurosensory session sketch.
+- Todo: spec the cross-link between navigator nodes and the session builder (data contract, preset mapping, visualization cues).
+
 ## 3. Python Musical Structures
 
 ### 3.1 Change Ringing & Group Permutations (🚧)

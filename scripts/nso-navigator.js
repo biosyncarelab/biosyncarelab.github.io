@@ -29,12 +29,20 @@ if (isLocalhost) {
   connectFirestoreEmulator(db, "127.0.0.1", 8085);
 }
 
+const urlParams =
+  typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+const requestedConcept = urlParams.get("concept");
+const requestedOntology = urlParams.get("ontology");
+
 // State
 let currentUser = null;
 let currentURI = null;
 let cy = null;
-let currentOntology = "bsc-owl";
+let currentOntology =
+  requestedOntology && ontologyFiles[requestedOntology] ? requestedOntology : "bsc-owl";
 let currentLayout = "cose";
+let pendingConceptFocus = requestedConcept;
+let showPropertiesAsNodes = true;
 
 // Ontology file mappings
 const ontologyFiles = {
@@ -67,9 +75,10 @@ const ui = {
   cancelComment: document.getElementById("cancel-comment"),
   ontologySelector: document.getElementById("ontology-selector"),
   layoutSelector: document.getElementById("layout-selector"),
+  toggleProperties: document.getElementById("toggle-properties"),
+  propertiesToggleText: document.getElementById("properties-toggle-text"),
   toggleFilters: document.getElementById("toggle-filters"),
   edgeFilters: document.getElementById("edge-filters"),
-  showPropertiesAsNodes: document.getElementById("show-properties-as-nodes"),
   filterSubclass: document.getElementById("filter-subclass"),
   filterDomain: document.getElementById("filter-domain"),
   filterRange: document.getElementById("filter-range"),
@@ -79,6 +88,10 @@ const ui = {
   error: document.getElementById("error-message"),
   errorText: document.getElementById("error-text"),
 };
+
+if (ui.ontologySelector) {
+  ui.ontologySelector.value = currentOntology;
+}
 
 // Auth state listener
 onAuthStateChanged(auth, (user) => {
@@ -606,6 +619,25 @@ function initCytoscape(elements) {
       hideURIInspector();
     }
   });
+
+  if (pendingConceptFocus) {
+    setTimeout(focusConceptIfNeeded, 300);
+  }
+}
+
+function focusConceptIfNeeded() {
+  if (!pendingConceptFocus || !cy) return;
+  const node = cy.getElementById(pendingConceptFocus);
+  if (!node || node.empty()) {
+    return;
+  }
+  cy.fit(node, 120);
+  node.select();
+  const resource = node.data("resource");
+  if (resource) {
+    showURIInspector(resource);
+  }
+  pendingConceptFocus = null;
 }
 
 // Show URI inspector sidebar
@@ -978,11 +1010,19 @@ ui.toggleFilters.addEventListener("click", () => {
   ui.edgeFilters.classList.toggle("hidden");
 });
 
-// Toggle property visualization mode
+// Toggle property nodes visibility
+ui.toggleProperties.addEventListener("click", () => {
+  showPropertiesAsNodes = !showPropertiesAsNodes;
+
+  // Update button text
+  ui.propertiesToggleText.textContent = showPropertiesAsNodes ? "Hide Properties" : "Show Properties";
+
+  updatePropertyVisualization();
+});
+
+// Update property visualization
 function updatePropertyVisualization() {
   if (!cy) return;
-
-  const showAsNodes = ui.showPropertiesAsNodes.checked;
 
   // Get all property nodes (ObjectProperty and DatatypeProperty)
   const propertyNodes = cy.nodes().filter((node) => {
@@ -990,23 +1030,21 @@ function updatePropertyVisualization() {
     return type === "objectProperty" || type === "datatypeProperty";
   });
 
-  if (showAsNodes) {
-    // Show property nodes and their domain/range edges
+  if (showPropertiesAsNodes) {
+    // Show property nodes
     propertyNodes.style("display", "element");
   } else {
-    // Hide property nodes and their domain/range edges
+    // Hide property nodes
     propertyNodes.style("display", "none");
   }
 
-  // Update edge visibility based on the mode
+  // Update edge visibility
   updateEdgeVisibility();
 }
 
 // Edge filter checkboxes
 function updateEdgeVisibility() {
   if (!cy) return;
-
-  const showAsNodes = ui.showPropertiesAsNodes.checked;
 
   const filters = {
     subclass: ui.filterSubclass.checked,
@@ -1031,7 +1069,7 @@ function updateEdgeVisibility() {
       targetType === "datatypeProperty";
 
     // If properties are hidden and this edge involves a property, hide it
-    if (!showAsNodes && involvesProperty) {
+    if (!showPropertiesAsNodes && involvesProperty) {
       edge.style("display", "none");
       return;
     }
@@ -1045,7 +1083,6 @@ function updateEdgeVisibility() {
   });
 }
 
-ui.showPropertiesAsNodes.addEventListener("change", updatePropertyVisualization);
 ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
 ui.filterDomain.addEventListener("change", updateEdgeVisibility);
 ui.filterRange.addEventListener("change", updateEdgeVisibility);

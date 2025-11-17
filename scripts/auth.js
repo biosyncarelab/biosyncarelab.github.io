@@ -35,16 +35,40 @@ const useAuthEmulator = isLocalhost && !window.localStorage?.getItem("bsc.usePro
 const NSO_BASE_URI = "https://biosyncare.github.io/rdf/harmonicare/SSO_Ontology.owl#";
 const DASHBOARD_ONTOLOGY_LINKS = {
   "community-default-alpha": [
-    { uri: `${NSO_BASE_URI}BrainwaveEntrainment`, label: "Brainwave Entrainment" },
-    { uri: `${NSO_BASE_URI}AudiovisualStimulation`, label: "Audiovisual Stimulation" },
+    {
+      uri: `${NSO_BASE_URI}BrainwaveEntrainment`,
+      label: "Brainwave Entrainment",
+      navigator: "harmonicare-sso",
+    },
+    {
+      uri: `${NSO_BASE_URI}AudiovisualStimulation`,
+      label: "Audiovisual Stimulation",
+      navigator: "harmonicare-sso",
+    },
   ],
   sine: [
-    { uri: `${NSO_BASE_URI}AudioStimulation`, label: "Audio Stimulation" },
-    { uri: `${NSO_BASE_URI}AudioTechniques`, label: "Audio Techniques" },
+    {
+      uri: `${NSO_BASE_URI}AudioStimulation`,
+      label: "Audio Stimulation",
+      navigator: "harmonicare-sso",
+    },
+    {
+      uri: `${NSO_BASE_URI}AudioTechniques`,
+      label: "Audio Techniques",
+      navigator: "harmonicare-sso",
+    },
   ],
   "binaural-alpha": [
-    { uri: `${NSO_BASE_URI}BinauralBeats`, label: "Binaural Beats" },
-    { uri: `${NSO_BASE_URI}AudioTechniques`, label: "Audio Techniques" },
+    {
+      uri: `${NSO_BASE_URI}BinauralBeats`,
+      label: "Binaural Beats",
+      navigator: "harmonicare-sso",
+    },
+    {
+      uri: `${NSO_BASE_URI}AudioTechniques`,
+      label: "Audio Techniques",
+      navigator: "harmonicare-sso",
+    },
   ],
 };
 
@@ -161,7 +185,7 @@ STRUCTURE_MANIFEST.forEach((entry) => {
 
 Object.entries(DASHBOARD_ONTOLOGY_LINKS).forEach(([recordId, links]) => {
   (links ?? []).forEach((link) => {
-    rdfLinker.register(recordId, link.uri, { label: link.label });
+    rdfLinker.register(recordId, link.uri, { label: link.label, navigator: link.navigator });
   });
 });
 
@@ -254,6 +278,38 @@ const formatMetaValue = (value) => {
   return String(value);
 };
 
+const openNavigatorWindow = (url) => {
+  if (!url) return;
+  if (typeof window === "undefined") return;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+
+const buildNavigatorUrl = (link) => {
+  if (!link || !link.uri) return null;
+  const params = new URLSearchParams({ concept: link.uri });
+  if (link.navigator) {
+    params.set("ontology", link.navigator);
+  }
+  return `nso-navigator.html?${params.toString()}`;
+};
+
+const createNavigatorButton = (target) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ghost tiny navigator-link";
+  button.textContent = "View in Navigator";
+  const destination = typeof target === "string" ? target : buildNavigatorUrl(target);
+  if (destination) {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      openNavigatorWindow(destination);
+    });
+  } else {
+    button.disabled = true;
+  }
+  return button;
+};
+
 const createOntologySlot = (kind, id) => {
   const slot = document.createElement("div");
   slot.className = "ontology-slot";
@@ -262,25 +318,34 @@ const createOntologySlot = (kind, id) => {
     slot.dataset.recordId = id;
   }
   const links = id ? rdfLinker.get(id) : [];
+  slot.innerHTML = "";
   if (links.length) {
     const primary = links[0];
-    slot.textContent = "";
     slot.title = links.map((link) => link.label ?? link.uri).join(", ");
+    const primaryWrap = document.createElement("div");
+    primaryWrap.className = "ontology-slot-primary";
     const anchor = document.createElement("a");
     anchor.href = primary.uri;
     anchor.target = "_blank";
     anchor.rel = "noopener noreferrer";
     anchor.textContent = primary.label ?? primary.uri;
-    slot.appendChild(anchor);
+    primaryWrap.appendChild(anchor);
     if (links.length > 1) {
       const extra = document.createElement("span");
       extra.className = "muted-text";
       extra.textContent = ` +${links.length - 1} more`;
-      slot.appendChild(extra);
+      primaryWrap.appendChild(extra);
     }
+    slot.appendChild(primaryWrap);
+    const navigatorButton = createNavigatorButton(primary);
+    slot.appendChild(navigatorButton);
   } else {
-    slot.textContent = "Map to NSO";
+    const emptyLabel = document.createElement("span");
+    emptyLabel.textContent = "Map to NSO";
+    emptyLabel.className = "muted-text";
     slot.title = "No ontology references yet";
+    slot.appendChild(emptyLabel);
+    slot.appendChild(createNavigatorButton("nso-navigator.html"));
   }
   return slot;
 };

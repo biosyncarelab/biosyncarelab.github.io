@@ -107,6 +107,12 @@ button.small {
   font-size: 0.8rem;
 }
 
+button.tiny {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
 form label {
   display: flex;
   flex-direction: column;
@@ -224,18 +230,35 @@ select {
   text-align: right;
   font-size: 0.78rem;
   color: var(--muted);
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.6rem;
   border: 1px dashed var(--border);
   border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.ontology-slot-primary {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .ontology-slot a {
   color: var(--accent, #38bdf8);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .ontology-slot a:hover {
   text-decoration: underline;
+}
+
+.ontology-slot .navigator-link {
+  align-self: flex-end;
 }
 
 .muted-text {

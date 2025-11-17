@@ -19,6 +19,7 @@ These briefs align with the principles in `README.md`: keep diffs small, define 
 | **BSCLab GUI & Engines** (UI + Martigli + Video agents in a single squad) | End-to-end session/preset dashboard, Martigli widget, audio/video algorithms, Firebase-driven state management | 1) Flesh out the dashboard using the seeded `sessions`/`presets` (list + detail modal). 2) Land the Martigli inspector card with live overrides. 3) Port the binaural/isochronous engines from legacy repo, keeping Web Audio baseline tiny before layering Tone.js/Pixi adapters. |
 | **Python Structures** | `music` package workflows that emit JSON/RDF artifacts for sequences and symmetry lines | 1) Reproduce the canonical change-ringing peals as deterministic JSON exports. 2) Document the export schema + provenance in `docs/Features.md`. 3) Provide a minimal loader for the UI pod (static import first, Firestore later). |
 | **RDF Navigator** | Ontology browser, annotation UX, registry linkages | 1) Prototype Cytoscape-based viewer pointed at `rdf/core/bsc-owl.ttl`. 2) Ship URI detail sidebar with comments stored in Firestore. 3) Surface ontology links inside the BSCLab dashboard cards for traceability. |
+| **Testing & QA** | Owns regression cadence across pods (structures, Playwright smoke, rules) | 1) Ensure `npm test` (structures + Playwright) stays green on pushes/PRs. 2) Add/maintain fixtures when new sequence exports land. 3) Raise targeted issues to owning pods when failures arise; keep summaries concise. |
 
 Pods can rotate contributors, but always announce hand-offs in the clarifications doc to keep responsibilities visible.
 
@@ -39,6 +40,12 @@ Pods can rotate contributors, but always announce hand-offs in the clarification
 - **Inputs:** Mathematical definitions in README/docs, parameter ranges, integration contracts from UI agent, guidance sentence libraries.
 - **Deliverables:** Engine-agnostic parameter graph, modulation DSL (`value = base + coeff * martigli`), presets, guided-sentence audio tracks (TTS/recorded) with sync metadata.
 - **Key checks:** Numerical stability, aliasing limits, automation smoothing, Web Audio baseline parity with future Tone.js adapter, safe TTS integration.
+
+## Agent: Testing & QA
+- **Mandate:** Run and evolve the regression net across pods.
+- **Inputs:** Repo test scripts (`npm test` → structures + Playwright), new data exports, Firestore rule changes.
+- **Deliverables:** Green `npm test` on pushes/PRs, quick fixtures for new sequence assets, issue pings to owning pods with minimal repro.
+- **Key checks:** Structures/loader integrity, Playwright smoke stability under emulators, clear pass/fail summaries in CI logs.
 
 ## Agent: Video & Visualizations
 - **Mandate:** Quadrant blinks, oscillations, particle trajectories driven by Martigli values.
