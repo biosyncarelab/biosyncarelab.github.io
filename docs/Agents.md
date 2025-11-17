@@ -10,6 +10,16 @@ These briefs align with the principles in `README.md`: keep diffs small, define 
 - Record assumptions; if anything is unclear, append to the clarifications list before coding.
 - Respect clarified priorities: 1) Firebase persistence, 2) BSCLab UI tied to Firebase, 3) migrate biosyncare algorithms with simplification.
 
+## Current Focus Pods (Nov 2025)
+
+| Pod | Scope | Immediate Backlog |
+| --- | ----- | ----------------- |
+| **BSCLab GUI & Engines** (UI + Martigli + Video agents in a single squad) | End-to-end session/preset dashboard, Martigli widget, audio/video algorithms, Firebase-driven state management | 1) Flesh out the dashboard using the seeded `sessions`/`presets` (list + detail modal). 2) Land the Martigli inspector card with live overrides. 3) Port the binaural/isochronous engines from legacy repo, keeping Web Audio baseline tiny before layering Tone.js/Pixi adapters. |
+| **Python Structures** | `music` package workflows that emit JSON/RDF artifacts for sequences and symmetry lines | 1) Reproduce the canonical change-ringing peals as deterministic JSON exports. 2) Document the export schema + provenance in `docs/Features.md`. 3) Provide a minimal loader for the UI pod (static import first, Firestore later). |
+| **RDF Navigator** | Ontology browser, annotation UX, registry linkages | 1) Prototype Cytoscape-based viewer pointed at `rdf/core/bsc-owl.ttl`. 2) Ship URI detail sidebar with comments stored in Firestore. 3) Surface ontology links inside the BSCLab dashboard cards for traceability. |
+
+Pods can rotate contributors, but always announce hand-offs in the clarifications doc to keep responsibilities visible.
+
 - **Mandate:** Build the client-side PWA (sessions, tracks, audio/video controls, documentation hooks).
 - **Inputs:** Feature entries 1.x, approved UI wireframes, Firestore schema, Martigli parameter ranges.
 - **Deliverables:** Modular UI components, audio/video engine integration, Firebase wiring, UX copy tied to RDF entries, conversational-assistant surfaces, multi-user scheduling/presence UI.
