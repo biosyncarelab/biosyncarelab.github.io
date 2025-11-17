@@ -14,6 +14,12 @@ In this context, the rules I derived and hope to allow for faster and better sof
 2) Make the specifications and guiding documents before starting the software: which features should the software have, which tickets they entail? It can help to state audience and broader context to guide AI workings.
 3) Describe the AI agents beforehand when possible, so that we can start working with agents in a coordinated way from the start.
 
+## Working documents
+- `docs/Features.md`: living backlog; every feature must argue for smaller surface area.
+- `docs/Agents.md`: roles, guardrails, and collaboration rules for AI/automation.
+- `docs/clarifications.md`: unresolved questions; update before writing code.
+- `docs/prior_art.md`: findings from earlier BSC deployments with explicit reuse decisions.
+
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
 in usual computers and mobile phones. It consists of a few core parts:
 1) A Web GUI which allows for the usage of sessions and track presets, and allow for the parametrization on the fly of the parameters involved, such as the frequency of the left channel of a binaural beat, or how much it oscillates with the breathing cue (which is an oscillation itself). The full specification of this software is in the next session.

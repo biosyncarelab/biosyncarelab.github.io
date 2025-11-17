@@ -1,10 +1,11 @@
 # AI Agent Playbooks
 
-These briefs align with the principles in `README.md`: keep diffs small, define specs first, and coordinate agents before touching code.
+These briefs align with the principles in `README.md`: keep diffs small, define specs first, and coordinate agents before touching code. Measure success primarily by how much simpler, shorter, and flatter the codebase becomes after each contribution.
 
 ## Shared Guardrails
 - Always validate that new work preserves existing functionality; rerun relevant checks after each change.
 - Prefer simplifying or deleting code over adding complexity; document why additions are unavoidable.
+- Track line counts and file additions in every PR; if the diff grows, explain the payback plan (e.g., forthcoming deletions, consolidation).
 - Keep specs (`docs/Features.md`, clarifications log) in sync with implementation decisions.
 - Record assumptions; if anything is unclear, append to the clarifications list before coding.
 

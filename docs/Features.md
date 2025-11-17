@@ -2,6 +2,8 @@
 
 Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design) · ❓ needs clarification
 
+**Simplicity directive:** every feature must shrink total surface area whenever possible—favor fewer files, flatter hierarchies, reusable primitives, and reversible experiments. New work should justify any line-count growth and note the deletion path for legacy code.
+
 ## 1. BSCLab Client Application
 
 ### 1.1 Session & Track Management (🧩)
