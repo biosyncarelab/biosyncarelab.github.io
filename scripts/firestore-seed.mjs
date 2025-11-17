@@ -6,7 +6,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
   process.exit(1);
 }
 
-const projectId = process.env.GCLOUD_PROJECT || "emulator-bsc-lab";
+const projectId = process.env.GCLOUD_PROJECT || "bsc-lab";
 initializeApp({ projectId });
 const db = getFirestore();
 

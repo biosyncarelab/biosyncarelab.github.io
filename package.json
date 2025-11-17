@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only auth,firestore --project emulator-bsc-lab \"npm run test:run-seeded\"",
-    "test:headed": "firebase emulators:exec --only auth,firestore --project emulator-bsc-lab \"npm run test:run-seeded:headed\"",
+    "test": "firebase emulators:exec --only auth,firestore --project bsc-lab \"npm run test:run-seeded\"",
+    "test:headed": "firebase emulators:exec --only auth,firestore --project bsc-lab \"npm run test:run-seeded:headed\"",
     "test:run": "playwright test",
     "test:run:headed": "playwright test --headed",
     "test:run-seeded": "npm run seed:firestore && npm run test:run",

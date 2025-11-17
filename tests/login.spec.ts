@@ -26,11 +26,16 @@ test.describe("Auth shell", () => {
     await expect(page.locator("#messages")).toContainText("Account created", { timeout: 5000 });
     await expect(page.locator("#auth-state")).toHaveText("Signed in", { timeout: 5000 });
     await expect(page.locator("#user-email")).toContainText(email);
+    const dashboard = page.locator("#dashboard");
+    await expect(dashboard).toBeVisible();
+    await expect(page.locator("#session-list")).toContainText("Community Alpha Session");
+    await expect(page.locator("#preset-list")).toContainText("Pure sine");
 
     const signOutButton = page.getByRole("button", { name: "Sign out" });
     await expect(signOutButton).toBeEnabled();
     await signOutButton.click();
     await expect(page.locator("#auth-state")).toHaveText("Signed out", { timeout: 5000 });
+    await expect(dashboard).toBeHidden();
 
     await emailInput.fill(email);
     await passwordInput.fill(testPassword);
@@ -38,5 +43,6 @@ test.describe("Auth shell", () => {
 
     await expect(page.locator("#auth-state")).toHaveText("Signed in", { timeout: 5000 });
     await expect(page.locator("#user-email")).toContainText(email);
+    await expect(dashboard).toBeVisible();
   });
 });

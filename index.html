@@ -23,6 +23,10 @@
         <h2>Google Sign-in</h2>
         <button id="google-sign-in" class="primary">Continue with Google</button>
         <button id="google-sign-out" class="ghost" disabled>Sign out</button>
+        <div class="auth-mode-hint">
+          <p id="auth-mode-text" class="muted-text">Checking auth mode…</p>
+          <button type="button" id="toggle-auth-mode" class="ghost small hidden">Use production auth</button>
+        </div>
       </section>
 
       <section class="auth-section">
@@ -44,6 +48,24 @@
       </section>
 
       <section id="messages" aria-live="polite"></section>
+
+      <section id="dashboard" class="auth-section dashboard hidden" aria-live="polite">
+        <div class="dashboard-group">
+          <div class="dashboard-head">
+            <h2>Seeded Sessions</h2>
+            <p id="session-status" class="muted-text">Sign in to load sessions.</p>
+          </div>
+          <ul id="session-list"></ul>
+        </div>
+
+        <div class="dashboard-group">
+          <div class="dashboard-head">
+            <h2>Seeded Presets</h2>
+            <p id="preset-status" class="muted-text">Sign in to load presets.</p>
+          </div>
+          <ul id="preset-list"></ul>
+        </div>
+      </section>
     </main>
 
     <script type="module" src="scripts/auth.js"></script>

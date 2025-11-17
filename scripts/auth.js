@@ -14,6 +14,12 @@ import {
   createUserWithEmailAndPassword,
   connectAuthEmulator,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  collection,
+  getDocs,
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -22,8 +28,11 @@ const isLocalhost =
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const useAuthEmulator = isLocalhost && !window.localStorage?.getItem("bsc.useProdAuth");
 
+const db = getFirestore(app);
+
 if (useAuthEmulator) {
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8085);
 }
 auth.useDeviceLanguage();
 
@@ -47,6 +56,13 @@ const ui = {
   passwordInput: document.getElementById("password"),
   emailSignUp: document.getElementById("email-sign-up"),
   messages: document.getElementById("messages"),
+  dashboard: document.getElementById("dashboard"),
+  sessionList: document.getElementById("session-list"),
+  presetList: document.getElementById("preset-list"),
+  sessionStatus: document.getElementById("session-status"),
+  presetStatus: document.getElementById("preset-status"),
+  authModeText: document.getElementById("auth-mode-text"),
+  toggleAuthMode: document.getElementById("toggle-auth-mode"),
 };
 
 const setMessage = (text, type = "") => {
@@ -55,6 +71,7 @@ const setMessage = (text, type = "") => {
 };
 
 let isBusy = false;
+let isFetchingDashboard = false;
 
 const refreshControls = () => {
   const user = auth.currentUser;
@@ -82,6 +99,82 @@ const setBusy = (nextBusy) => {
   refreshControls();
 };
 
+const updateAuthModeHint = () => {
+  if (!ui.authModeText || !ui.toggleAuthMode) {
+    return;
+  }
+  if (!isLocalhost) {
+    ui.authModeText.textContent = "Google sign-in uses Firebase production.";
+    ui.toggleAuthMode.classList.add("hidden");
+    return;
+  }
+  ui.authModeText.textContent = useAuthEmulator
+    ? "Local Auth emulator active; Google disabled."
+    : "Production Auth active; Google enabled.";
+  ui.toggleAuthMode.textContent = useAuthEmulator ? "Use production auth" : "Use emulator auth";
+  ui.toggleAuthMode.classList.remove("hidden");
+};
+
+const setDashboardVisibility = (visible) => {
+  if (!ui.dashboard) return;
+  ui.dashboard.classList.toggle("hidden", !visible);
+};
+
+const clearList = (list) => {
+  if (!list) return;
+  while (list.firstChild) {
+    list.removeChild(list.firstChild);
+  }
+};
+
+const renderCollection = (list, statusEl, items, emptyLabel) => {
+  if (!list || !statusEl) return;
+  clearList(list);
+  if (!items.length) {
+    statusEl.textContent = emptyLabel;
+    return;
+  }
+  statusEl.textContent = `${items.length} item${items.length > 1 ? "s" : ""}`;
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "dashboard-item";
+    const title = document.createElement("h3");
+    title.textContent = item.label ?? item.id;
+    const meta = document.createElement("p");
+    meta.textContent = item.description ?? item.kind ?? item.visibility ?? "";
+    li.appendChild(title);
+    if (meta.textContent) {
+      li.appendChild(meta);
+    }
+    list.appendChild(li);
+  });
+};
+
+const loadDashboardData = async () => {
+  if (isFetchingDashboard) return;
+  if (!ui.dashboard) return;
+  isFetchingDashboard = true;
+  setDashboardVisibility(true);
+  ui.sessionStatus.textContent = "Loading sessions…";
+  ui.presetStatus.textContent = "Loading presets…";
+  try {
+    const [sessionSnap, presetSnap] = await Promise.all([
+      getDocs(collection(db, "sessions")),
+      getDocs(collection(db, "presets")),
+    ]);
+    const sessions = sessionSnap.docs.map((doc) => doc.data());
+    const presets = presetSnap.docs.map((doc) => doc.data());
+    renderCollection(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.");
+    renderCollection(ui.presetList, ui.presetStatus, presets, "No presets found.");
+  } catch (err) {
+    console.error("Dashboard load failed", err);
+    ui.sessionStatus.textContent = "Unable to load sessions.";
+    ui.presetStatus.textContent = "Unable to load presets.";
+  } finally {
+    isFetchingDashboard = false;
+  }
+};
+
 const updateAuthState = (user) => {
   if (!user) {
     ui.state.textContent = "Signed out";
@@ -89,6 +182,11 @@ const updateAuthState = (user) => {
     ui.userId.textContent = "";
     setMessage("");
     refreshControls();
+    setDashboardVisibility(false);
+    clearList(ui.sessionList);
+    clearList(ui.presetList);
+    if (ui.sessionStatus) ui.sessionStatus.textContent = "Sign in to load sessions.";
+    if (ui.presetStatus) ui.presetStatus.textContent = "Sign in to load presets.";
     return;
   }
 
@@ -96,6 +194,7 @@ const updateAuthState = (user) => {
   ui.email.textContent = user.email ? `Email: ${user.email}` : "";
   ui.userId.textContent = `UID: ${user.uid}`;
   refreshControls();
+  loadDashboardData();
 };
 
 const handleError = (error) => {
@@ -179,3 +278,15 @@ ui.emailSignUp.addEventListener("click", async () => {
 
 setMessage(useAuthEmulator ? "Using local Auth emulator." : "Ready.", "info");
 refreshControls();
+updateAuthModeHint();
+
+if (ui.toggleAuthMode) {
+  ui.toggleAuthMode.addEventListener("click", () => {
+    if (useAuthEmulator) {
+      window.localStorage.setItem("bsc.useProdAuth", "1");
+    } else {
+      window.localStorage.removeItem("bsc.useProdAuth");
+    }
+    window.location.reload();
+  });
+}
