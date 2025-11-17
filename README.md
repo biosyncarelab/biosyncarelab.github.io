@@ -20,6 +20,17 @@ In this context, the rules I derived and hope to allow for faster and better sof
 - `docs/clarifications.md`: snapshot of resolved decisions (last update 2025-11-17); append new questions only when blockers appear.
 - `docs/prior_art.md`: findings from earlier BSC deployments with explicit reuse decisions.
 
+## Testing
+
+To protect the simplicity of the codebase we rely on a single Playwright smoke suite that only checks what absolutely must keep working: the login shell loads, the primary actions render, and the default auth state initializes. Tests live under `tests/` and run against the static site via Python's built-in web server; expand them as higher-level flows land, but keep the core UI/data/audio engines lean.
+
+```bash
+npm install
+npm test
+```
+
+`npm test` spins up `python3 -m http.server 4173` automatically, runs the browser test headlessly, and tears everything down.
+
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
 in usual computers and mobile phones. It consists of a few core parts:
 1) A Web GUI which allows for the usage of sessions and track presets, and allow for the parametrization on the fly of the parameters involved, such as the frequency of the left channel of a binaural beat, or how much it oscillates with the breathing cue (which is an oscillation itself). The full specification of this software is in the next session.
