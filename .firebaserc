@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "bsc-lab",
+    "emulator": "emulator-bsc-lab"
+  }
+}

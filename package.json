@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only auth --project emulator-bsc-lab \"npm run test:run\"",
-    "test:headed": "firebase emulators:exec --only auth --project emulator-bsc-lab \"npm run test:run:headed\"",
+    "test": "firebase emulators:exec --only auth,firestore --project emulator-bsc-lab \"npm run test:run-seeded\"",
+    "test:headed": "firebase emulators:exec --only auth,firestore --project emulator-bsc-lab \"npm run test:run-seeded:headed\"",
     "test:run": "playwright test",
-    "test:run:headed": "playwright test --headed"
+    "test:run:headed": "playwright test --headed",
+    "test:run-seeded": "npm run seed:firestore && npm run test:run",
+    "test:run-seeded:headed": "npm run seed:firestore && npm run test:run:headed",
+    "seed:firestore": "node scripts/firestore-seed.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
+    "firebase-admin": "^12.6.0",
     "firebase-tools": "^13.29.1"
   }
 }
