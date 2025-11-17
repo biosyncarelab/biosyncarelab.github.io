@@ -1,6 +1,233 @@
 import { loadStructureCatalog, STRUCTURE_MANIFEST } from "./structures-loader.js";
 
 const noop = () => {};
+const clamp = (value, min, max) => {
+  if (!Number.isFinite(value)) return min;
+  if (min !== undefined && value < min) return min;
+  if (max !== undefined && value > max) return max;
+  return value;
+};
+const TWO_PI = Math.PI * 2;
+
+const DEFAULT_MARTIGLI_CONFIG = {
+  id: "martigli-primary",
+  label: "Primary Martigli",
+  startPeriodSec: 10,
+  endPeriodSec: 20,
+  transitionSec: 120,
+  waveform: "sine",
+  inhaleRatio: 0.5,
+  amplitude: 1,
+  startOffsetSec: 0,
+  phaseOffset: 0,
+  fadeOutSec: 20,
+  prestartValue: 0,
+  conceptUri: null,
+};
+
+const nowSeconds = () => {
+  if (
+    typeof performance !== "undefined" &&
+    typeof performance.now === "function" &&
+    typeof performance.timeOrigin === "number"
+  ) {
+    return (performance.timeOrigin + performance.now()) / 1000;
+  }
+  return Date.now() / 1000;
+};
+
+export class MartigliOscillator {
+  constructor(config = {}) {
+    const merged = { ...DEFAULT_MARTIGLI_CONFIG, ...(config ?? {}) };
+    this.id = merged.id ?? `martigli-${Math.random().toString(36).slice(2, 8)}`;
+    this.label = merged.label ?? "Martigli";
+    this.metadata = {
+      conceptUri: merged.conceptUri ?? null,
+      notes: merged.notes ?? null,
+    };
+    this.config = {
+      startPeriodSec: clamp(merged.startPeriodSec, 0.1, 120),
+      endPeriodSec: clamp(merged.endPeriodSec, 0.1, 120),
+      transitionSec: Math.max(0, merged.transitionSec ?? 0),
+      waveform: merged.waveform ?? "sine",
+      inhaleRatio: clamp(merged.inhaleRatio ?? 0.5, 0.05, 0.95),
+      amplitude: clamp(merged.amplitude ?? 1, 0, 1),
+      startOffsetSec: merged.startOffsetSec ?? 0,
+      phaseOffset: ((merged.phaseOffset ?? 0) % 1 + 1) % 1,
+      fadeOutSec: Math.max(0, merged.fadeOutSec ?? 0),
+      prestartValue: clamp(merged.prestartValue ?? 0, -1, 1),
+    };
+    if (this.config.startPeriodSec > this.config.endPeriodSec) {
+      this.config.endPeriodSec = this.config.startPeriodSec;
+    }
+    this.session = {
+      startTime: merged.sessionStart ?? null,
+      endTime: merged.sessionEnd ?? null,
+    };
+    this._phase = 0;
+    this._lastTime = null;
+    this._lastPeriod = this.config.startPeriodSec;
+    this._anchor = merged.anchorTime ?? nowSeconds();
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      label: this.label,
+      conceptUri: this.metadata.conceptUri,
+      startPeriodSec: this.config.startPeriodSec,
+      endPeriodSec: this.config.endPeriodSec,
+      transitionSec: this.config.transitionSec,
+      waveform: this.config.waveform,
+      inhaleRatio: this.config.inhaleRatio,
+      amplitude: this.config.amplitude,
+      startOffsetSec: this.config.startOffsetSec,
+      phaseOffset: this.config.phaseOffset,
+      fadeOutSec: this.config.fadeOutSec,
+      sessionStart: this.session.startTime,
+      sessionEnd: this.session.endTime,
+    };
+  }
+
+  setConceptUri(uri) {
+    this.metadata.conceptUri = uri ?? null;
+  }
+
+  bindSessionWindow({ startTime = null, endTime = null, fadeOutSec = null } = {}) {
+    if (startTime === null) {
+      this.session.startTime = null;
+    } else if (typeof startTime === "number") {
+      this.session.startTime = startTime;
+    } else if (startTime instanceof Date) {
+      this.session.startTime = startTime.getTime() / 1000;
+    }
+    if (endTime === null) {
+      this.session.endTime = null;
+    } else if (typeof endTime === "number") {
+      this.session.endTime = endTime;
+    } else if (endTime instanceof Date) {
+      this.session.endTime = endTime.getTime() / 1000;
+    }
+    if (fadeOutSec !== null && fadeOutSec !== undefined) {
+      this.config.fadeOutSec = Math.max(0, fadeOutSec);
+    }
+  }
+
+  setStartPeriod(value) {
+    this.config.startPeriodSec = clamp(value, 0.1, 120);
+  }
+
+  setEndPeriod(value) {
+    this.config.endPeriodSec = clamp(value, 0.1, 120);
+  }
+
+  setTransitionDuration(value) {
+    this.config.transitionSec = Math.max(0, value ?? 0);
+  }
+
+  setWaveform(value) {
+    if (!value) return;
+    this.config.waveform = value;
+  }
+
+  setInhaleRatio(value) {
+    this.config.inhaleRatio = clamp(value, 0.05, 0.95);
+  }
+
+  setAmplitude(value) {
+    this.config.amplitude = clamp(value, 0, 1.5);
+  }
+
+  setOffsets({ startOffsetSec, phaseOffset }) {
+    if (Number.isFinite(startOffsetSec)) {
+      this.config.startOffsetSec = startOffsetSec;
+    }
+    if (Number.isFinite(phaseOffset)) {
+      this.config.phaseOffset = ((phaseOffset % 1) + 1) % 1;
+    }
+  }
+
+  valueAt(timeSec = nowSeconds()) {
+    const startTime = (this.session.startTime ?? this._anchor) + this.config.startOffsetSec;
+    const elapsed = timeSec - startTime;
+    if (elapsed < 0) {
+      return this.config.prestartValue;
+    }
+    const period = this._periodAt(elapsed);
+    if (!period || period <= 0) {
+      return 0;
+    }
+    const dt = this._lastTime === null ? 0 : timeSec - this._lastTime;
+    const avgPeriod = this._lastPeriod ? (this._lastPeriod + period) / 2 : period;
+    if (dt >= 0 && avgPeriod > 0) {
+      this._phase = (this._phase + (dt / avgPeriod)) % 1;
+    } else if (dt < 0) {
+      this._phase = 0;
+    }
+    this._lastTime = timeSec;
+    this._lastPeriod = period;
+    const envelope = this._sessionEnvelope(timeSec, startTime);
+    const shaped = this._shapeValue(this._phase);
+    return shaped * this.config.amplitude * envelope;
+  }
+
+  _periodAt(elapsed) {
+    if (!Number.isFinite(elapsed) || elapsed < 0) {
+      return this.config.startPeriodSec;
+    }
+    if (this.config.transitionSec === 0) {
+      return this.config.endPeriodSec;
+    }
+    const progress = clamp(elapsed / this.config.transitionSec, 0, 1);
+    return this.config.startPeriodSec + progress * (this.config.endPeriodSec - this.config.startPeriodSec);
+  }
+
+  _sessionEnvelope(timeSec, startTime) {
+    if (this.session.startTime && timeSec < startTime) {
+      return 0;
+    }
+    if (this.session.endTime) {
+      if (timeSec >= this.session.endTime) {
+        if (!this.config.fadeOutSec) {
+          return 0;
+        }
+        const delta = timeSec - this.session.endTime;
+        if (delta >= this.config.fadeOutSec) {
+          return 0;
+        }
+        return 1 - delta / this.config.fadeOutSec;
+      }
+    }
+    return 1;
+  }
+
+  _shapeValue(phase) {
+    const wf = (this.config.waveform ?? "sine").toLowerCase();
+    const normalizedPhase = ((phase + this.config.phaseOffset) % 1 + 1) % 1;
+    switch (wf) {
+      case "triangle":
+        return normalizedPhase < 0.5
+          ? -1 + normalizedPhase * 4
+          : 3 - normalizedPhase * 4;
+      case "square":
+        return normalizedPhase < this.config.inhaleRatio ? 1 : -1;
+      case "saw":
+      case "sawtooth":
+        return normalizedPhase * 2 - 1;
+      case "breath":
+      case "martigli": {
+        const inhale = this.config.inhaleRatio;
+        if (normalizedPhase < inhale) {
+          return -1 + (normalizedPhase / inhale) * 2;
+        }
+        const exPhase = (normalizedPhase - inhale) / (1 - inhale || 1);
+        return 1 - exPhase * 2;
+      }
+      default:
+        return Math.sin(normalizedPhase * TWO_PI);
+    }
+  }
+}
 
 export class StructureStore {
   constructor(options = {}) {
@@ -80,17 +307,70 @@ export class StructureStore {
 
 export class MartigliState {
   constructor(initial = {}) {
-    this.startPeriod = initial.startPeriod ?? 10;
-    this.endPeriod = initial.endPeriod ?? 20;
-    this.waveform = initial.waveform ?? "sine";
     this.listeners = new Set();
+    this._oscillations = new Map();
+    this.referenceId = null;
+    const seeds = Array.isArray(initial.oscillations) && initial.oscillations.length
+      ? initial.oscillations
+      : [initial];
+    seeds.filter(Boolean).forEach((config) => this.addOscillator(config));
+    if (!this._oscillations.size) {
+      this.addOscillator();
+    }
+    if (initial.referenceId && this._oscillations.has(initial.referenceId)) {
+      this.referenceId = initial.referenceId;
+    }
+  }
+
+  addOscillator(config = {}) {
+    const oscillator = new MartigliOscillator(config);
+    this._oscillations.set(oscillator.id, oscillator);
+    if (!this.referenceId) {
+      this.referenceId = oscillator.id;
+    }
+    this._emit();
+    return oscillator;
+  }
+
+  removeOscillator(id) {
+    if (!id || !this._oscillations.has(id)) return;
+    this._oscillations.delete(id);
+    if (this.referenceId === id) {
+      this.referenceId = this._oscillations.keys().next().value ?? null;
+    }
+    this._emit();
+  }
+
+  setReference(id) {
+    if (id && this._oscillations.has(id)) {
+      this.referenceId = id;
+      this._emit();
+    }
+  }
+
+  getReference() {
+    if (!this.referenceId) return null;
+    return this._oscillations.get(this.referenceId) ?? null;
+  }
+
+  bindSessionWindow(windowConfig = {}) {
+    this._oscillations.forEach((osc) => osc.bindSessionWindow(windowConfig));
+    this._emit();
+  }
+
+  valueAt(timeSec = nowSeconds(), id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    return osc ? osc.valueAt(timeSec) : 0;
   }
 
   snapshot() {
+    const reference = this.getReference();
     return {
-      startPeriod: this.startPeriod,
-      endPeriod: this.endPeriod,
-      waveform: this.waveform,
+      referenceId: this.referenceId,
+      startPeriod: reference?.config.startPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.startPeriodSec,
+      endPeriod: reference?.config.endPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.endPeriodSec,
+      waveform: reference?.config.waveform ?? DEFAULT_MARTIGLI_CONFIG.waveform,
+      oscillations: Array.from(this._oscillations.values()).map((osc) => osc.toJSON()),
     };
   }
 
@@ -112,27 +392,54 @@ export class MartigliState {
     });
   }
 
-  setStartPeriod(value) {
+  setStartPeriod(value, id = this.referenceId) {
     if (!Number.isFinite(value)) return;
-    this.startPeriod = value;
-    if (this.startPeriod > this.endPeriod) {
-      this.endPeriod = this.startPeriod;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setStartPeriod(value);
+    if (osc.config.startPeriodSec > osc.config.endPeriodSec) {
+      osc.setEndPeriod(osc.config.startPeriodSec);
     }
     this._emit();
   }
 
-  setEndPeriod(value) {
+  setEndPeriod(value, id = this.referenceId) {
     if (!Number.isFinite(value)) return;
-    this.endPeriod = value;
-    if (this.endPeriod < this.startPeriod) {
-      this.startPeriod = this.endPeriod;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setEndPeriod(value);
+    if (osc.config.endPeriodSec < osc.config.startPeriodSec) {
+      osc.setStartPeriod(osc.config.endPeriodSec);
     }
     this._emit();
   }
 
-  setWaveform(value) {
+  setWaveform(value, id = this.referenceId) {
     if (!value) return;
-    this.waveform = value;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setWaveform(value);
+    this._emit();
+  }
+
+  setTransitionDuration(value, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setTransitionDuration(value);
+    this._emit();
+  }
+
+  setInhaleRatio(value, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setInhaleRatio(value);
+    this._emit();
+  }
+
+  setConceptUri(uri, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setConceptUri(uri);
     this._emit();
   }
 }
@@ -142,6 +449,13 @@ export class AudioEngine {
     this.martigli = martigli ?? null;
     this.ctx = null;
     this.active = null;
+    this._ctxEpoch = null;
+    this._workletPromise = null;
+    this._workletNode = null;
+    this._workletSink = null;
+    this._pendingMartigli = null;
+    this._latestMartigliSnapshot = null;
+    this._bindMartigliState();
   }
 
   get isSupported() {
@@ -200,11 +514,136 @@ export class AudioEngine {
     if (!Ctor) return null;
     if (!this.ctx) {
       this.ctx = new Ctor();
+      this._updateContextEpoch();
+      if (this.ctx.audioWorklet) {
+        this._ensureWorklet(this.ctx);
+      }
+      this._postMartigliSnapshot();
+    } else {
+      this._updateContextEpoch();
     }
     if (this.ctx.state === "suspended") {
       this.ctx.resume();
     }
+    if (this.ctx?.audioWorklet) {
+      this._ensureWorklet(this.ctx);
+    }
     return this.ctx;
+  }
+
+  _updateContextEpoch() {
+    if (!this.ctx) return;
+    const ctxTime = typeof this.ctx.currentTime === "number" ? this.ctx.currentTime : 0;
+    const epoch = nowSeconds() - ctxTime;
+    if (Number.isFinite(epoch)) {
+      this._ctxEpoch = epoch;
+    }
+  }
+
+  _ensureWorklet(ctx) {
+    if (!ctx?.audioWorklet || this._workletNode) {
+      return this._workletPromise ?? Promise.resolve(this._workletNode);
+    }
+    if (this._workletPromise) {
+      return this._workletPromise;
+    }
+    this._workletPromise = ctx.audioWorklet
+      .addModule("scripts/martigli.worklet.js")
+      .then(() => {
+        const node = new AudioWorkletNode(ctx, "martigli-processor", {
+          numberOfOutputs: 1,
+          outputChannelCount: [1],
+        });
+        const sink = ctx.createGain();
+        sink.gain.value = 0;
+        node.connect(sink).connect(ctx.destination);
+        this._workletNode = node;
+        this._workletSink = sink;
+        if (this._pendingMartigli) {
+          this._sendMartigliPayload(this._pendingMartigli);
+        } else {
+          this._postMartigliSnapshot();
+        }
+        return node;
+      })
+      .catch((err) => {
+        console.warn("Martigli worklet init failed", err);
+        this._workletNode = null;
+        this._workletSink = null;
+        this._workletPromise = null;
+        return null;
+      });
+    return this._workletPromise;
+  }
+
+  _bindMartigliState() {
+    if (!this.martigli?.subscribe) return;
+    this._latestMartigliSnapshot = this.martigli.snapshot?.() ?? null;
+    this.martigli.subscribe((snapshot) => {
+      this._latestMartigliSnapshot = snapshot;
+      this._postMartigliSnapshot(snapshot);
+    });
+  }
+
+  _postMartigliSnapshot(snapshot = this._latestMartigliSnapshot) {
+    if (!snapshot && this.martigli?.snapshot) {
+      snapshot = this.martigli.snapshot();
+      this._latestMartigliSnapshot = snapshot;
+    }
+    const payload = this._normalizeMartigliPayload(snapshot);
+    if (!payload) return;
+    this._pendingMartigli = payload;
+    if (this._workletNode) {
+      this._sendMartigliPayload(payload);
+    }
+  }
+
+  _normalizeMartigliPayload(snapshot) {
+    const reference = this.martigli?.getReference?.();
+    const base = reference?.toJSON?.() ?? snapshot?.oscillations?.[0] ?? null;
+    if (!base) return null;
+    const payload = {
+      startPeriodSec: base.startPeriodSec,
+      endPeriodSec: base.endPeriodSec,
+      transitionSec: base.transitionSec,
+      waveform: base.waveform,
+      inhaleRatio: base.inhaleRatio,
+      amplitude: base.amplitude,
+      startOffsetSec: base.startOffsetSec,
+      phaseOffset: base.phaseOffset,
+      fadeOutSec: base.fadeOutSec,
+      conceptUri: base.conceptUri ?? null,
+      oscillatorId: base.id ?? null,
+    };
+    const sessionStart = this._contextTimeFromAbsolute(base.sessionStart);
+    const sessionEnd = this._contextTimeFromAbsolute(base.sessionEnd);
+    if (sessionStart !== undefined) {
+      payload.sessionStart = sessionStart;
+    }
+    if (sessionEnd !== undefined) {
+      payload.sessionEnd = sessionEnd;
+    }
+    return payload;
+  }
+
+  _contextTimeFromAbsolute(value) {
+    if (!Number.isFinite(value) || this._ctxEpoch === null) {
+      return undefined;
+    }
+    const ctxTime = value - this._ctxEpoch;
+    if (!Number.isFinite(ctxTime)) {
+      return undefined;
+    }
+    return Math.max(ctxTime, 0);
+  }
+
+  _sendMartigliPayload(payload) {
+    if (!payload || !this._workletNode) return;
+    try {
+      this._workletNode.port.postMessage({ type: "martigli:update", payload });
+    } catch (err) {
+      console.warn("Martigli worklet post failed", err);
+    }
   }
 
   _inferMode(track) {
