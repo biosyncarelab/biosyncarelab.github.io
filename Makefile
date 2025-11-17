@@ -1,5 +1,7 @@
 .PHONY := up aup serve seed-prod
 
+BSC_FIREBASE_PROJECT ?= bsc-lab
+
 RAW_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 COMMIT_MSG := $(if $(strip $(RAW_ARGS)),$(strip $(RAW_ARGS)),up)
 
@@ -16,8 +18,8 @@ serve:
 	python3 -m http.server "$$PORT"
 
 seed-prod:
-	BSC_FIREBASE_PROJECT=$(BSC_FIREBASE_PROJECT) \
-	GOOGLE_APPLICATION_CREDENTIALS=$(GOOGLE_APPLICATION_CREDENTIALS) \
+	@BSC_FIREBASE_PROJECT="$(BSC_FIREBASE_PROJECT)" \
+	GOOGLE_APPLICATION_CREDENTIALS="$$PWD/hidden/bsc-lab-firebase-adminsdk-fbsvc-9262a53b1c.json" \
 	bash scripts/seed-prod.sh
 
 ifneq ($(strip $(RAW_ARGS)),)

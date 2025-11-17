@@ -58,7 +58,13 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
 make seed-prod
 ```
 
-`make seed-prod` delegates to `scripts/seed-prod.sh`, which performs the same guard checks and exports `BSC_ALLOW_PROD_SEED=1` automatically. You can also execute `bash scripts/seed-prod.sh` directly if you prefer.
+`make seed-prod` delegates to `scripts/seed-prod.sh`, which performs the same guard checks and exports `BSC_ALLOW_PROD_SEED=1` automatically. If you store a service-account key at `hidden/bsc-lab-firebase-adminsdk-fbsvc-9262a53b1c.json` (ignored by git), simply run:
+
+```bash
+make seed-prod
+```
+
+The helper exports `BSC_FIREBASE_PROJECT=bsc-lab` and points `GOOGLE_APPLICATION_CREDENTIALS` at that hidden path for you. You can also execute `bash scripts/seed-prod.sh` directly or override those env vars when needed.
 
 Need to seed the live Firestore project instead? Authenticate with Application Default Credentials (e.g., `gcloud auth application-default login` or set `GOOGLE_APPLICATION_CREDENTIALS`) and run:
 
