@@ -14,12 +14,15 @@
       </header>
 
       <section id="auth-status" aria-live="polite" class="auth-status">
-        <p>Status: <span id="auth-state">Checking…</span></p>
+        <p>
+          Status: <span id="auth-state">Checking…</span>
+          <button id="status-sign-out" class="ghost small auth-signout-pill" type="button">Sign out</button>
+        </p>
         <p id="user-email"></p>
         <p id="user-id"></p>
       </section>
 
-      <section class="auth-section">
+      <section class="auth-section auth-card-google">
         <h2>Google Sign-in</h2>
         <button id="google-sign-in" class="primary">Continue with Google</button>
         <button id="google-sign-out" class="ghost" disabled>Sign out</button>
@@ -29,7 +32,7 @@
         </div>
       </section>
 
-      <section class="auth-section">
+      <section class="auth-section auth-card-email">
         <h2>Email Sign-in</h2>
         <form id="email-form">
           <label>

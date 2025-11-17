@@ -101,6 +101,7 @@ const ui = {
   userId: document.getElementById("user-id"),
   googleSignIn: document.getElementById("google-sign-in"),
   googleSignOut: document.getElementById("google-sign-out"),
+  statusSignOut: document.getElementById("status-sign-out"),
   emailForm: document.getElementById("email-form"),
   emailInput: document.getElementById("email"),
   passwordInput: document.getElementById("password"),
@@ -224,6 +225,11 @@ const createTrackPreviewButton = (track, context = {}) => {
 const refreshControls = () => {
   const user = auth.currentUser;
   const emailSubmit = ui.emailForm.querySelector("button[type='submit']");
+  if (user) {
+    document.body.classList.add("auth-hidden");
+  } else {
+    document.body.classList.remove("auth-hidden");
+  }
   if (ui.googleSignIn) {
     const emulatorBlocksFederated = useAuthEmulator;
     ui.googleSignIn.disabled = isBusy || !!user || emulatorBlocksFederated;
@@ -233,6 +239,11 @@ const refreshControls = () => {
   }
   if (ui.googleSignOut) {
     ui.googleSignOut.disabled = isBusy || !user;
+    ui.googleSignOut.classList.toggle("hidden", !!user);
+  }
+  if (ui.statusSignOut) {
+    ui.statusSignOut.disabled = isBusy || !user;
+    ui.statusSignOut.classList.toggle("hidden", !user);
   }
   if (emailSubmit) {
     emailSubmit.disabled = isBusy;
@@ -820,19 +831,21 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-ui.googleSignIn.addEventListener("click", async () => {
-  setBusy(true);
-  const provider = new GoogleAuthProvider();
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (err) {
-    handleError(err);
-  } finally {
-    setBusy(false);
-  }
-});
+if (ui.googleSignIn) {
+  ui.googleSignIn.addEventListener("click", async () => {
+    setBusy(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setBusy(false);
+    }
+  });
+}
 
-ui.googleSignOut.addEventListener("click", async () => {
+const handleSignOut = async () => {
   setBusy(true);
   try {
     await signOut(auth);
@@ -842,7 +855,14 @@ ui.googleSignOut.addEventListener("click", async () => {
   } finally {
     setBusy(false);
   }
-});
+};
+
+if (ui.googleSignOut) {
+  ui.googleSignOut.addEventListener("click", handleSignOut);
+}
+if (ui.statusSignOut) {
+  ui.statusSignOut.addEventListener("click", handleSignOut);
+}
 
 ui.emailForm.addEventListener("submit", async (event) => {
   event.preventDefault();

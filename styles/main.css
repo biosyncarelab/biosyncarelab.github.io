@@ -274,6 +274,15 @@ select {
   display: none !important;
 }
 
+body.auth-hidden .auth-card-google,
+body.auth-hidden .auth-card-email {
+  display: none;
+}
+
+body.auth-hidden #auth-status .auth-signout-pill {
+  display: inline-flex;
+}
+
 body.modal-open {
   overflow: hidden;
 }
