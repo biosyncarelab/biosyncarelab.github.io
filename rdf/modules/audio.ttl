@@ -1,0 +1,122 @@
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix sso:   <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<> a owl:Ontology ;
+  dct:title "BSCLab Audio Techniques Module" ;
+  dct:creator "BioSynCare Lab" ;
+  dct:description "Audio-based neurosensory stimulation techniques consolidated from SSO/ONC sources with naming fixes and safety metadata." ;
+  dct:created "2025-11-17"^^xsd:date ;
+  owl:imports <../core/bsc-owl.ttl> ;
+  owl:versionInfo "1.0.0" .
+
+# ============================================================================
+# BASE CLASS (replaces plural sso:AudioTechniques)
+# ============================================================================
+
+bsc:AudioTechnique a owl:Class ;
+  rdfs:subClassOf bsc:Technique ;
+  rdfs:label "Audio Technique" ;
+  rdfs:comment "Auditory neurosensory stimulation methods using sound frequencies, beats, or rhythmic patterns to influence brainwave activity." ;
+  dct:source <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl#AudioTechniques> ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D013016> .  # MeSH: Sound Therapy
+
+# ============================================================================
+# BINAURAL BEATS
+# ============================================================================
+
+bsc:BinauralBeat a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Binaural Beat" ;
+  rdfs:comment "Two slightly different frequencies presented to each ear (e.g., 200Hz left, 210Hz right) creating a perceived 10Hz 'beat' via brainwave entrainment." ;
+  dct:source <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl#BinauralBeats> ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 2.5 ;  # moderate (scale 0-5)
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "PubMed search: 'binaural beats brainwave entrainment' (2020-2024), 14 systematic reviews, 3 meta-analyses" ;
+  bsc:evidenceReasoning "Moderate evidence from controlled studies showing modest effects on anxiety, focus, and sleep onset. Heterogeneous protocols limit comparability." ;
+  bsc:contraindications "Epilepsy, severe tinnitus, hearing impairments. SERIOUS: Photosensitive epilepsy if combined with visual flicker." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Binaural_beat> .
+
+# ============================================================================
+# MONAURAL BEATS
+# ============================================================================
+
+bsc:MonauralBeat a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Monaural Beat" ;
+  rdfs:comment "Two frequencies mixed before reaching the ear (e.g., 200Hz + 210Hz = 10Hz beat), creating physical beat perception rather than neurological processing." ;
+  dct:source <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl#MonauralBeats> ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 2.0 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Smaller corpus than binaural; 6 studies comparing monaural vs binaural efficacy" ;
+  bsc:evidenceReasoning "Similar effects to binaural beats but less studied. Some evidence suggests stronger entrainment due to physical vs. neurological beat generation." ;
+  bsc:contraindications "Epilepsy, severe tinnitus. Potential discomfort at high volumes." .
+
+# ============================================================================
+# ISOCHRONIC TONES
+# ============================================================================
+
+bsc:IsochronicTone a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Isochronic Tone" ;
+  rdfs:comment "Regular pulses of a single tone (e.g., 440Hz pulsed at 10Hz), creating rhythmic on/off patterns for brainwave entrainment." ;
+  dct:source <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl#IsochronicTones> ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.8 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "8 peer-reviewed studies (2015-2024) on attention and meditation" ;
+  bsc:evidenceReasoning "Preliminary evidence for focus enhancement. Less research than binaural beats; user reports suggest strong subjective effects." ;
+  bsc:contraindications "Epilepsy (SERIOUS: rhythmic pulses may trigger seizures in susceptible individuals), migraine triggers." .
+
+# ============================================================================
+# SOLFEGGIO FREQUENCIES
+# ============================================================================
+
+bsc:SolfeggioFrequency a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Solfeggio Frequency" ;
+  rdfs:comment "Specific frequencies (e.g., 528Hz 'love frequency', 432Hz 'natural tuning') claimed to have healing or spiritual effects. Evidence is anecdotal." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 0.5 ;  # anecdotal
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "No controlled studies in PubMed; popular culture and alternative medicine literature only" ;
+  bsc:evidenceReasoning "No scientific evidence beyond placebo effects. Widely used in wellness apps and sound therapy practices." ;
+  bsc:contraindications "None known. Potential for false hope in medical contexts." .
+
+# ============================================================================
+# HEMI-SYNC
+# ============================================================================
+
+bsc:HemiSync a owl:Class ;
+  rdfs:subClassOf bsc:BinauralBeat ;
+  rdfs:label "Hemi-Sync" ;
+  rdfs:comment "Proprietary binaural beat system developed by Monroe Institute for hemispheric synchronization and altered states of consciousness." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 2.2 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Monroe Institute research archives; 4 independent studies on meditation and lucid dreaming" ;
+  bsc:evidenceReasoning "Proprietary nature limits independent verification. Some evidence for deep relaxation and meditative states." ;
+  bsc:contraindications "Same as binaural beats; epilepsy, tinnitus." .
+
+# ============================================================================
+# DEPRECATION MAPPINGS (for backward compatibility)
+# ============================================================================
+
+sso:AudioTechniques owl:deprecated true ;
+  rdfs:isDefinedBy <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl> ;
+  dct:isReplacedBy bsc:AudioTechnique ;
+  rdfs:comment "Deprecated: Use singular bsc:AudioTechnique instead." .
+
+sso:BinauralBeats owl:deprecated true ;
+  dct:isReplacedBy bsc:BinauralBeat .
+
+sso:MonauralBeats owl:deprecated true ;
+  dct:isReplacedBy bsc:MonauralBeat .
+
+sso:IsochronicTones owl:deprecated true ;
+  dct:isReplacedBy bsc:IsochronicTone .

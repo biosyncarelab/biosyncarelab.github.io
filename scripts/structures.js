@@ -322,6 +322,52 @@ export class MartigliState {
     }
   }
 
+  loadSnapshot(snapshot = {}) {
+    const configs = this._normalizeOscillationConfigs(snapshot);
+    if (!configs.length) return;
+    this._oscillations.clear();
+    this.referenceId = null;
+    configs.forEach((config) => {
+      const oscillator = new MartigliOscillator(config);
+      this._oscillations.set(oscillator.id, oscillator);
+      if (!this.referenceId) {
+        this.referenceId = oscillator.id;
+      }
+    });
+    const preferredId = snapshot.referenceId ?? configs[0]?.id ?? null;
+    if (preferredId && this._oscillations.has(preferredId)) {
+      this.referenceId = preferredId;
+    }
+    this._emit();
+  }
+
+  _normalizeOscillationConfigs(source = {}) {
+    if (!source) return [];
+    if (Array.isArray(source)) {
+      return source;
+    }
+    if (Array.isArray(source.oscillations) && source.oscillations.length) {
+      return source.oscillations;
+    }
+    const single = {
+      startPeriodSec: source.startPeriodSec ?? source.startPeriod ?? source.start ?? null,
+      endPeriodSec: source.endPeriodSec ?? source.endPeriod ?? source.end ?? null,
+      transitionSec: source.transitionSec ?? source.transition ?? null,
+      waveform: source.waveform,
+      inhaleRatio: source.inhaleRatio,
+      amplitude: source.amplitude,
+      startOffsetSec: source.startOffsetSec,
+      phaseOffset: source.phaseOffset,
+      fadeOutSec: source.fadeOutSec,
+      conceptUri: source.conceptUri,
+      id: source.id ?? source.referenceId ?? null,
+      sessionStart: source.sessionStart ?? null,
+      sessionEnd: source.sessionEnd ?? null,
+    };
+    const hasValue = Object.values(single).some((value) => value !== undefined && value !== null);
+    return hasValue ? [single] : [];
+  }
+
   addOscillator(config = {}) {
     const oscillator = new MartigliOscillator(config);
     this._oscillations.set(oscillator.id, oscillator);

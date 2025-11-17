@@ -236,8 +236,13 @@ This software has had different incarnations, the last one is at biosyncare.gith
 - [x] Prototype Cytoscape viewer pointed at `rdf/core/bsc-owl.ttl` (standalone page for now).
 - [x] Add URI inspector sidebar pulling label/definition/comments, storing annotations in Firestore.
 - [x] Visual key differentiating class vs property edges with colors/icons.
-- [ ] Add navigation link from main dashboard to NSO Navigator page.
+- [x] Add navigation link from main dashboard to NSO Navigator page.
+- [x] Create modular audio.ttl with evidence metadata (invasiveness, evidenceLevel, contraindications).
+- [x] Fix naming violations (AudioTechniques → AudioTechnique singular).
+- [x] Add property visibility toggle to hide/show ObjectProperty and DatatypeProperty nodes.
 - [ ] Hook ontology links into the dashboard cards (e.g., session links to relevant NSO concept).
+- [ ] Create visual.ttl module with photosensitive epilepsy warnings for flicker stimulation.
+- [ ] Generate weekly consolidated release (nso-consolidated-v1.0.ttl).
 - [x] **Request (GUI & Engines)**: placeholder area exposed in dashboard cards (`.ontology-slot`) for future ontology links.
 
 The RDF data should work as the basis for BSCLab, giving it the definitions used in the algorithms and the texts for documentations and links to further context in the RDF data itself.

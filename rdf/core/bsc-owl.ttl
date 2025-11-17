@@ -1,5 +1,6 @@
-@prefix bsc:   <https://biosyncare.github.io/ont#> .
-@prefix id:    <https://biosyncare.github.io/id/> .
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix id:    <https://biosyncarelab.github.io/id/> .
+@prefix old:   <https://biosyncare.github.io/ont#> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
@@ -63,6 +64,49 @@ bsc:maxLatencyDays    a owl:DatatypeProperty ;
 
 bsc:notes             a owl:DatatypeProperty ;
   rdfs:label "notes" ; rdfs:range xsd:string .
+
+# Safety and evidence metadata properties
+bsc:invasiveness      a owl:DatatypeProperty ;
+  rdfs:label "invasiveness" ;
+  rdfs:comment "Classification of technique invasiveness: non-invasive, minimally-invasive, invasive" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:string .
+
+bsc:evidenceLevel     a owl:DatatypeProperty ;
+  rdfs:label "evidence level" ;
+  rdfs:comment "Numeric scale 0-5: 0=anecdotal, 1-2=low, 2-3=moderate, 3-4=high, 4-5=systematic reviews/meta-analyses" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:decimal .
+
+bsc:evidenceCurator   a owl:DatatypeProperty ;
+  rdfs:label "evidence curator" ;
+  rdfs:comment "Who assigned the evidence level (AI agent, specialist name, institution)" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:string .
+
+bsc:evidenceCorpus    a owl:DatatypeProperty ;
+  rdfs:label "evidence corpus" ;
+  rdfs:comment "Description of literature reviewed or criteria used for evidence assessment" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:string .
+
+bsc:evidenceReasoning a owl:DatatypeProperty ;
+  rdfs:label "evidence reasoning" ;
+  rdfs:comment "Explanation of why the evidence level was assigned" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:string .
+
+bsc:contraindications a owl:DatatypeProperty ;
+  rdfs:label "contraindications" ;
+  rdfs:comment "Medical/safety warnings. Use 'SERIOUS:' prefix for life-threatening risks (e.g., seizures)" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:string .
+
+bsc:usageCount        a owl:DatatypeProperty ;
+  rdfs:label "usage count" ;
+  rdfs:comment "Community usage statistics from Firestore telemetry aggregates" ;
+  rdfs:domain bsc:Technique ;
+  rdfs:range xsd:integer .
 
 # One canonical project resource
 id:BioSynCareLab a bsc:Project ;

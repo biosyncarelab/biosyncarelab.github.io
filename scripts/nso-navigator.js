@@ -33,6 +33,7 @@ if (isLocalhost) {
 const ontologyFiles = {
   "bsc-owl": "rdf/core/bsc-owl.ttl",
   "bsc-skos": "rdf/core/bsc-skos.ttl",
+  "bsc-audio": "rdf/modules/audio.ttl",
   "sso-ontology": "rdf/external/sso/sso-ontology.ttl",
   "sso-extended": "rdf/external/sso/sso-ontology-extended.ttl",
   "sso-initial": "rdf/external/sso/sso-initial.owl",
@@ -640,9 +641,27 @@ function focusConceptIfNeeded() {
   pendingConceptFocus = null;
 }
 
+// Update URL with current state (ontology + concept)
+function updateURLState(conceptURI = null) {
+  if (typeof window === 'undefined') return;
+
+  const params = new URLSearchParams();
+  params.set('ontology', currentOntology);
+
+  if (conceptURI) {
+    params.set('concept', conceptURI);
+  }
+
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ ontology: currentOntology, concept: conceptURI }, '', newURL);
+}
+
 // Show URI inspector sidebar
 async function showURIInspector(resource) {
   currentURI = resource.uri;
+
+  // Update URL to include selected concept
+  updateURLState(resource.uri);
 
   ui.inspectorURI.textContent = resource.uri;
   ui.inspectorLabel.textContent = resource.label || getLocalName(resource.uri);
@@ -681,6 +700,9 @@ async function showURIInspector(resource) {
 function hideURIInspector() {
   ui.inspector.classList.add("hidden");
   currentURI = null;
+
+  // Update URL to remove concept parameter
+  updateURLState(null);
 }
 
 // Load comments for URI from Firestore
@@ -951,6 +973,9 @@ async function loadOntology(ontologyKey) {
 
     initCytoscape(elements);
     ui.loading.classList.add("hidden");
+
+    // Update URL with current ontology (ensures URL is correct on initial load)
+    updateURLState(pendingConceptFocus);
   } catch (error) {
     console.error("Error loading ontology:", error);
     showError(`Failed to load ontology: ${error.message}`);
@@ -987,6 +1012,10 @@ ui.commentForm.addEventListener("submit", async (e) => {
 ui.ontologySelector.addEventListener("change", (e) => {
   currentOntology = e.target.value;
   hideURIInspector();
+
+  // Update URL with new ontology (removes concept since we're loading new graph)
+  updateURLState(null);
+
   loadOntology(currentOntology);
 });
 
@@ -1112,6 +1141,28 @@ ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
 ui.filterDomain.addEventListener("change", updateEdgeVisibility);
 ui.filterRange.addEventListener("change", updateEdgeVisibility);
 ui.filterRelated.addEventListener("change", updateEdgeVisibility);
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', (event) => {
+  if (event.state) {
+    const { ontology, concept } = event.state;
+
+    // Update ontology if changed
+    if (ontology && ontology !== currentOntology) {
+      currentOntology = ontology;
+      ui.ontologySelector.value = ontology;
+      loadOntology(ontology);
+    }
+
+    // Update concept selection
+    if (concept && cy) {
+      pendingConceptFocus = concept;
+      setTimeout(focusConceptIfNeeded, 300);
+    } else if (!concept) {
+      hideURIInspector();
+    }
+  }
+});
 
 // Initial load
 loadOntology(currentOntology);

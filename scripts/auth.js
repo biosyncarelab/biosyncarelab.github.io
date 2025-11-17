@@ -188,6 +188,7 @@ const videoEngine = kernel.video;
 let lastStructureRecord = null;
 let activeVideoLayerId = null;
 let activeModalRecord = null;
+let activeModalData = null;
 const videoCanvasController =
   ui.martigliCanvas && typeof videoEngine.attachCanvas === "function"
     ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
@@ -581,30 +582,97 @@ const renderStructurePreview = (record) => {
 };
 
 const ensureSessionTarget = () => {
-  if (activeModalRecord?.kind === "session") {
-    return activeModalRecord;
+  if (activeModalRecord?.kind === "session" && activeModalData) {
+    return activeModalData;
   }
   setMessage("Open a session to apply or save neurosensory state.", "info");
   return null;
 };
 
-const handleSessionApply = () => {
-  const target = ensureSessionTarget();
-  if (!target) return;
-  kernel.recordInteraction("session.apply.request", {
-    recordId: target.id,
-    label: target.label,
-  });
-  setMessage("Session application will sync Martigli/audio/video once wiring is finished.", "info");
+const normalizeMartigliSnapshot = (source) => {
+  if (!source) return null;
+  if (Array.isArray(source.oscillations) && source.oscillations.length) {
+    return { oscillations: source.oscillations, referenceId: source.referenceId ?? null };
+  }
+  if (Array.isArray(source)) {
+    return { oscillations: source };
+  }
+  return { oscillations: [source] };
 };
 
-const handleSessionSave = () => {
-  const context = activeModalRecord ?? null;
-  kernel.recordInteraction("session.save.snapshot", {
-    recordId: context?.id ?? null,
-    label: context?.label ?? null,
+const applyMartigliFromRecord = (record) => {
+  const martigliParams = extractMartigliParams(record);
+  const snapshot = normalizeMartigliSnapshot(martigliParams);
+  if (!snapshot) {
+    setMessage("Session has no Martigli payload yet.", "error");
+    return false;
+  }
+  martigliState.loadSnapshot(snapshot);
+  kernel.recordInteraction("session.apply.martigli", {
+    recordId: record.id ?? null,
+    label: record.label ?? null,
   });
-  setMessage("Saving current usage as a session is not wired yet, but the request was logged.", "info");
+  return true;
+};
+
+const collectSessionDraft = (record) => {
+  const reference = martigliState.getReference ? martigliState.getReference() : null;
+  const martigliPayload = reference?.toJSON?.() ?? martigliState.snapshot?.().oscillations?.[0] ?? null;
+  return {
+    id: record?.id ?? null,
+    label: record?.label ?? "Draft Session",
+    savedAt: new Date().toISOString(),
+    martigli: martigliPayload,
+    voices: record?.voices ?? record?.tracks ?? [],
+  };
+};
+
+const copyToClipboard = async (text) => {
+  if (!text || typeof navigator === "undefined") return false;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (err) {
+    console.warn("Clipboard copy failed", err);
+  }
+  return false;
+};
+
+const handleSessionApply = () => {
+  const record = ensureSessionTarget();
+  if (!record) return;
+  const martigliApplied = applyMartigliFromRecord(record);
+  if (martigliApplied) {
+    setMessage("Martigli oscillations synced from session. Audio/video presets will follow once editable.", "success");
+  }
+};
+
+const handleSessionSave = async () => {
+  const contextRecord = activeModalData ?? null;
+  if (!contextRecord) {
+    setMessage("Open a preset or session first.", "info");
+    return;
+  }
+  const draft = collectSessionDraft(contextRecord);
+  if (!draft.martigli) {
+    setMessage("Adjust the Martigli widget before saving a session.", "error");
+    return;
+  }
+  const serialized = JSON.stringify(draft, null, 2);
+  const copied = await copyToClipboard(serialized);
+  kernel.recordInteraction("session.save.snapshot", {
+    recordId: draft.id,
+    label: draft.label,
+    copied,
+  });
+  if (copied) {
+    setMessage("Current Martigli + track state copied to clipboard for session storage.", "success");
+  } else {
+    console.log("Session draft", draft);
+    setMessage("Clipboard unavailable; session draft logged to console.", "info");
+  }
 };
 
 const renderModalMeta = (record, kind) => {
@@ -786,6 +854,7 @@ function closeDetailModal() {
     kernel.recordInteraction("modal.close", { ...activeModalRecord });
   }
   activeModalRecord = null;
+  activeModalData = null;
   activeVideoLayerId = null;
   if (videoCanvasController?.setLayer) {
     videoCanvasController.setLayer(null);
@@ -800,6 +869,7 @@ function openDetailModal(record, kind) {
     kind: normalizedKind,
     label: record.label ?? record.name ?? record.id ?? null,
   };
+  activeModalData = record;
   ui.modalTitle.textContent = record.label ?? record.name ?? record.id ?? "Untitled";
   ui.modalKind.textContent = normalizedKind === "session" ? "Session" : "Preset";
   if (ui.sessionHint) {
