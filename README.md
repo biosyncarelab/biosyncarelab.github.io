@@ -15,9 +15,9 @@ In this context, the rules I derived and hope to allow for faster and better sof
 3) Describe the AI agents beforehand when possible, so that we can start working with agents in a coordinated way from the start.
 
 ## Working documents
-- `docs/Features.md`: living backlog; every feature must argue for smaller surface area.
-- `docs/Agents.md`: roles, guardrails, and collaboration rules for AI/automation.
-- `docs/clarifications.md`: unresolved questions; update before writing code.
+- `docs/Features.md`: living backlog; now reflects resolved priorities (Firebase first, UI next, algorithm migration) and decisions on presets, Martigli ranges, engines, etc.
+- `docs/Agents.md`: roles, guardrails, and collaboration rules updated with clarified mandates per subsystem.
+- `docs/clarifications.md`: snapshot of resolved decisions (last update 2025-11-17); append new questions only when blockers appear.
 - `docs/prior_art.md`: findings from earlier BSC deployments with explicit reuse decisions.
 
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
