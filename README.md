@@ -111,6 +111,7 @@ in usual computers and mobile phones. It consists of a few core parts:
 - [x] Promote the new `scripts/structures.js` kernel (Martigli + audio + video + RDF) into dashboard flows by logging Firestore interactions and exposing a public API for other pods.
 - [x] Fill `.ontology-slot` via the kernel's `RDFLinker` so dashboard cards render real NSO references.
 - [x] Turn the `VideoEngine` stub into a visible Martigli-driven canvas widget to validate the abstraction.
+- [ ] Ontology links must always deep-link into `nso-navigator.html` with the target URI pre-selected, inspector open (definition, annotations, relations visible), and hover tooltips summarizing the concept (definition/comment snippet); if summary text is missing, fall back to "Definition pending" so the UX stays predictable.
 
 The woking of the BSCLab has at least three parts of considerable complexity:
 1.1) the Firebase data persistence and sharing. The software should reports in real time the number of interactions performed by all users. And the kind of interactions, opening, creation and deletion of tracks and presets, parameter updates/setting, changes in the breathing cue's parameters and of its usage in the audiovisual tracks. The database is envisioned to keep/manage, at least: user's login and persona's data, interactions of users with the interface, presets for sessions and tracks.

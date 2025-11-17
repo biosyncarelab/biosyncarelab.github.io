@@ -57,7 +57,11 @@ Pods can rotate contributors, but always announce hand-offs in the clarification
 - **Mandate:** Build ontology viewer/editor with annotations.
 - **Inputs:** RDF datasets in `rdf/`, requirements section 2 in README, tooling decisions (Cytoscape/etc).
 - **Deliverables:** Graph exploration UI, URI inspector panel, comment system, version diff view.
-- **Key checks:** Handles seed RDF sizes now, scales with weekly updates, caching strategy, clear visual differentiation of relation types, moderator tooling tied to Firebase roles.
+- **Deliverables (expanded):**
+	- Deep-link router so `nso-navigator.html?concept=<URI>&ontology=<id>` selects the node, opens the inspector, and exposes definition + annotation threads + relation badges by default.
+	- Lightweight summary service (precomputed JSON or Firestore doc) that surfaces `label`, `definition/comment snippet`, and `related[]` so dashboard/tooltips can show a preview without parsing the OWL on the fly.
+	- Commenting UI already planned; ensure deep links land on the same thread list so “Add comment” is one click away from dashboard context.
+- **Key checks:** Handles seed RDF sizes now, scales with weekly updates, caching strategy, clear visual differentiation of relation types, moderator tooling tied to Firebase roles, **plus a shareable URI surface** (deep-linkable viewer panels so `...#BinauralBeats` opens inside the Navigator instead of force-downloading the OWL file) and hover-ready summaries (definition fallback string when none exists).
 
 ## Agent: Documentation & Knowledge Ops
 - **Mandate:** Maintain `README.md`, `docs/*.md`, changelogs, clarifications, prior-art findings.

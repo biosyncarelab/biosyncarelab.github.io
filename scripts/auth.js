@@ -39,11 +39,13 @@ const DASHBOARD_ONTOLOGY_LINKS = {
       uri: `${NSO_BASE_URI}BrainwaveEntrainment`,
       label: "Brainwave Entrainment",
       navigator: "harmonicare-sso",
+      summary: "Protocols that synchronize neural oscillations using rhythmic sensory cues.",
     },
     {
       uri: `${NSO_BASE_URI}AudiovisualStimulation`,
       label: "Audiovisual Stimulation",
       navigator: "harmonicare-sso",
+      summary: "Combined light and sound entrainment techniques referenced by the session baseline.",
     },
   ],
   sine: [
@@ -51,11 +53,13 @@ const DASHBOARD_ONTOLOGY_LINKS = {
       uri: `${NSO_BASE_URI}AudioStimulation`,
       label: "Audio Stimulation",
       navigator: "harmonicare-sso",
+      summary: "General-purpose sonic cues covering pure tones, isochronous beats, and modulated voices.",
     },
     {
       uri: `${NSO_BASE_URI}AudioTechniques`,
       label: "Audio Techniques",
       navigator: "harmonicare-sso",
+      summary: "Families of sound design approaches catalogued in the SSO ontology.",
     },
   ],
   "binaural-alpha": [
@@ -63,11 +67,13 @@ const DASHBOARD_ONTOLOGY_LINKS = {
       uri: `${NSO_BASE_URI}BinauralBeats`,
       label: "Binaural Beats",
       navigator: "harmonicare-sso",
+      summary: "Left/right carrier offsets targeting specific brainwave ranges (alpha, theta, etc.).",
     },
     {
       uri: `${NSO_BASE_URI}AudioTechniques`,
       label: "Audio Techniques",
       navigator: "harmonicare-sso",
+      summary: "Families of sound design approaches catalogued in the SSO ontology.",
     },
   ],
 };
@@ -185,7 +191,11 @@ STRUCTURE_MANIFEST.forEach((entry) => {
 
 Object.entries(DASHBOARD_ONTOLOGY_LINKS).forEach(([recordId, links]) => {
   (links ?? []).forEach((link) => {
-    rdfLinker.register(recordId, link.uri, { label: link.label, navigator: link.navigator });
+    rdfLinker.register(recordId, link.uri, {
+      label: link.label,
+      navigator: link.navigator,
+      summary: link.summary,
+    });
   });
 });
 
@@ -321,14 +331,17 @@ const createOntologySlot = (kind, id) => {
   slot.innerHTML = "";
   if (links.length) {
     const primary = links[0];
-    slot.title = links.map((link) => link.label ?? link.uri).join(", ");
+    const tooltip = primary.summary ?? primary.definition ?? primary.label ?? primary.uri;
+    slot.title = tooltip;
     const primaryWrap = document.createElement("div");
     primaryWrap.className = "ontology-slot-primary";
+    const navigatorUrl = buildNavigatorUrl(primary);
     const anchor = document.createElement("a");
-    anchor.href = primary.uri;
+    anchor.href = navigatorUrl ?? primary.uri;
     anchor.target = "_blank";
     anchor.rel = "noopener noreferrer";
     anchor.textContent = primary.label ?? primary.uri;
+    anchor.title = tooltip;
     primaryWrap.appendChild(anchor);
     if (links.length > 1) {
       const extra = document.createElement("span");
@@ -338,7 +351,28 @@ const createOntologySlot = (kind, id) => {
     }
     slot.appendChild(primaryWrap);
     const navigatorButton = createNavigatorButton(primary);
+    navigatorButton.textContent = "Open in Navigator";
     slot.appendChild(navigatorButton);
+    const copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "ghost tiny copy-uri";
+    copyButton.textContent = "Copy URI";
+    copyButton.addEventListener("click", () => {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(primary.uri).then(
+          () => {
+            copyButton.textContent = "Copied";
+            setTimeout(() => {
+              copyButton.textContent = "Copy URI";
+            }, 1200);
+          },
+          () => window.open(primary.uri, "_blank", "noopener,noreferrer"),
+        );
+      } else {
+        window.open(primary.uri, "_blank", "noopener,noreferrer");
+      }
+    });
+    slot.appendChild(copyButton);
   } else {
     const emptyLabel = document.createElement("span");
     emptyLabel.textContent = "Map to NSO";

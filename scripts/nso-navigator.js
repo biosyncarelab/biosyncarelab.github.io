@@ -29,6 +29,20 @@ if (isLocalhost) {
   connectFirestoreEmulator(db, "127.0.0.1", 8085);
 }
 
+// Ontology file mappings
+const ontologyFiles = {
+  "bsc-owl": "rdf/core/bsc-owl.ttl",
+  "bsc-skos": "rdf/core/bsc-skos.ttl",
+  "sso-ontology": "rdf/external/sso/sso-ontology.ttl",
+  "sso-extended": "rdf/external/sso/sso-ontology-extended.ttl",
+  "sso-initial": "rdf/external/sso/sso-initial.owl",
+  "sso-updated": "rdf/external/sso/sso-updated.owl",
+  "onc-ontology": "rdf/external/onc/onc-ontology-attachment-2.ttl",
+  "onc-attachment": "rdf/Attachment 2_ONC_Ontology.ttl",
+  "harmonicare-sso": "rdf/external/harmonicare/SSO_Ontology.owl",
+  "harmonicare-sso-alt": "rdf/external/harmonicare/SSO_Ontology_.owl",
+};
+
 const urlParams =
   typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
 const requestedConcept = urlParams.get("concept");
@@ -43,20 +57,6 @@ let currentOntology =
 let currentLayout = "cose";
 let pendingConceptFocus = requestedConcept;
 let showPropertiesAsNodes = true;
-
-// Ontology file mappings
-const ontologyFiles = {
-  "bsc-owl": "rdf/core/bsc-owl.ttl",
-  "bsc-skos": "rdf/core/bsc-skos.ttl",
-  "sso-ontology": "rdf/external/sso/sso-ontology.ttl",
-  "sso-extended": "rdf/external/sso/sso-ontology-extended.ttl",
-  "sso-initial": "rdf/external/sso/sso-initial.owl",
-  "sso-updated": "rdf/external/sso/sso-updated.owl",
-  "onc-ontology": "rdf/external/onc/onc-ontology-attachment-2.ttl",
-  "onc-attachment": "rdf/Attachment 2_ONC_Ontology.ttl",
-  "harmonicare-sso": "rdf/external/harmonicare/SSO_Ontology.owl",
-  "harmonicare-sso-alt": "rdf/external/harmonicare/SSO_Ontology_.owl",
-};
 
 // UI Elements
 const ui = {
@@ -1030,12 +1030,16 @@ function updatePropertyVisualization() {
     return type === "objectProperty" || type === "datatypeProperty";
   });
 
+  console.log(`[Property Toggle] Showing properties: ${showPropertiesAsNodes}, Found ${propertyNodes.length} property nodes`);
+
   if (showPropertiesAsNodes) {
     // Show property nodes
     propertyNodes.style("display", "element");
+    console.log(`[Property Toggle] Showing ${propertyNodes.length} property nodes`);
   } else {
     // Hide property nodes
     propertyNodes.style("display", "none");
+    console.log(`[Property Toggle] Hiding ${propertyNodes.length} property nodes`);
   }
 
   // Update edge visibility
@@ -1052,12 +1056,25 @@ function updateEdgeVisibility() {
     domain: ui.filterDomain.checked,
     range: ui.filterRange.checked,
     related: ui.filterRelated.checked,
+    relation: true, // Default for unclassified edges
   };
+
+  console.log('[Edge Visibility] Filters:', filters, 'Show properties:', showPropertiesAsNodes);
+
+  let hiddenByProperty = 0;
+  let hiddenByFilter = 0;
+  let shown = 0;
 
   cy.edges().forEach((edge) => {
     const edgeType = edge.data("edgeType");
     const source = edge.source();
     const target = edge.target();
+
+    // Check if source/target nodes exist
+    if (!source || !target || source.empty() || target.empty()) {
+      return;
+    }
+
     const sourceType = source.data("type");
     const targetType = target.data("type");
 
@@ -1071,16 +1088,24 @@ function updateEdgeVisibility() {
     // If properties are hidden and this edge involves a property, hide it
     if (!showPropertiesAsNodes && involvesProperty) {
       edge.style("display", "none");
+      hiddenByProperty++;
       return;
     }
 
-    // Otherwise, apply normal edge filters
-    if (filters[edgeType]) {
-      edge.style("display", "element");
+    // If properties are shown and this edge involves a property, always respect edge type filters
+    // Apply normal edge filters
+    const shouldShow = filters[edgeType] !== undefined ? filters[edgeType] : filters.relation;
+
+    edge.style("display", shouldShow ? "element" : "none");
+
+    if (shouldShow) {
+      shown++;
     } else {
-      edge.style("display", "none");
+      hiddenByFilter++;
     }
   });
+
+  console.log(`[Edge Visibility] Hidden by property: ${hiddenByProperty}, Hidden by filter: ${hiddenByFilter}, Shown: ${shown}`);
 }
 
 ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
