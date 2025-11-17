@@ -36,7 +36,8 @@
   flex-wrap: wrap;
 }
 
-.ontology-selector {
+.ontology-selector,
+.layout-selector {
   background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
@@ -47,9 +48,14 @@
   min-width: 180px;
 }
 
-.ontology-selector:focus {
+.ontology-selector:focus,
+.layout-selector:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+.layout-selector {
+  min-width: 200px;
 }
 
 .nso-container {
@@ -248,6 +254,54 @@
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+}
+
+.edge-filters {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+  min-width: 220px;
+  z-index: 5;
+}
+
+.edge-filters.hidden {
+  display: none;
+}
+
+.edge-filters h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.filter-checkbox:hover {
+  color: var(--primary);
 }
 
 .graph-legend {

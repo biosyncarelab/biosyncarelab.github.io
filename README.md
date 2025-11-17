@@ -58,7 +58,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
 make seed-prod
 ```
 
-`make seed-prod` performs the same guard checks and exports `BSC_ALLOW_PROD_SEED=1` automatically.
+`make seed-prod` delegates to `scripts/seed-prod.sh`, which performs the same guard checks and exports `BSC_ALLOW_PROD_SEED=1` automatically. You can also execute `bash scripts/seed-prod.sh` directly if you prefer.
 
 Need to seed the live Firestore project instead? Authenticate with Application Default Credentials (e.g., `gcloud auth application-default login` or set `GOOGLE_APPLICATION_CREDENTIALS`) and run:
 

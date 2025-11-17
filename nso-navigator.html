@@ -35,6 +35,15 @@
             <option value="harmonicare-sso-alt">HarmoniCare SSO Alt</option>
           </optgroup>
         </select>
+        <select id="layout-selector" class="layout-selector">
+          <option value="cose">Force-Directed (COSE)</option>
+          <option value="circle">Circle</option>
+          <option value="concentric">Concentric</option>
+          <option value="breadthfirst">Breadth-First Tree</option>
+          <option value="grid">Grid</option>
+          <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
+        </select>
+        <button type="button" id="toggle-filters" class="ghost small">Edge Filters</button>
         <button type="button" id="reset-view" class="ghost small">Reset View</button>
         <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
       </div>
@@ -96,6 +105,28 @@
 
       <main class="graph-container">
         <div id="cy-canvas" class="cy-canvas"></div>
+
+        <div id="edge-filters" class="edge-filters hidden">
+          <h4>Edge Visibility</h4>
+          <div class="filter-group">
+            <label class="filter-checkbox">
+              <input type="checkbox" id="filter-subclass" checked />
+              <span>Subclass/Hierarchy</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="filter-domain" checked />
+              <span>Domain</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="filter-range" checked />
+              <span>Range</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="filter-related" checked />
+              <span>Related/Other</span>
+            </label>
+          </div>
+        </div>
 
         <div class="graph-legend">
           <h4>Legend</h4>

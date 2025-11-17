@@ -16,17 +16,9 @@ serve:
 	python3 -m http.server "$$PORT"
 
 seed-prod:
-	@if [ -z "$(BSC_FIREBASE_PROJECT)" ]; then \
-		echo "BSC_FIREBASE_PROJECT must be set"; \
-		exit 1; \
-	fi
-	@if [ -z "$(GOOGLE_APPLICATION_CREDENTIALS)" ] && ! gcloud auth application-default print-access-token >/dev/null 2>&1; then \
-		echo "Authenticate via GOOGLE_APPLICATION_CREDENTIALS or gcloud auth application-default login"; \
-		exit 1; \
-	fi
-	BSC_ALLOW_PROD_SEED=1 BSC_FIREBASE_PROJECT=$(BSC_FIREBASE_PROJECT) \
+	BSC_FIREBASE_PROJECT=$(BSC_FIREBASE_PROJECT) \
 	GOOGLE_APPLICATION_CREDENTIALS=$(GOOGLE_APPLICATION_CREDENTIALS) \
-	npm run seed:firestore:prod
+	bash scripts/seed-prod.sh
 
 ifneq ($(strip $(RAW_ARGS)),)
 .PHONY += $(RAW_ARGS)

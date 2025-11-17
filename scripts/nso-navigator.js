@@ -34,6 +34,7 @@ let currentUser = null;
 let currentURI = null;
 let cy = null;
 let currentOntology = "bsc-owl";
+let currentLayout = "cose";
 
 // Ontology file mappings
 const ontologyFiles = {
@@ -65,6 +66,13 @@ const ui = {
   commentInput: document.getElementById("comment-input"),
   cancelComment: document.getElementById("cancel-comment"),
   ontologySelector: document.getElementById("ontology-selector"),
+  layoutSelector: document.getElementById("layout-selector"),
+  toggleFilters: document.getElementById("toggle-filters"),
+  edgeFilters: document.getElementById("edge-filters"),
+  filterSubclass: document.getElementById("filter-subclass"),
+  filterDomain: document.getElementById("filter-domain"),
+  filterRange: document.getElementById("filter-range"),
+  filterRelated: document.getElementById("filter-related"),
   resetView: document.getElementById("reset-view"),
   loading: document.getElementById("loading-indicator"),
   error: document.getElementById("error-message"),
@@ -402,6 +410,75 @@ function buildGraph(rdfData) {
   return elements;
 }
 
+// Get layout configuration by name
+function getLayoutConfig(layoutName) {
+  const configs = {
+    cose: {
+      name: "cose",
+      idealEdgeLength: 100,
+      nodeOverlap: 20,
+      refresh: 20,
+      fit: true,
+      padding: 30,
+      randomize: false,
+      componentSpacing: 100,
+      nodeRepulsion: 400000,
+      edgeElasticity: 100,
+      nestingFactor: 5,
+      gravity: 80,
+      numIter: 1000,
+      initialTemp: 200,
+      coolingFactor: 0.95,
+      minTemp: 1.0,
+    },
+    circle: {
+      name: "circle",
+      fit: true,
+      padding: 30,
+      avoidOverlap: true,
+      spacingFactor: 1.5,
+    },
+    concentric: {
+      name: "concentric",
+      fit: true,
+      padding: 30,
+      avoidOverlap: true,
+      concentric: (node) => node.degree(),
+      levelWidth: () => 2,
+    },
+    breadthfirst: {
+      name: "breadthfirst",
+      fit: true,
+      padding: 30,
+      directed: true,
+      spacingFactor: 1.5,
+      avoidOverlap: true,
+    },
+    grid: {
+      name: "grid",
+      fit: true,
+      padding: 30,
+      avoidOverlap: true,
+      avoidOverlapPadding: 10,
+    },
+    "cose-bilkent": {
+      name: "cose-bilkent",
+      fit: true,
+      padding: 30,
+      randomize: false,
+      nodeRepulsion: 4500,
+      idealEdgeLength: 100,
+      edgeElasticity: 0.45,
+      nestingFactor: 0.1,
+      gravity: 0.25,
+      numIter: 2500,
+      tile: true,
+    },
+  };
+
+  return configs[layoutName] || configs.cose;
+}
+
 // Initialize Cytoscape
 function initCytoscape(elements) {
   if (cy) {
@@ -512,24 +589,7 @@ function initCytoscape(elements) {
         },
       },
     ],
-    layout: {
-      name: "cose",
-      idealEdgeLength: 100,
-      nodeOverlap: 20,
-      refresh: 20,
-      fit: true,
-      padding: 30,
-      randomize: false,
-      componentSpacing: 100,
-      nodeRepulsion: 400000,
-      edgeElasticity: 100,
-      nestingFactor: 5,
-      gravity: 80,
-      numIter: 1000,
-      initialTemp: 200,
-      coolingFactor: 0.95,
-      minTemp: 1.0,
-    },
+    layout: getLayoutConfig(currentLayout),
   });
 
   // Node click handler
@@ -902,6 +962,47 @@ ui.resetView.addEventListener("click", () => {
     cy.fit();
   }
 });
+
+// Layout selector
+ui.layoutSelector.addEventListener("change", (e) => {
+  currentLayout = e.target.value;
+  if (cy) {
+    const layout = cy.layout(getLayoutConfig(currentLayout));
+    layout.run();
+  }
+});
+
+// Toggle edge filters panel
+ui.toggleFilters.addEventListener("click", () => {
+  ui.edgeFilters.classList.toggle("hidden");
+});
+
+// Edge filter checkboxes
+function updateEdgeVisibility() {
+  if (!cy) return;
+
+  const filters = {
+    subclass: ui.filterSubclass.checked,
+    hierarchy: ui.filterSubclass.checked, // hierarchy uses same checkbox as subclass
+    domain: ui.filterDomain.checked,
+    range: ui.filterRange.checked,
+    related: ui.filterRelated.checked,
+  };
+
+  cy.edges().forEach((edge) => {
+    const edgeType = edge.data("edgeType");
+    if (filters[edgeType]) {
+      edge.style("display", "element");
+    } else {
+      edge.style("display", "none");
+    }
+  });
+}
+
+ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
+ui.filterDomain.addEventListener("change", updateEdgeVisibility);
+ui.filterRange.addEventListener("change", updateEdgeVisibility);
+ui.filterRelated.addEventListener("change", updateEdgeVisibility);
 
 // Initial load
 loadOntology(currentOntology);
