@@ -119,8 +119,9 @@ const ui = {
   modalTitle: document.getElementById("modal-title"),
   modalKind: document.getElementById("modal-kind"),
   modalMeta: document.getElementById("modal-meta"),
-  modalTracks: document.getElementById("modal-tracks"),
-  modalTrackHint: document.getElementById("modal-track-hint"),
+  sessionApply: document.getElementById("session-apply"),
+  sessionSave: document.getElementById("session-save"),
+  sessionHint: document.getElementById("session-card-hint"),
   modalMartigli: document.getElementById("modal-martigli"),
   modalClose: document.getElementById("modal-close"),
   martigliStart: document.getElementById("martigli-start"),
@@ -128,6 +129,12 @@ const ui = {
   martigliWaveform: document.getElementById("martigli-waveform"),
   martigliPreview: document.getElementById("martigli-preview"),
   martigliCanvas: document.getElementById("martigli-canvas"),
+  audioTrackList: document.getElementById("audio-track-list"),
+  audioTrackHint: document.getElementById("audio-track-hint"),
+  videoTrackList: document.getElementById("video-track-list"),
+  videoTrackHint: document.getElementById("video-track-hint"),
+  hapticTrackList: document.getElementById("haptic-track-list"),
+  hapticTrackHint: document.getElementById("haptic-track-hint"),
   structureSection: document.getElementById("structure-section"),
   structureSummary: document.getElementById("structure-summary"),
   structureList: document.getElementById("structure-list"),
@@ -573,6 +580,33 @@ const renderStructurePreview = (record) => {
   });
 };
 
+const ensureSessionTarget = () => {
+  if (activeModalRecord?.kind === "session") {
+    return activeModalRecord;
+  }
+  setMessage("Open a session to apply or save neurosensory state.", "info");
+  return null;
+};
+
+const handleSessionApply = () => {
+  const target = ensureSessionTarget();
+  if (!target) return;
+  kernel.recordInteraction("session.apply.request", {
+    recordId: target.id,
+    label: target.label,
+  });
+  setMessage("Session application will sync Martigli/audio/video once wiring is finished.", "info");
+};
+
+const handleSessionSave = () => {
+  const context = activeModalRecord ?? null;
+  kernel.recordInteraction("session.save.snapshot", {
+    recordId: context?.id ?? null,
+    label: context?.label ?? null,
+  });
+  setMessage("Saving current usage as a session is not wired yet, but the request was logged.", "info");
+};
+
 const renderModalMeta = (record, kind) => {
   if (!ui.modalMeta) return;
   ui.modalMeta.innerHTML = "";
@@ -612,51 +646,88 @@ const summariseTrackParams = (params = {}) => {
   return parts.slice(0, 3).join(" · ") || "No parameters provided";
 };
 
-const renderTrackList = (record, kind) => {
-  if (!ui.modalTracks || !ui.modalTrackHint) return;
-  audioEngine.stop();
-  clearList(ui.modalTracks);
-  const tracks = record.voices ?? record.tracks ?? [];
-  if (!tracks.length) {
-    ui.modalTrackHint.textContent = "No tracks stored yet.";
+const detectTrackModality = (track = {}) => {
+  const tags = Array.isArray(track.tags) ? track.tags.join(" ") : "";
+  const descriptor = [track.modality, track.kind, track.channel, track.category, track.type, tags]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/(video|visual|light|led|display)/.test(descriptor)) return "video";
+  if (/(haptic|tactile|vibration|touch)/.test(descriptor)) return "haptics";
+  return "audio";
+};
+
+const buildTrackCard = (track, record, kind, index) => {
+  const card = document.createElement("li");
+  card.className = "track-card";
+  const title = document.createElement("h5");
+  title.textContent = track.label ?? `Track ${index + 1}`;
+  const meta = document.createElement("div");
+  meta.className = "track-meta";
+  const presetChip = document.createElement("span");
+  presetChip.textContent = track.presetId ? `Preset · ${track.presetId}` : "Custom";
+  const gainChip = document.createElement("span");
+  const gainValue = track.gain ?? track.params?.gain;
+  if (gainValue !== undefined) {
+    gainChip.textContent = `Gain ${gainValue}`;
+    meta.appendChild(gainChip);
+  }
+  meta.appendChild(presetChip);
+  const summary = document.createElement("p");
+  summary.className = "muted-text";
+  summary.textContent = summariseTrackParams(track.params ?? {});
+  card.appendChild(title);
+  card.appendChild(meta);
+  card.appendChild(summary);
+  const actions = document.createElement("div");
+  actions.className = "track-actions";
+  const previewButton = createTrackPreviewButton(track, { record, kind, index });
+  if (previewButton) {
+    actions.appendChild(previewButton);
+  } else {
+    const hint = document.createElement("span");
+    hint.className = "muted-text";
+    hint.textContent = "Preview unavailable for this track.";
+    actions.appendChild(hint);
+  }
+  card.appendChild(actions);
+  return card;
+};
+
+const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
+  if (!listEl || !hintEl) return;
+  clearList(listEl);
+  if (!entries.length) {
+    hintEl.textContent = `No ${label} tracks stored yet.`;
     return;
   }
-  ui.modalTrackHint.textContent = `${tracks.length} track${tracks.length > 1 ? "s" : ""}`;
-  tracks.forEach((track, index) => {
-    const card = document.createElement("li");
-    card.className = "track-card";
-    const title = document.createElement("h5");
-    title.textContent = track.label ?? `Track ${index + 1}`;
-    const meta = document.createElement("div");
-    meta.className = "track-meta";
-    const presetChip = document.createElement("span");
-    presetChip.textContent = track.presetId ? `Preset · ${track.presetId}` : "Custom";
-    const gainChip = document.createElement("span");
-    if (track.gain !== undefined) {
-      gainChip.textContent = `Gain ${track.gain}`;
-      meta.appendChild(gainChip);
-    }
-    meta.appendChild(presetChip);
-    const summary = document.createElement("p");
-    summary.className = "muted-text";
-    summary.textContent = summariseTrackParams(track.params ?? {});
-    card.appendChild(title);
-    card.appendChild(meta);
-    card.appendChild(summary);
-    const actions = document.createElement("div");
-    actions.className = "track-actions";
-    const previewButton = createTrackPreviewButton(track, { record, kind, index });
-    if (previewButton) {
-      actions.appendChild(previewButton);
-    } else {
-      const hint = document.createElement("span");
-      hint.className = "muted-text";
-      hint.textContent = "Audio preview unavailable for this track.";
-      actions.appendChild(hint);
-    }
-    card.appendChild(actions);
-    ui.modalTracks.appendChild(card);
+  hintEl.textContent = `${entries.length} ${label} track${entries.length > 1 ? "s" : ""}`;
+  entries.forEach(({ track, index }) => {
+    listEl.appendChild(buildTrackCard(track, record, kind, index));
   });
+};
+
+const renderModalTrackSections = (record, kind) => {
+  audioEngine.stop();
+  const tracks = record.voices ?? record.tracks ?? [];
+  const buckets = {
+    audio: [],
+    video: [],
+    haptics: [],
+  };
+  tracks.forEach((track, index) => {
+    const modality = detectTrackModality(track);
+    if (modality === "video") {
+      buckets.video.push({ track, index });
+    } else if (modality === "haptics") {
+      buckets.haptics.push({ track, index });
+    } else {
+      buckets.audio.push({ track, index });
+    }
+  });
+  renderTrackSection(buckets.audio, ui.audioTrackList, ui.audioTrackHint, record, kind, "audio");
+  renderTrackSection(buckets.video, ui.videoTrackList, ui.videoTrackHint, record, kind, "visual");
+  renderTrackSection(buckets.haptics, ui.hapticTrackList, ui.hapticTrackHint, record, kind, "haptic");
 };
 
 const formatMartigliValue = (value) => {
@@ -731,8 +802,14 @@ function openDetailModal(record, kind) {
   };
   ui.modalTitle.textContent = record.label ?? record.name ?? record.id ?? "Untitled";
   ui.modalKind.textContent = normalizedKind === "session" ? "Session" : "Preset";
+  if (ui.sessionHint) {
+    ui.sessionHint.textContent =
+      normalizedKind === "session"
+        ? "Applying this session will update Martigli, audio, video, and haptic controls."
+        : "Viewing a preset — open a session to sync all modalities.";
+  }
   renderModalMeta(record, normalizedKind);
-  renderTrackList(record, normalizedKind);
+  renderModalTrackSections(record, normalizedKind);
   renderMartigliParams(record);
   renderStructurePreview(record);
   activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
@@ -921,6 +998,14 @@ if (ui.toggleAuthMode) {
 }
 
 structureStore.subscribe(() => renderStructurePreview(lastStructureRecord));
+
+if (ui.sessionApply) {
+  ui.sessionApply.addEventListener("click", handleSessionApply);
+}
+
+if (ui.sessionSave) {
+  ui.sessionSave.addEventListener("click", handleSessionSave);
+}
 
 bindMartigliWidget();
 martigliState.subscribe((snapshot) => {

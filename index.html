@@ -90,58 +90,95 @@
           <button type="button" id="modal-close" class="ghost small" aria-label="Close dialog">Close</button>
         </header>
 
-        <section aria-labelledby="modal-meta-label">
-          <h4 id="modal-meta-label">Summary</h4>
-          <dl id="modal-meta" class="modal-meta"></dl>
-        </section>
-
-        <section aria-labelledby="modal-tracks-label">
+        <section class="modal-card" id="session-card" aria-labelledby="session-card-label">
           <div class="section-head">
-            <h4 id="modal-tracks-label">Tracks</h4>
-            <p id="modal-track-hint" class="muted-text"></p>
+            <div>
+              <h4 id="session-card-label">Session</h4>
+              <p id="session-card-hint" class="muted-text">Choose or save sessions to set all modalities.</p>
+            </div>
+            <div class="session-actions">
+              <button type="button" id="session-apply" class="ghost tiny">Apply Session</button>
+              <button type="button" id="session-save" class="ghost tiny">Save Current State</button>
+            </div>
           </div>
-          <ul id="modal-tracks" class="track-list"></ul>
+          <dl id="modal-meta" class="modal-meta"></dl>
+          <section aria-labelledby="structure-label" id="structure-section" class="modal-subsection">
+            <h5 id="structure-label">Change-Ringing Structures</h5>
+            <p id="structure-summary" class="muted-text"></p>
+            <ul id="structure-list" class="structure-list"></ul>
+          </section>
         </section>
 
-        <section aria-labelledby="modal-martigli-label">
-          <h4 id="modal-martigli-label">Stored Martigli Parameters</h4>
-          <div id="modal-martigli" class="martigli-params"></div>
-        </section>
-
-        <section aria-labelledby="martigli-widget-label" class="martigli-widget" data-role="widget">
-          <h4 id="martigli-widget-label">Martigli Widget (live)</h4>
-          <div class="widget-grid">
-            <label>
-              Start period (s)
-              <input type="range" id="martigli-start" min="4" max="20" step="1" value="10" />
-            </label>
-            <label>
-              End period (s)
-              <input type="range" id="martigli-end" min="8" max="40" step="1" value="20" />
-            </label>
-            <label>
-              Waveform
-              <select id="martigli-waveform">
-                <option value="sine">Sine</option>
-                <option value="triangle">Triangle</option>
-                <option value="square">Square</option>
-                <option value="saw">Sawtooth</option>
-              </select>
-            </label>
+        <section class="modal-card" id="martigli-card" aria-labelledby="martigli-card-label">
+          <div class="section-head">
+            <div>
+              <h4 id="martigli-card-label">Martigli / Breathing Oscillations</h4>
+              <p id="martigli-preview" class="muted-text"></p>
+            </div>
           </div>
-          <p id="martigli-preview" class="muted-text"></p>
+          <div class="martigli-card-grid">
+            <div>
+              <h5>Stored Parameters</h5>
+              <div id="modal-martigli" class="martigli-params"></div>
+            </div>
+            <section aria-labelledby="martigli-widget-label" class="martigli-widget" data-role="widget">
+              <h5 id="martigli-widget-label">Live Controls</h5>
+              <div class="widget-grid">
+                <label>
+                  Start period (s)
+                  <input type="range" id="martigli-start" min="4" max="20" step="1" value="10" />
+                </label>
+                <label>
+                  End period (s)
+                  <input type="range" id="martigli-end" min="8" max="40" step="1" value="20" />
+                </label>
+                <label>
+                  Waveform
+                  <select id="martigli-waveform">
+                    <option value="sine">Sine</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="square">Square</option>
+                    <option value="saw">Sawtooth</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+            <div class="martigli-visual">
+              <h5>Visual Preview</h5>
+              <canvas id="martigli-canvas" width="360" height="160" aria-label="Martigli waveform preview"></canvas>
+              <p class="muted-text">Canvas pulses with the current Martigli snapshot; video engines will hook here.</p>
+            </div>
+          </div>
         </section>
 
-        <section aria-labelledby="video-widget-label" class="video-widget">
-          <h4 id="video-widget-label">Martigli Visual Preview</h4>
-          <canvas id="martigli-canvas" width="360" height="160" aria-label="Martigli waveform preview"></canvas>
-          <p class="muted-text">Canvas pulses with the current Martigli snapshot; future video engines will hook here.</p>
+        <section class="modal-card" id="audio-card" aria-labelledby="audio-card-label">
+          <div class="section-head">
+            <div>
+              <h4 id="audio-card-label">Audio Tracks</h4>
+              <p id="audio-track-hint" class="muted-text"></p>
+            </div>
+          </div>
+          <ul id="audio-track-list" class="track-list"></ul>
         </section>
 
-        <section aria-labelledby="structure-label" id="structure-section">
-          <h4 id="structure-label">Change-Ringing Structures</h4>
-          <p id="structure-summary" class="muted-text"></p>
-          <ul id="structure-list" class="structure-list"></ul>
+        <section class="modal-card" id="video-card" aria-labelledby="video-card-label">
+          <div class="section-head">
+            <div>
+              <h4 id="video-card-label">Visual Controls</h4>
+              <p id="video-track-hint" class="muted-text">No video tracks stored yet.</p>
+            </div>
+          </div>
+          <ul id="video-track-list" class="track-list"></ul>
+        </section>
+
+        <section class="modal-card" id="haptics-card" aria-labelledby="haptics-card-label">
+          <div class="section-head">
+            <div>
+              <h4 id="haptics-card-label">Haptic Controls</h4>
+              <p id="haptic-track-hint" class="muted-text">No haptic tracks stored yet.</p>
+            </div>
+          </div>
+          <ul id="haptic-track-list" class="track-list"></ul>
         </section>
       </div>
     </section>

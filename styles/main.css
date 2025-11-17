@@ -317,6 +317,26 @@ body.modal-open {
   gap: 1.25rem;
 }
 
+.modal-card {
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  padding: 1.1rem;
+  background: rgba(2, 6, 23, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modal-card h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.modal-subsection {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 0.75rem;
+}
+
 .modal-head {
   display: flex;
   justify-content: space-between;
@@ -347,6 +367,34 @@ body.modal-open {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.session-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.martigli-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.martigli-visual {
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.martigli-visual canvas {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: #020617;
+  display: block;
+  margin-top: 0.5rem;
 }
 
 .track-list {
