@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NSO Navigator · BioSynCare Lab</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/nso-navigator.css" />
+    <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+  </head>
+  <body class="nso-body">
+    <header class="nso-header">
+      <div class="nso-header-content">
+        <h1>NSO Navigator</h1>
+        <p class="muted-text">Neurosensory Stimulation Ontology Browser</p>
+      </div>
+      <div class="nso-header-controls">
+        <select id="ontology-selector" class="ontology-selector">
+          <option value="bsc-owl">BSC Core (OWL)</option>
+          <option value="bsc-skos">BSC Core (SKOS)</option>
+          <option value="sso-ontology">SSO Ontology</option>
+          <option value="sso-extended">SSO Extended</option>
+          <option value="onc-ontology">ONC Ontology</option>
+        </select>
+        <button type="button" id="reset-view" class="ghost small">Reset View</button>
+        <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
+      </div>
+    </header>
+
+    <div class="nso-container">
+      <aside id="uri-inspector" class="uri-inspector hidden">
+        <div class="inspector-header">
+          <h2 id="inspector-title">URI Inspector</h2>
+          <button type="button" id="close-inspector" class="ghost small" aria-label="Close inspector">×</button>
+        </div>
+
+        <div class="inspector-content">
+          <section class="inspector-section">
+            <h3>URI</h3>
+            <code id="inspector-uri" class="uri-display"></code>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Type</h3>
+            <p id="inspector-type" class="type-badge"></p>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Label</h3>
+            <p id="inspector-label"></p>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Definition</h3>
+            <p id="inspector-definition" class="muted-text"></p>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Properties</h3>
+            <dl id="inspector-properties" class="property-list"></dl>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Comments</h3>
+            <div id="inspector-comments" class="comments-list"></div>
+            <button type="button" id="add-comment-btn" class="ghost small">+ Add Comment</button>
+
+            <form id="comment-form" class="comment-form hidden">
+              <textarea
+                id="comment-input"
+                placeholder="Add your comment or annotation..."
+                rows="3"
+                required
+              ></textarea>
+              <div class="form-actions">
+                <button type="submit" class="primary small">Save</button>
+                <button type="button" id="cancel-comment" class="ghost small">Cancel</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </aside>
+
+      <main class="graph-container">
+        <div id="cy-canvas" class="cy-canvas"></div>
+
+        <div class="graph-legend">
+          <h4>Legend</h4>
+          <div class="legend-items">
+            <div class="legend-item">
+              <span class="legend-color" style="background: #38bdf8"></span>
+              <span>Class</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #a78bfa"></span>
+              <span>Object Property</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #fb923c"></span>
+              <span>Data Property</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-arrow subclass"></span>
+              <span>Subclass (is-a)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-arrow relation"></span>
+              <span>Property Relation</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="loading-indicator" class="loading-indicator">
+          <p>Loading ontology...</p>
+        </div>
+
+        <div id="error-message" class="error-message hidden">
+          <p id="error-text"></p>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="scripts/nso-navigator.js"></script>
+  </body>
+</html>

@@ -63,6 +63,19 @@ const ui = {
   presetStatus: document.getElementById("preset-status"),
   authModeText: document.getElementById("auth-mode-text"),
   toggleAuthMode: document.getElementById("toggle-auth-mode"),
+  modal: document.getElementById("detail-modal"),
+  modalOverlay: document.getElementById("modal-overlay"),
+  modalTitle: document.getElementById("modal-title"),
+  modalKind: document.getElementById("modal-kind"),
+  modalMeta: document.getElementById("modal-meta"),
+  modalTracks: document.getElementById("modal-tracks"),
+  modalTrackHint: document.getElementById("modal-track-hint"),
+  modalMartigli: document.getElementById("modal-martigli"),
+  modalClose: document.getElementById("modal-close"),
+  martigliStart: document.getElementById("martigli-start"),
+  martigliEnd: document.getElementById("martigli-end"),
+  martigliWaveform: document.getElementById("martigli-waveform"),
+  martigliPreview: document.getElementById("martigli-preview"),
 };
 
 const setMessage = (text, type = "") => {
@@ -72,6 +85,15 @@ const setMessage = (text, type = "") => {
 
 let isBusy = false;
 let isFetchingDashboard = false;
+const dashboardState = {
+  sessions: [],
+  presets: [],
+};
+const martigliState = {
+  startPeriod: 10,
+  endPeriod: 20,
+  waveform: "sine",
+};
 
 const refreshControls = () => {
   const user = auth.currentUser;
@@ -127,26 +149,100 @@ const clearList = (list) => {
   }
 };
 
-const renderCollection = (list, statusEl, items, emptyLabel) => {
+const getTrackCount = (entry) =>
+  entry.trackCount ?? entry.voices?.length ?? entry.tracks?.length ?? 0;
+
+const formatMetaValue = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  return String(value);
+};
+
+const createOntologySlot = (kind, id) => {
+  const slot = document.createElement("div");
+  slot.className = "ontology-slot";
+  slot.dataset.kind = kind;
+  if (id) {
+    slot.dataset.recordId = id;
+  }
+  slot.textContent = "Ontology link placeholder";
+  return slot;
+};
+
+const createMetaGrid = (fields) => {
+  const dl = document.createElement("dl");
+  dl.className = "card-meta";
+  fields
+    .filter((field) => field)
+    .forEach(({ label, value }) => {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = formatMetaValue(value);
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+  return dl;
+};
+
+const createDashboardCard = (item, kind) => {
+  const li = document.createElement("li");
+  li.className = "dashboard-item";
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  const title = document.createElement("h3");
+  title.textContent = item.label ?? item.name ?? item.id ?? "Untitled";
+  const pill = document.createElement("span");
+  pill.className = "pill";
+  pill.textContent = (item.visibility ?? kind ?? "Session").toString();
+  head.appendChild(title);
+  head.appendChild(pill);
+  li.appendChild(head);
+
+  if (item.description) {
+    const description = document.createElement("p");
+    description.textContent = item.description;
+    li.appendChild(description);
+  }
+
+  li.appendChild(
+    createMetaGrid([
+      { label: "Folder", value: item.folderId ?? item.folder ?? "—" },
+      { label: "Tracks", value: getTrackCount(item) },
+      { label: "Updated", value: item.updatedAt ?? item.createdAt ?? "—" },
+    ]),
+  );
+
+  const footer = document.createElement("div");
+  footer.className = "card-footer";
+  const openBtn = document.createElement("button");
+  openBtn.type = "button";
+  openBtn.className = "primary small";
+  openBtn.textContent = "Open";
+  openBtn.addEventListener("click", () => openDetailModal(item, kind));
+  footer.appendChild(openBtn);
+  footer.appendChild(createOntologySlot(kind, item.id));
+  li.appendChild(footer);
+
+  return li;
+};
+
+const renderDashboardList = (list, statusEl, items, emptyLabel, kind) => {
   if (!list || !statusEl) return;
   clearList(list);
   if (!items.length) {
     statusEl.textContent = emptyLabel;
     return;
   }
-  statusEl.textContent = `${items.length} item${items.length > 1 ? "s" : ""}`;
+  const noun = kind === "session" ? "session" : "preset";
+  statusEl.textContent = `${items.length} ${noun}${items.length > 1 ? "s" : ""}`;
   items.forEach((item) => {
-    const li = document.createElement("li");
-    li.className = "dashboard-item";
-    const title = document.createElement("h3");
-    title.textContent = item.label ?? item.id;
-    const meta = document.createElement("p");
-    meta.textContent = item.description ?? item.kind ?? item.visibility ?? "";
-    li.appendChild(title);
-    if (meta.textContent) {
-      li.appendChild(meta);
-    }
-    list.appendChild(li);
+    list.appendChild(createDashboardCard(item, kind));
   });
 };
 
@@ -162,10 +258,12 @@ const loadDashboardData = async () => {
       getDocs(collection(db, "sessions")),
       getDocs(collection(db, "presets")),
     ]);
-    const sessions = sessionSnap.docs.map((doc) => doc.data());
-    const presets = presetSnap.docs.map((doc) => doc.data());
-    renderCollection(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.");
-    renderCollection(ui.presetList, ui.presetStatus, presets, "No presets found.");
+    const sessions = sessionSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const presets = presetSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    dashboardState.sessions = sessions;
+    dashboardState.presets = presets;
+    renderDashboardList(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.", "session");
+    renderDashboardList(ui.presetList, ui.presetStatus, presets, "No presets found.", "preset");
   } catch (err) {
     console.error("Dashboard load failed", err);
     ui.sessionStatus.textContent = "Unable to load sessions.";
@@ -173,6 +271,176 @@ const loadDashboardData = async () => {
   } finally {
     isFetchingDashboard = false;
   }
+};
+
+const renderModalMeta = (record, kind) => {
+  if (!ui.modalMeta) return;
+  ui.modalMeta.innerHTML = "";
+  const fields = [
+    { label: "Folder", value: record.folderId ?? record.folder ?? "—" },
+    { label: "Visibility", value: record.visibility ?? "—" },
+    { label: "Tracks", value: getTrackCount(record) },
+    { label: "Source", value: record.source ?? kind },
+    { label: "Updated", value: record.updatedAt ?? record.createdAt ?? "—" },
+  ];
+  fields.forEach(({ label, value }) => {
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    dd.textContent = formatMetaValue(value);
+    ui.modalMeta.appendChild(dt);
+    ui.modalMeta.appendChild(dd);
+  });
+};
+
+const summariseTrackParams = (params = {}) => {
+  const pickOrder = [
+    "frequency",
+    "base",
+    "beat",
+    "gain",
+    "pan",
+    "waveform",
+    "martigliFrequency",
+  ];
+  const parts = pickOrder
+    .map((key) => {
+      if (params[key] === undefined) return null;
+      return `${key}: ${params[key]}`;
+    })
+    .filter(Boolean);
+  return parts.slice(0, 3).join(" · ") || "No parameters provided";
+};
+
+const renderTrackList = (record) => {
+  if (!ui.modalTracks || !ui.modalTrackHint) return;
+  clearList(ui.modalTracks);
+  const tracks = record.voices ?? record.tracks ?? [];
+  if (!tracks.length) {
+    ui.modalTrackHint.textContent = "No tracks stored yet.";
+    return;
+  }
+  ui.modalTrackHint.textContent = `${tracks.length} track${tracks.length > 1 ? "s" : ""}`;
+  tracks.forEach((track, index) => {
+    const card = document.createElement("li");
+    card.className = "track-card";
+    const title = document.createElement("h5");
+    title.textContent = track.label ?? `Track ${index + 1}`;
+    const meta = document.createElement("div");
+    meta.className = "track-meta";
+    const presetChip = document.createElement("span");
+    presetChip.textContent = track.presetId ? `Preset · ${track.presetId}` : "Custom";
+    const gainChip = document.createElement("span");
+    if (track.gain !== undefined) {
+      gainChip.textContent = `Gain ${track.gain}`;
+      meta.appendChild(gainChip);
+    }
+    meta.appendChild(presetChip);
+    const summary = document.createElement("p");
+    summary.className = "muted-text";
+    summary.textContent = summariseTrackParams(track.params ?? {});
+    card.appendChild(title);
+    card.appendChild(meta);
+    card.appendChild(summary);
+    ui.modalTracks.appendChild(card);
+  });
+};
+
+const formatMartigliValue = (value) => {
+  if (typeof value === "object" && value !== null) {
+    const parts = [];
+    if ("enabled" in value) {
+      parts.push(value.enabled ? "enabled" : "disabled");
+    }
+    if ("depth" in value) {
+      parts.push(`depth ${value.depth}`);
+    }
+    if ("frequency" in value) {
+      parts.push(`${value.frequency}Hz`);
+    }
+    return parts.join(" · ") || JSON.stringify(value);
+  }
+  return formatMetaValue(value);
+};
+
+const extractMartigliParams = (record) => {
+  if (record?.martigli) return record.martigli;
+  return record?.voices?.find((voice) => voice?.martigli)?.martigli;
+};
+
+const renderMartigliParams = (record) => {
+  if (!ui.modalMartigli) return;
+  ui.modalMartigli.innerHTML = "";
+  const params = extractMartigliParams(record);
+  if (!params) {
+    const empty = document.createElement("p");
+    empty.className = "muted-text";
+    empty.textContent = "No Martigli data stored for this document yet.";
+    ui.modalMartigli.appendChild(empty);
+    return;
+  }
+  Object.entries(params).forEach(([key, value]) => {
+    const row = document.createElement("div");
+    row.className = "martigli-param";
+    const label = document.createElement("span");
+    label.textContent = key;
+    const val = document.createElement("span");
+    val.textContent = formatMartigliValue(value);
+    row.appendChild(label);
+    row.appendChild(val);
+    ui.modalMartigli.appendChild(row);
+  });
+};
+
+function closeDetailModal() {
+  if (!ui.modal) return;
+  ui.modal.classList.add("hidden");
+  ui.modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+function openDetailModal(record, kind) {
+  if (!ui.modal) return;
+  ui.modalTitle.textContent = record.label ?? record.name ?? record.id ?? "Untitled";
+  ui.modalKind.textContent = kind === "session" ? "Session" : "Preset";
+  renderModalMeta(record, kind);
+  renderTrackList(record);
+  renderMartigliParams(record);
+  ui.modal.classList.remove("hidden");
+  ui.modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+const updateMartigliPreview = () => {
+  if (!ui.martigliPreview) return;
+  const delta = martigliState.endPeriod - martigliState.startPeriod;
+  const direction = delta === 0 ? "steady" : delta > 0 ? "slows" : "quickens";
+  ui.martigliPreview.textContent = `Breath ${direction} from ${martigliState.startPeriod}s to ${martigliState.endPeriod}s on a ${martigliState.waveform} wave.`;
+};
+
+const bindMartigliWidget = () => {
+  if (!ui.martigliStart || !ui.martigliEnd || !ui.martigliWaveform) return;
+  ui.martigliStart.addEventListener("input", (event) => {
+    martigliState.startPeriod = Number(event.target.value);
+    if (martigliState.startPeriod > martigliState.endPeriod) {
+      martigliState.endPeriod = martigliState.startPeriod;
+      ui.martigliEnd.value = String(martigliState.endPeriod);
+    }
+    updateMartigliPreview();
+  });
+  ui.martigliEnd.addEventListener("input", (event) => {
+    martigliState.endPeriod = Number(event.target.value);
+    if (martigliState.endPeriod < martigliState.startPeriod) {
+      martigliState.startPeriod = martigliState.endPeriod;
+      ui.martigliStart.value = String(martigliState.startPeriod);
+    }
+    updateMartigliPreview();
+  });
+  ui.martigliWaveform.addEventListener("change", (event) => {
+    martigliState.waveform = event.target.value;
+    updateMartigliPreview();
+  });
+  updateMartigliPreview();
 };
 
 const updateAuthState = (user) => {
@@ -187,6 +455,7 @@ const updateAuthState = (user) => {
     clearList(ui.presetList);
     if (ui.sessionStatus) ui.sessionStatus.textContent = "Sign in to load sessions.";
     if (ui.presetStatus) ui.presetStatus.textContent = "Sign in to load presets.";
+    closeDetailModal();
     return;
   }
 
@@ -290,3 +559,19 @@ if (ui.toggleAuthMode) {
     window.location.reload();
   });
 }
+
+bindMartigliWidget();
+
+if (ui.modalOverlay) {
+  ui.modalOverlay.addEventListener("click", closeDetailModal);
+}
+
+if (ui.modalClose) {
+  ui.modalClose.addEventListener("click", closeDetailModal);
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && ui.modal && !ui.modal.classList.contains("hidden")) {
+    closeDetailModal();
+  }
+});

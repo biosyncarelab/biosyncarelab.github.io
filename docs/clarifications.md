@@ -34,7 +34,9 @@ Last updated: 2025-11-17. Every previously open question now has an explicit dec
 19. **Success metrics** _(resolved 2025-11-17)_ — Track feedback submissions, interaction counts, most-used sessions/tracks, etc. _Action:_ add metrics list to telemetry backlog.
 
 - **Pod kickoff log** _(added 2025-11-17)_ — Whenever a pod (GUI/Engines, Python Structures, RDF Navigator) starts or pauses work, add a bullet here summarizing the date, pod name, scope slice, and owning AI agent. This keeps ownership visible for hand-offs.
-- **Checklist discipline** _(added 2025-11-17)_ — Each pod maintains a 3–5 bullet “Next Actions” list inside `README.md` (section 1 for GUI/Engines, section 3 for Python Structures, section 2 for RDF Navigator). Update it after every push so other agents can pick up instantly.
+- 2025-11-17: **GUI & Engines pod (BSCLab GUI)** activated by GitHub Copilot (primary) + Copilot Chat. Scope: dashboard cards + detail modal + Martigli widget prototype.
+- 2025-11-17: **RDF Navigator Pod (NSO)** activated by Claude Code. Scope: standalone Cytoscape-based RDF browser with URI inspector sidebar, visual differentiation of classes/properties, and Firestore-backed annotations.
+- **Checklist discipline** _(added 2025-11-17)_ — Each pod maintains a 3–5 bullet "Next Actions" list inside `README.md` (section 1 for GUI/Engines, section 3 for Python Structures, section 2 for RDF Navigator). Update it after every push so other agents can pick up instantly.
 - **Inter-agent requests** _(added 2025-11-17)_ — When a pod needs assistance or input from another pod, add a bolded `**Request:**` entry under the relevant pod’s “Next Actions” list in `README.md`, tagging the target pod and describing the ask. The receiving pod clears the request once addressed.
 - **Merge cadence** _(added 2025-11-17)_ — Commit/merge order stays: (1) GUI/Engines vertical slices, (2) Python data exports feeding UI, (3) RDF navigator updates. Later pods should branch from the latest GUI/Engines commit to avoid rebase churn.
 
