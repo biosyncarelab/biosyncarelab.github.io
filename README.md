@@ -39,6 +39,35 @@ Each test run seeds the Firestore emulator with:
 
 Need the data without running the suite? Start the emulators in another terminal and execute `npm run seed:firestore`.
 
+Need to prime the live Firestore project? Use the guarded script:
+
+```bash
+BSC_ALLOW_PROD_SEED=1 \
+BSC_FIREBASE_PROJECT=bsc-lab \
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
+npm run seed:firestore:prod
+```
+
+The extra env vars ensure you opt in explicitly (`BSC_ALLOW_PROD_SEED=1`), target the right project, and authenticate via a service account or `gcloud auth application-default login`.
+
+Prefer Make targets? Run:
+
+```bash
+BSC_FIREBASE_PROJECT=bsc-lab \
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json \
+make seed-prod
+```
+
+`make seed-prod` performs the same guard checks and exports `BSC_ALLOW_PROD_SEED=1` automatically.
+
+Need to seed the live Firestore project instead? Authenticate with Application Default Credentials (e.g., `gcloud auth application-default login` or set `GOOGLE_APPLICATION_CREDENTIALS`) and run:
+
+```bash
+BSC_ALLOW_PROD_SEED=1 BSC_FIREBASE_PROJECT=bsc-lab npm run seed:firestore:prod
+```
+
+The safety flag `BSC_ALLOW_PROD_SEED=1` is required to avoid accidental production writes; adjust `BSC_FIREBASE_PROJECT` if you target a different Firebase project ID.
+
 CI mirrors this flow via `.github/workflows/playwright.yml`, so every push and PR to `main` runs the emulator-backed smoke suite in GitHub Actions' Ubuntu runners.
 
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation

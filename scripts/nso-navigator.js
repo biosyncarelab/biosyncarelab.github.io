@@ -142,46 +142,90 @@ function parseTurtle(ttlText) {
     return { value: objStr, type: "literal" };
   };
 
+  // First pass: join multi-line statements (those ending with ; or ,)
+  const statements = [];
+  let currentStatement = "";
+
   for (let line of lines) {
     line = line.trim();
 
     // Skip comments and empty lines
     if (!line || line.startsWith("#")) continue;
 
+    // Handle prefix declarations separately
+    if (line.startsWith("@prefix") || line.startsWith("@base")) {
+      if (currentStatement) {
+        statements.push(currentStatement);
+        currentStatement = "";
+      }
+      statements.push(line);
+      continue;
+    }
+
+    // Add line to current statement
+    if (currentStatement) {
+      currentStatement += " " + line;
+    } else {
+      currentStatement = line;
+    }
+
+    // Check if statement is complete (ends with .)
+    if (line.endsWith(".")) {
+      statements.push(currentStatement);
+      currentStatement = "";
+    }
+  }
+
+  // Add any remaining statement
+  if (currentStatement) {
+    statements.push(currentStatement);
+  }
+
+  // Second pass: parse complete statements
+  for (let statement of statements) {
+    statement = statement.trim();
+
     // Parse prefix declarations
-    if (line.startsWith("@prefix")) {
-      const match = line.match(/@prefix\s+(\w+):\s+<([^>]+)>/);
+    if (statement.startsWith("@prefix")) {
+      const match = statement.match(/@prefix\s+(\w+):\s+<([^>]+)>/);
       if (match) {
         prefixes[match[1]] = match[2];
       }
       continue;
     }
 
-    // Parse triples (simplified - handles basic subject predicate object patterns)
-    const parts = line.split(/\s+/);
-    if (parts.length >= 3) {
-      // New subject
-      if (!line.startsWith(";") && !line.startsWith(",")) {
-        currentSubject = expandURI(parts[0]);
-        currentPredicate = expandURI(parts[1]);
-        const objectParts = parts.slice(2).join(" ").replace(/\s*[;.]\s*$/, "");
-        const object = parseObject(objectParts);
+    // Parse triples with potential property lists (semicolon-separated)
+    // Format: subject pred1 obj1 ; pred2 obj2 ; pred3 obj3 .
 
-        if (currentSubject && currentPredicate && object) {
-          triples.push({
-            subject: currentSubject,
-            predicate: currentPredicate,
-            object: object.value,
-            objectType: object.type,
-          });
-        }
-      }
-      // Continuation with same subject, new predicate
-      else if (line.startsWith(";")) {
-        const continueParts = line.substring(1).trim().split(/\s+/);
-        currentPredicate = expandURI(continueParts[0]);
-        const objectParts = continueParts.slice(1).join(" ").replace(/\s*[;.]\s*$/, "");
-        const object = parseObject(objectParts);
+    // First, split by first whitespace to get subject
+    const firstSpace = statement.search(/\s/);
+    if (firstSpace === -1) continue;
+
+    currentSubject = expandURI(statement.substring(0, firstSpace).trim());
+    const rest = statement.substring(firstSpace + 1).trim();
+
+    // Split by semicolons to get property-object pairs
+    const propertyPairs = rest.split(";");
+
+    for (let pair of propertyPairs) {
+      pair = pair.trim().replace(/\s*\.\s*$/, ""); // Remove trailing period
+      if (!pair) continue;
+
+      // Split by first whitespace to get predicate and object
+      const pairSpace = pair.search(/\s/);
+      if (pairSpace === -1) continue;
+
+      currentPredicate = expandURI(pair.substring(0, pairSpace).trim());
+      const objectPart = pair.substring(pairSpace + 1).trim();
+
+      // Handle multiple objects separated by commas
+      const objects = objectPart.split(",");
+
+      for (let objStr of objects) {
+        objStr = objStr.trim();
+        if (!objStr) continue;
+
+        const object = parseObject(objStr);
 
         if (currentSubject && currentPredicate && object) {
           triples.push({
