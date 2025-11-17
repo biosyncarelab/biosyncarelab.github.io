@@ -69,6 +69,7 @@ const ui = {
   layoutSelector: document.getElementById("layout-selector"),
   toggleFilters: document.getElementById("toggle-filters"),
   edgeFilters: document.getElementById("edge-filters"),
+  showPropertiesAsNodes: document.getElementById("show-properties-as-nodes"),
   filterSubclass: document.getElementById("filter-subclass"),
   filterDomain: document.getElementById("filter-domain"),
   filterRange: document.getElementById("filter-range"),
@@ -977,9 +978,35 @@ ui.toggleFilters.addEventListener("click", () => {
   ui.edgeFilters.classList.toggle("hidden");
 });
 
+// Toggle property visualization mode
+function updatePropertyVisualization() {
+  if (!cy) return;
+
+  const showAsNodes = ui.showPropertiesAsNodes.checked;
+
+  // Get all property nodes (ObjectProperty and DatatypeProperty)
+  const propertyNodes = cy.nodes().filter((node) => {
+    const type = node.data("type");
+    return type === "objectProperty" || type === "datatypeProperty";
+  });
+
+  if (showAsNodes) {
+    // Show property nodes and their domain/range edges
+    propertyNodes.style("display", "element");
+  } else {
+    // Hide property nodes and their domain/range edges
+    propertyNodes.style("display", "none");
+  }
+
+  // Update edge visibility based on the mode
+  updateEdgeVisibility();
+}
+
 // Edge filter checkboxes
 function updateEdgeVisibility() {
   if (!cy) return;
+
+  const showAsNodes = ui.showPropertiesAsNodes.checked;
 
   const filters = {
     subclass: ui.filterSubclass.checked,
@@ -991,6 +1018,25 @@ function updateEdgeVisibility() {
 
   cy.edges().forEach((edge) => {
     const edgeType = edge.data("edgeType");
+    const source = edge.source();
+    const target = edge.target();
+    const sourceType = source.data("type");
+    const targetType = target.data("type");
+
+    // Check if edge involves a property node
+    const involvesProperty =
+      sourceType === "objectProperty" ||
+      sourceType === "datatypeProperty" ||
+      targetType === "objectProperty" ||
+      targetType === "datatypeProperty";
+
+    // If properties are hidden and this edge involves a property, hide it
+    if (!showAsNodes && involvesProperty) {
+      edge.style("display", "none");
+      return;
+    }
+
+    // Otherwise, apply normal edge filters
     if (filters[edgeType]) {
       edge.style("display", "element");
     } else {
@@ -999,6 +1045,7 @@ function updateEdgeVisibility() {
   });
 }
 
+ui.showPropertiesAsNodes.addEventListener("change", updatePropertyVisualization);
 ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
 ui.filterDomain.addEventListener("change", updateEdgeVisibility);
 ui.filterRange.addEventListener("change", updateEdgeVisibility);

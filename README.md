@@ -46,6 +46,7 @@ Prefer Make targets whenever possible—each essential workflow is wired up for 
 - `make test` / `make test-structures` → wrappers around `npm test` and `npm run test:structures`.
 - `make seed-prod` → production seeding helper (see below for env vars).
 - `make deploy-firestore-rules` → pushes `firestore.rules` to the project in `BSC_FIREBASE_PROJECT`.
+- Dashboard now links to the NSO Navigator page (`nso-navigator.html`) so anyone can jump from sessions to the ontology explorer without hunting for the standalone URL.
 
 Need to prime the live Firestore project? Use the guarded script:
 
