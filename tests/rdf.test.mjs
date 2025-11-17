@@ -14,6 +14,7 @@ const ttlFiles = [
 ];
 
 let totalQuads = 0;
+const perFile = [];
 const parser = new Parser({ baseIRI: "http://example.org/base#" });
 
 for (const relPath of ttlFiles) {
@@ -22,7 +23,9 @@ for (const relPath of ttlFiles) {
   const quads = parser.parse(text);
   assert.ok(quads.length > 0, `${relPath} should contain triples`);
   totalQuads += quads.length;
+  perFile.push({ relPath, count: quads.length });
 }
 
 assert.ok(totalQuads > 0, "RDF corpus contains triples overall");
-console.log(`RDF sanity OK: ${ttlFiles.length} files, ${totalQuads} quads parsed`);
+const detail = perFile.map(({ relPath, count }) => `${relPath}=${count}`).join(", ");
+console.log(`RDF sanity OK: ${ttlFiles.length} files, ${totalQuads} quads parsed (${detail})`);

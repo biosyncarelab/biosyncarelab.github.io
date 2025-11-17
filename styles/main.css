@@ -454,6 +454,27 @@ body.modal-open {
   flex-wrap: wrap;
 }
 
+.martigli-oscillation-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.martigli-oscillation-toolbar label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.martigli-oscillation-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.martigli-oscillation-actions select {
+  flex: 1;
+}
+
 .martigli-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

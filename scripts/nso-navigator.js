@@ -29,22 +29,83 @@ if (isLocalhost) {
   connectFirestoreEmulator(db, "127.0.0.1", 8085);
 }
 
-// Ontology file mappings
+// Ontology file mappings with metadata
 const ontologyFiles = {
-  "bsc-owl": "rdf/core/bsc-owl.ttl",
-  "bsc-skos": "rdf/core/bsc-skos.ttl",
-  "bsc-audio": "rdf/modules/audio.ttl",
-  "bsc-visual": "rdf/modules/visual.ttl",
-  "bsc-mixed": "rdf/modules/mixed.ttl",
-  "bsc-outcomes": "rdf/modules/outcomes.ttl",
-  "sso-ontology": "rdf/external/sso/sso-ontology.ttl",
-  "sso-extended": "rdf/external/sso/sso-ontology-extended.ttl",
-  "sso-initial": "rdf/external/sso/sso-initial.owl",
-  "sso-updated": "rdf/external/sso/sso-updated.owl",
-  "onc-ontology": "rdf/external/onc/onc-ontology-attachment-2.ttl",
-  "onc-attachment": "rdf/Attachment 2_ONC_Ontology.ttl",
-  "harmonicare-sso": "rdf/external/harmonicare/SSO_Ontology.owl",
-  "harmonicare-sso-alt": "rdf/external/harmonicare/SSO_Ontology_.owl",
+  "bsc-consolidated": {
+    path: "rdf/releases/nso-consolidated-v1.0.ttl",
+    label: "NSO Consolidated v1.0",
+    description: "Complete ontology: 60+ classes across audio, visual, multimodal techniques and outcomes with evidence levels (0-5 scale)"
+  },
+  "bsc-owl": {
+    path: "rdf/core/bsc-owl.ttl",
+    label: "BSC Core (OWL)",
+    description: "Core classes (Project, Protocol, Session, Technique, Outcome) and 11 safety/evidence metadata properties"
+  },
+  "bsc-skos": {
+    path: "rdf/core/bsc-skos.ttl",
+    label: "BSC Core (SKOS)",
+    description: "SKOS concept schemes for neurosensory stimulation taxonomy"
+  },
+  "bsc-audio": {
+    path: "rdf/modules/audio.ttl",
+    label: "Audio Techniques",
+    description: "6 audio techniques: binaural/monaural beats, isochronic tones, solfeggio, Hemi-Sync (evidence: 0.5-2.5)"
+  },
+  "bsc-visual": {
+    path: "rdf/modules/visual.ttl",
+    label: "Visual Techniques",
+    description: "7 visual techniques: flicker, color therapy, entrainment, Ganzfeld (evidence: 1.2-3.8) with epilepsy warnings"
+  },
+  "bsc-mixed": {
+    path: "rdf/modules/mixed.ttl",
+    label: "Multimodal Techniques",
+    description: "9 mixed techniques: audiovisual entrainment, vibroacoustic, VR, haptic (evidence: 1.5-3.5)"
+  },
+  "bsc-outcomes": {
+    path: "rdf/modules/outcomes.ttl",
+    label: "Outcomes Taxonomy",
+    description: "30+ outcomes across cognitive, emotional, physiological, behavioral domains with measurement standards"
+  },
+  "sso-ontology": {
+    path: "rdf/external/sso/sso-ontology.ttl",
+    label: "SSO Ontology",
+    description: "External: Sensory Stimulation Ontology (legacy)"
+  },
+  "sso-extended": {
+    path: "rdf/external/sso/sso-ontology-extended.ttl",
+    label: "SSO Extended",
+    description: "External: Extended SSO with additional classes"
+  },
+  "sso-initial": {
+    path: "rdf/external/sso/sso-initial.owl",
+    label: "SSO Initial",
+    description: "External: Initial SSO version with hierarchies"
+  },
+  "sso-updated": {
+    path: "rdf/external/sso/sso-updated.owl",
+    label: "SSO Updated",
+    description: "External: Updated SSO version"
+  },
+  "onc-ontology": {
+    path: "rdf/external/onc/onc-ontology-attachment-2.ttl",
+    label: "ONC Ontology",
+    description: "External: Neurosensory Care Ontology"
+  },
+  "onc-attachment": {
+    path: "rdf/Attachment 2_ONC_Ontology.ttl",
+    label: "ONC Attachment",
+    description: "External: ONC with hierarchies (legacy)"
+  },
+  "harmonicare-sso": {
+    path: "rdf/external/harmonicare/SSO_Ontology.owl",
+    label: "HarmoniCare SSO",
+    description: "External: HarmoniCare SSO variant"
+  },
+  "harmonicare-sso-alt": {
+    path: "rdf/external/harmonicare/SSO_Ontology_.owl",
+    label: "HarmoniCare SSO Alt",
+    description: "External: HarmoniCare SSO alternative"
+  },
 };
 
 const urlParams =
@@ -951,11 +1012,12 @@ function parseOwlXml(xmlText) {
 
 // Load ontology from file
 async function loadOntology(ontologyKey) {
-  const filePath = ontologyFiles[ontologyKey];
-  if (!filePath) {
+  const ontologyMeta = ontologyFiles[ontologyKey];
+  if (!ontologyMeta) {
     showError("Ontology file not found.");
     return;
   }
+  const filePath = ontologyMeta.path || ontologyMeta; // Support both new and old format
 
   ui.loading.classList.remove("hidden");
   ui.error.classList.add("hidden");

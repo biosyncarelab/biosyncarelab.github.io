@@ -78,6 +78,13 @@ const DASHBOARD_ONTOLOGY_LINKS = {
   ],
 };
 
+const SESSION_CLASS_LINK = {
+  uri: `${NSO_BASE_URI}Session`,
+  label: "Session Class",
+  navigator: "harmonicare-sso",
+  summary: "Canonical definition of the Session concept within the NSO / SSO ontology.",
+};
+
 const db = getFirestore(app);
 
 if (useAuthEmulator) {
@@ -110,6 +117,7 @@ const ui = {
   dashboard: document.getElementById("dashboard"),
   sessionList: document.getElementById("session-list"),
   sessionStatus: document.getElementById("session-status"),
+  sessionNavigator: document.getElementById("session-navigator"),
   authModeText: document.getElementById("auth-mode-text"),
   toggleAuthMode: document.getElementById("toggle-auth-mode"),
   modal: document.getElementById("detail-modal"),
@@ -128,6 +136,8 @@ const ui = {
   martigliWaveform: document.getElementById("martigli-waveform"),
   martigliPreview: document.getElementById("martigli-preview"),
   martigliCanvas: document.getElementById("martigli-canvas"),
+  martigliOscillationSelect: document.getElementById("martigli-oscillation-select"),
+  martigliAdd: document.getElementById("martigli-add"),
   audioSensoryList: document.getElementById("audio-sensory-list"),
   audioSensoryStatus: document.getElementById("audio-sensory-status"),
   visualSensoryList: document.getElementById("visual-sensory-list"),
@@ -346,10 +356,29 @@ const resetDashboardContext = () => {
   if (ui.martigliDashboardPreview) {
     ui.martigliDashboardPreview.textContent = defaultDashboardCopy.martigliPreview;
   }
+  updateSessionNavigatorLink();
 };
 
 const formatPanelLabel = (label = "") =>
   label.length ? label.charAt(0).toUpperCase() + label.slice(1) : "";
+
+const updateSessionNavigatorLink = (record = null) => {
+  if (!ui.sessionNavigator) return;
+  const links = record ? rdfLinker.get(record.id) : [];
+  const primary = links[0] ?? SESSION_CLASS_LINK;
+  const href = buildNavigatorUrl(primary);
+  const hasRecordLink = Boolean(record && links[0] && href);
+  ui.sessionNavigator.dataset.href = href ?? "";
+  ui.sessionNavigator.disabled = !href;
+  ui.sessionNavigator.textContent = hasRecordLink
+    ? `Open ${record.label ?? record.id ?? "Session"} in NSO`
+    : "Session Class (NSO)";
+  ui.sessionNavigator.title = hasRecordLink
+    ? primary.summary ?? primary.label ?? primary.uri
+    : "Browse the canonical Session class";
+};
+
+updateSessionNavigatorLink();
 
 const getTrackCount = (entry) =>
   entry.trackCount ?? entry.voices?.length ?? entry.tracks?.length ?? 0;
@@ -370,14 +399,14 @@ const openNavigatorWindow = (url) => {
   window.open(url, "_blank", "noopener,noreferrer");
 };
 
-const buildNavigatorUrl = (link) => {
+function buildNavigatorUrl(link) {
   if (!link || !link.uri) return null;
   const params = new URLSearchParams({ concept: link.uri });
   if (link.navigator) {
     params.set("ontology", link.navigator);
   }
   return `nso-navigator.html?${params.toString()}`;
-};
+}
 
 const createNavigatorButton = (target) => {
   const button = document.createElement("button");
@@ -695,6 +724,7 @@ const setActiveSessionContext = (record, kind) => {
   dashboardState.activeSessionLabel = record.label ?? record.name ?? record.id ?? null;
   renderSensoryPanelsForRecord(record, kind);
   updateMartigliPreview(martigliState.snapshot());
+  updateSessionNavigatorLink(record);
 };
 
 const handleSessionApply = () => {
@@ -896,6 +926,47 @@ const renderSensoryPanelsForRecord = (record, kind) => {
   updateSensoryPanel("haptic", buckets.haptic, record, kind);
 };
 
+const labelMartigliOscillation = (osc, index) => {
+  if (!osc) return `Oscillation ${index + 1}`;
+  const trimmed = typeof osc.label === "string" ? osc.label.trim() : "";
+  if (trimmed) {
+    return trimmed;
+  }
+  if (osc.id) {
+    return `Oscillation ${index + 1}`;
+  }
+  return `Oscillation ${index + 1}`;
+};
+
+const renderMartigliOscillationSelect = (snapshot = martigliState.snapshot()) => {
+  if (!ui.martigliOscillationSelect) return;
+  const select = ui.martigliOscillationSelect;
+  select.innerHTML = "";
+  const oscillations = snapshot.oscillations ?? [];
+  if (!oscillations.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No oscillations loaded";
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+  oscillations.forEach((osc, index) => {
+    const option = document.createElement("option");
+    option.value = osc.id ?? `osc-${index}`;
+    option.textContent = labelMartigliOscillation(osc, index);
+    select.appendChild(option);
+  });
+  select.disabled = false;
+  const fallbackId = snapshot.referenceId ?? oscillations[0].id ?? select.options[0].value;
+  if (fallbackId) {
+    select.value = fallbackId;
+  }
+  if (!select.value && select.options.length) {
+    select.selectedIndex = 0;
+  }
+};
+
 const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
   if (!listEl || !hintEl) return;
   clearList(listEl);
@@ -1016,6 +1087,9 @@ function openDetailModal(record, kind) {
   renderModalTrackSections(record, normalizedKind);
   renderSensoryPanelsForRecord(record, normalizedKind);
   renderMartigliParams(record);
+  if (normalizedKind === "session") {
+    updateSessionNavigatorLink(record);
+  }
   renderStructurePreview(record);
   activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
   videoEngine.registerLayer(activeVideoLayerId, {
@@ -1224,10 +1298,50 @@ if (ui.sessionSave) {
   ui.sessionSave.addEventListener("click", handleSessionSave);
 }
 
+if (ui.martigliOscillationSelect) {
+  ui.martigliOscillationSelect.addEventListener("change", (event) => {
+    const nextId = event.target.value;
+    if (!nextId) return;
+    martigliState.setReference(nextId);
+    kernel.recordInteraction("martigli.oscillation.select", { oscillatorId: nextId });
+  });
+}
+
+if (ui.martigliAdd) {
+  ui.martigliAdd.addEventListener("click", () => {
+    const snapshot = martigliState.snapshot();
+    const reference = martigliState.getReference();
+    const base = reference?.toJSON?.() ?? {};
+    const { id: _ignoredId, ...rest } = base;
+    const label = reference?.label
+      ? `${reference.label} Copy`
+      : `Oscillation ${snapshot.oscillations.length + 1}`;
+    const newOsc = martigliState.addOscillator({ ...rest, label });
+    if (newOsc?.id) {
+      martigliState.setReference(newOsc.id);
+    }
+    kernel.recordInteraction("martigli.oscillation.create", {
+      oscillatorId: newOsc?.id ?? null,
+      sourceId: reference?.id ?? null,
+      label,
+    });
+    setMessage("New Martigli oscillation added. Adjust the sliders to customize it.", "success");
+  });
+}
+
+if (ui.sessionNavigator) {
+  ui.sessionNavigator.addEventListener("click", () => {
+    const href = ui.sessionNavigator.dataset.href;
+    if (!href) return;
+    openNavigatorWindow(href);
+  });
+}
+
 bindMartigliWidget();
 martigliState.subscribe((snapshot) => {
   syncMartigliInputs(snapshot);
   updateMartigliPreview(snapshot);
+  renderMartigliOscillationSelect(snapshot);
 });
 updateMartigliPreview(martigliState.snapshot());
 

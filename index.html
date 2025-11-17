@@ -69,7 +69,9 @@
               Pick a record to hydrate Martigli and sensory controls.
             </p>
             <ul id="session-list" class="stack-list"></ul>
-            <a class="ghost small" href="nso-navigator.html">Open NSO Navigator</a>
+            <button type="button" id="session-navigator" class="ghost small" disabled>
+              Session Class (NSO)
+            </button>
           </article>
 
           <article class="neuro-card" id="dashboard-martigli-card">
@@ -142,6 +144,13 @@
             <div>
               <h4 id="martigli-card-label">Martigli / Breathing Oscillations</h4>
               <p id="martigli-preview" class="muted-text"></p>
+            </div>
+          </div>
+          <div class="martigli-oscillation-toolbar">
+            <label for="martigli-oscillation-select">Active Oscillation</label>
+            <div class="martigli-oscillation-actions">
+              <select id="martigli-oscillation-select"></select>
+              <button type="button" id="martigli-add" class="ghost tiny">Add Oscillation</button>
             </div>
           </div>
           <div class="martigli-card-grid">
