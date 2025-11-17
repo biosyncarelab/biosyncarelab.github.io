@@ -38,6 +38,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Ensure low-latency scheduling for isochronous events and binaural offsets.
 - Tests: compare left/right phase alignment, verify modulation depth ranges.
 - Decisions: ship Web Audio baseline first (biosyncare engine reference); keep adapter interface ready for Tone.js.
+- Current work: `scripts/structures.js::AudioEngine` handles Web Audio preview + cleanup; extend it to full session playback and Martigli modulation hooks.
 
 ### 1.5 Video Engine Abstraction (🧩)
 - Toggle between Canvas baseline and optional engine (PixiJS / Three.js / p5.js).
@@ -45,6 +46,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Sentence-collection tracks render guidance text in the background, synced to Martigli tempo and optionally linked to audio narration.
 - Need presets for visual scenes and parameter binding DSL similar to audio side.
 - Decisions: Canvas baseline ships first; advanced engines follow once adapter ready.
+- Current work: `scripts/structures.js::VideoEngine` stores Martigli-aware layers; next milestone is rendering a visible canvas and binding to dashboard modals.
 
 ### 1.6 Feature Toggles & Defaults (🧩)
 - Save "instrument" default ranges per user; shareable bundles.
@@ -94,6 +96,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Provide test fixtures verifying expected permutation cycles.
 - Decisions: `music` package is first-party; license-clear to use all generated sequences.
 - Current asset: `data/structures/community-alpha-change-ringing.json` (plain-hunt rows for 4/6 bells, loops to rounds).
+- New assets: `data/structures/symmetry-lines.json` (mirror/rotation sweeps) and `data/structures/martigli-following-sequences.json` (phase-aligned orderings).
 
 ### 3.2 Integration Pipeline (🧩)
 - Define transport format between Python outputs and BSCLab (REST? static JSON?).
@@ -107,6 +110,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 	- `sequences[]`: `id`, `label`, `orderDimension`, `rows[][]`, `loop`
 - Loader: `scripts/structures-loader.js` exports `loadStructures(url)` → adds `rowsZeroBased`, and `getSequence(structures, id)`.
 - TODO: add fixtures for regression and wire loader into the GUI once placement is confirmed.
+- Current work: `scripts/structures.js::StructureStore` caches the JSON payload and feeds the dashboard modal; still need fixtures + Firestore-backed selection flows.
 
 ## 4. Cross-Cutting Infrastructure
 

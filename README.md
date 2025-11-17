@@ -54,6 +54,9 @@ in usual computers and mobile phones. It consists of a few core parts:
 - [x] Stub the Martigli widget (period sliders + waveform picker) and wire it to live state.
 - [x] **Request (Python Structures)**: schema delivered (`data/structures/community-alpha-change-ringing.json`) and previewed beneath the Martigli widget.
 - [x] After modal+widget, integrate audio synthesis baseline (pure Web Audio) for the sine/binaural tracks (modal track list now has Preview buttons).
+- [ ] Promote the new `scripts/structures.js` kernel (Martigli + audio + video + RDF) into dashboard flows by logging Firestore interactions and exposing a public API for other pods.
+- [ ] Fill `.ontology-slot` via the kernel's `RDFLinker` so dashboard cards render real NSO references.
+- [ ] Turn the `VideoEngine` stub into a visible Martigli-driven canvas widget to validate the abstraction.
 
 The woking of the BSCLab has at least three parts of considerable complexity:
 1.1) the Firebase data persistence and sharing. The software should reports in real time the number of interactions performed by all users. And the kind of interactions, opening, creation and deletion of tracks and presets, parameter updates/setting, changes in the breathing cue's parameters and of its usage in the audiovisual tracks. The database is envisioned to keep/manage, at least: user's login and persona's data, interactions of users with the interface, presets for sessions and tracks.
@@ -208,7 +211,7 @@ To navigate the RDF structures, we should:
 - [x] Document the export schema + provenance in `docs/Features.md` 3.x.
 - [x] Provide a tiny loader (ES module) that reads the JSON for the GUI pod (`scripts/structures-loader.js`).
 - [ ] **Request (GUI & Engines)**: confirm where in the UI these structures will surface first (modal or separate panel) before wiring the loader.
-- [ ] Plan follow-up exports (symmetry lines, Martigli-following sequences) once the first schema is accepted.
+- [x] Plan and ship follow-up exports (symmetry lines, Martigli-following sequences) once the first schema is accepted (`data/structures/symmetry-lines.json`, `data/structures/martigli-following-sequences.json`).
 
 We'll be creating JSON data (or RDF data or maybe both JSON and RDF) represeting
 sequences or orderings. Such orderings are to be applied to notes or characteristics of notes, typically.
@@ -226,4 +229,3 @@ One such sequence of orderings may act on a sequence of notes
 or in a specific parameter of a sequence of notes, for example;
 it can swap the duration of the notes in each iteration,
 or a control parameter used in distortion or spatialization.
-

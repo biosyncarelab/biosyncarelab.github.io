@@ -1,0 +1,48 @@
+{
+  "id": "symmetry-lines",
+  "label": "Symmetry Lines",
+  "description": "Deterministic symmetric orderings for swapping or rotating parameters; rows are 1-based and return to start.",
+  "source": {
+    "method": "constructed_symmetry_cycles",
+    "library": "music (first-party)",
+    "generator": "Python Structures pod",
+    "generated": "2025-11-17T00:00:00Z",
+    "notes": "Palindromic and rotational sweeps for 6 elements; convert to 0-based indices in UI."
+  },
+  "sequences": [
+    {
+      "id": "mirror-sweep-6",
+      "label": "Mirror Sweep on 6",
+      "orderDimension": 6,
+      "rows": [
+        [1, 2, 3, 4, 5, 6],
+        [2, 1, 4, 3, 6, 5],
+        [3, 2, 1, 6, 5, 4],
+        [4, 3, 6, 1, 2, 5],
+        [5, 6, 3, 2, 1, 4],
+        [6, 5, 4, 3, 2, 1],
+        [5, 6, 3, 2, 1, 4],
+        [4, 3, 6, 1, 2, 5],
+        [3, 2, 1, 6, 5, 4],
+        [2, 1, 4, 3, 6, 5],
+        [1, 2, 3, 4, 5, 6]
+      ],
+      "loop": true
+    },
+    {
+      "id": "rotating-crossfade-6",
+      "label": "Rotating Crossfade on 6",
+      "orderDimension": 6,
+      "rows": [
+        [1, 2, 3, 4, 5, 6],
+        [2, 3, 4, 5, 6, 1],
+        [3, 4, 5, 6, 1, 2],
+        [4, 5, 6, 1, 2, 3],
+        [5, 6, 1, 2, 3, 4],
+        [6, 1, 2, 3, 4, 5],
+        [1, 2, 3, 4, 5, 6]
+      ],
+      "loop": true
+    }
+  ]
+}

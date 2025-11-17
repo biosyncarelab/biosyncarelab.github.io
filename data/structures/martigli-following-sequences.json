@@ -1,0 +1,44 @@
+{
+  "id": "martigli-following-sequences",
+  "label": "Martigli-Following Sequences",
+  "description": "Orderings aligned to inhale/hold/exhale phases; rows are 1-based and wrap to rounds.",
+  "source": {
+    "method": "constructed_phase_cycles",
+    "library": "music (first-party)",
+    "generator": "Python Structures pod",
+    "generated": "2025-11-17T00:00:00Z",
+    "notes": "Phasic emphasis patterns intended to map to Martigli breathing envelopes."
+  },
+  "sequences": [
+    {
+      "id": "phase-6-4-4-2",
+      "label": "6-step · 4-4-2 emphasis",
+      "orderDimension": 6,
+      "rows": [
+        [1, 2, 3, 4, 5, 6],
+        [1, 2, 4, 3, 6, 5],
+        [2, 3, 5, 6, 1, 4],
+        [2, 4, 6, 5, 1, 3],
+        [3, 5, 1, 6, 2, 4],
+        [3, 6, 2, 5, 4, 1],
+        [4, 6, 2, 5, 3, 1],
+        [1, 2, 3, 4, 5, 6]
+      ],
+      "loop": true
+    },
+    {
+      "id": "phase-4-3-3-2",
+      "label": "4-step · 3-3-2 emphasis",
+      "orderDimension": 4,
+      "rows": [
+        [1, 2, 3, 4],
+        [1, 3, 2, 4],
+        [2, 4, 1, 3],
+        [3, 4, 1, 2],
+        [2, 3, 4, 1],
+        [1, 2, 3, 4]
+      ],
+      "loop": true
+    }
+  ]
+}

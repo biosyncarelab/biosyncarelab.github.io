@@ -248,11 +248,15 @@ function buildGraph(rdfData) {
   const classURI = "http://www.w3.org/2002/07/owl#Class";
   const objectPropertyURI = "http://www.w3.org/2002/07/owl#ObjectProperty";
   const datatypePropertyURI = "http://www.w3.org/2002/07/owl#DatatypeProperty";
+  const conceptURI = "http://www.w3.org/2004/02/skos/core#Concept";
   const subClassOf = "http://www.w3.org/2000/01/rdf-schema#subClassOf";
   const domain = "http://www.w3.org/2000/01/rdf-schema#domain";
   const range = "http://www.w3.org/2000/01/rdf-schema#range";
+  const skosRelated = "http://www.w3.org/2004/02/skos/core#related";
+  const skosBroader = "http://www.w3.org/2004/02/skos/core#broader";
+  const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
 
-  // Create nodes for classes and properties
+  // Create nodes for classes, properties, and concepts
   for (const [uri, resource] of rdfData.resources) {
     let nodeType = "resource";
     let color = "#64748b"; // default gray
@@ -266,6 +270,9 @@ function buildGraph(rdfData) {
     } else if (resource.types.includes(datatypePropertyURI)) {
       nodeType = "datatypeProperty";
       color = "#fb923c"; // orange
+    } else if (resource.types.includes(conceptURI)) {
+      nodeType = "concept";
+      color = "#22d3ee"; // cyan
     }
 
     elements.push({
@@ -288,11 +295,43 @@ function buildGraph(rdfData) {
     if (objectType === "uri" && nodeMap.has(object)) {
       let edgeClass = "relation";
       let edgeColor = "#a78bfa"; // purple
+      let edgeStyle = "solid";
+      let edgeWidth = 2;
 
-      // Subclass relations
+      // Subclass relations (hierarchy)
       if (predicate === subClassOf) {
         edgeClass = "subclass";
         edgeColor = "#38bdf8"; // blue
+        edgeStyle = "solid";
+        edgeWidth = 3;
+      }
+      // SKOS broader/narrower (hierarchy)
+      else if (predicate === skosBroader || predicate === skosNarrower) {
+        edgeClass = "hierarchy";
+        edgeColor = "#38bdf8"; // blue
+        edgeStyle = "dashed";
+        edgeWidth = 2;
+      }
+      // Domain relations
+      else if (predicate === domain) {
+        edgeClass = "domain";
+        edgeColor = "#10b981"; // green
+        edgeStyle = "dashed";
+        edgeWidth = 2;
+      }
+      // Range relations
+      else if (predicate === range) {
+        edgeClass = "range";
+        edgeColor = "#f59e0b"; // amber
+        edgeStyle = "dashed";
+        edgeWidth = 2;
+      }
+      // SKOS related
+      else if (predicate === skosRelated) {
+        edgeClass = "related";
+        edgeColor = "#22d3ee"; // cyan
+        edgeStyle = "dotted";
+        edgeWidth = 1.5;
       }
 
       elements.push({
@@ -303,6 +342,8 @@ function buildGraph(rdfData) {
           label: getLocalName(predicate),
           edgeType: edgeClass,
           color: edgeColor,
+          style: edgeStyle,
+          width: edgeWidth,
           predicate: predicate,
         },
       });
@@ -359,10 +400,17 @@ function initCytoscape(elements) {
         },
       },
       {
+        selector: "node[type='concept']",
+        style: {
+          shape: "round-rectangle",
+        },
+      },
+      {
         selector: "edge",
         style: {
-          width: 2,
+          width: "data(width)",
           "line-color": "data(color)",
+          "line-style": "data(style)",
           "target-arrow-color": "data(color)",
           "target-arrow-shape": "triangle",
           "curve-style": "bezier",
@@ -380,6 +428,31 @@ function initCytoscape(elements) {
         style: {
           "line-style": "solid",
           width: 3,
+        },
+      },
+      {
+        selector: "edge[edgeType='hierarchy']",
+        style: {
+          "line-style": "dashed",
+          width: 2,
+        },
+      },
+      {
+        selector: "edge[edgeType='domain']",
+        style: {
+          "line-style": "dashed",
+        },
+      },
+      {
+        selector: "edge[edgeType='range']",
+        style: {
+          "line-style": "dashed",
+        },
+      },
+      {
+        selector: "edge[edgeType='related']",
+        style: {
+          "line-style": "dotted",
         },
       },
       {

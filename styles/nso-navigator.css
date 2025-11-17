@@ -270,7 +270,21 @@
 .legend-items {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.legend-section {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+}
+
+.legend-section strong {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
 }
 
 .legend-item {
@@ -286,13 +300,26 @@
   border-radius: 50%;
   display: inline-block;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .legend-arrow {
-  width: 24px;
+  width: 28px;
   height: 2px;
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-arrow::after {
+  content: "";
+  position: absolute;
+  right: -4px;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
 }
 
 .legend-arrow.subclass {
@@ -300,31 +327,49 @@
 }
 
 .legend-arrow.subclass::after {
-  content: "";
-  position: absolute;
-  right: -4px;
-  top: -3px;
-  width: 0;
-  height: 0;
   border-left: 6px solid #38bdf8;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
 }
 
-.legend-arrow.relation {
-  background: #a78bfa;
+.legend-arrow.domain {
+  background: repeating-linear-gradient(
+    90deg,
+    #10b981 0px,
+    #10b981 4px,
+    transparent 4px,
+    transparent 8px
+  );
 }
 
-.legend-arrow.relation::after {
-  content: "";
-  position: absolute;
-  right: -4px;
-  top: -3px;
-  width: 0;
-  height: 0;
-  border-left: 6px solid #a78bfa;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
+.legend-arrow.domain::after {
+  border-left: 6px solid #10b981;
+}
+
+.legend-arrow.range {
+  background: repeating-linear-gradient(
+    90deg,
+    #f59e0b 0px,
+    #f59e0b 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.legend-arrow.range::after {
+  border-left: 6px solid #f59e0b;
+}
+
+.legend-arrow.related {
+  background: repeating-linear-gradient(
+    90deg,
+    #22d3ee 0px,
+    #22d3ee 2px,
+    transparent 2px,
+    transparent 5px
+  );
+}
+
+.legend-arrow.related::after {
+  border-left: 6px solid #22d3ee;
 }
 
 .loading-indicator {

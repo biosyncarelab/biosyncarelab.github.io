@@ -1,4 +1,5 @@
 import { firebaseConfig } from "./firebase-config.js";
+import { BSCLabKernel } from "./structures.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import {
   getAnalytics,
@@ -92,155 +93,24 @@ const dashboardState = {
   sessions: [],
   presets: [],
 };
-const martigliState = {
-  startPeriod: 10,
-  endPeriod: 20,
-  waveform: "sine",
-};
-let structureData = null;
-let structureError = null;
-let structureLoadPromise = null;
+const kernel = new BSCLabKernel({});
+kernel.init();
+const martigliState = kernel.martigli;
+const audioEngine = kernel.audio;
+const structureStore = kernel.structures;
+const rdfLinker = kernel.rdf;
+const videoEngine = kernel.video;
 let lastStructureRecord = null;
-const audioEngine = {
-  ctx: null,
-  active: null,
-};
-
-const getAudioContextCtor = () => {
-  if (typeof window === "undefined") return null;
-  return window.AudioContext || window.webkitAudioContext || null;
-};
-
-const ensureAudioContext = () => {
-  const Ctor = getAudioContextCtor();
-  if (!Ctor) return null;
-  if (!audioEngine.ctx) {
-    audioEngine.ctx = new Ctor();
-  }
-  if (audioEngine.ctx.state === "suspended") {
-    audioEngine.ctx.resume();
-  }
-  return audioEngine.ctx;
-};
-
-const stopAudioPlayback = () => {
-  if (audioEngine.active?.stop) {
-    try {
-      audioEngine.active.stop();
-    } catch (err) {
-      console.warn("Audio stop failed", err);
-    }
-  }
-  if (audioEngine.active?.button) {
-    audioEngine.active.button.textContent = "Preview";
-  }
-  audioEngine.active = null;
-};
-
-const inferTrackAudioMode = (track) => {
-  const preset = (track.presetId ?? track.kind ?? "").toLowerCase();
-  if (preset.includes("binaural")) return "binaural";
-  if (preset.includes("sine")) return "sine";
-  if (track.params?.leftFrequency && track.params?.rightFrequency) return "binaural";
-  if (track.params?.frequency ?? track.params?.base) return "sine";
-  return null;
-};
-
-const startSinePreview = (ctx, track) => {
-  const osc = ctx.createOscillator();
-  const gainNode = ctx.createGain();
-  const frequency = Number(track.params?.frequency ?? track.params?.base ?? 440);
-  const gainValue = Number(track.params?.gain ?? track.gain ?? 0.2);
-  osc.type = "sine";
-  osc.frequency.value = Number.isFinite(frequency) ? frequency : 440;
-  const clampedGain = Math.min(Math.max(Number.isFinite(gainValue) ? gainValue : 0.2, 0), 1);
-  gainNode.gain.value = clampedGain;
-  osc.connect(gainNode).connect(ctx.destination);
-  osc.start();
-  return () => {
-    try {
-      osc.stop();
-    } catch (err) {
-      /* oscillator already stopped */
-    }
-    osc.disconnect();
-    gainNode.disconnect();
-  };
-};
-
-const startBinauralPreview = (ctx, track) => {
-  const leftOsc = ctx.createOscillator();
-  const rightOsc = ctx.createOscillator();
-  leftOsc.type = "sine";
-  rightOsc.type = "sine";
-  const base = Number(track.params?.base ?? track.params?.frequency ?? 200);
-  const beat = Number(track.params?.beat ?? track.params?.martigliFrequency ?? 10);
-  const leftFrequency = Number(track.params?.leftFrequency ?? base - beat / 2);
-  const rightFrequency = Number(track.params?.rightFrequency ?? base + beat / 2);
-  leftOsc.frequency.value = Number.isFinite(leftFrequency) ? leftFrequency : 200;
-  rightOsc.frequency.value = Number.isFinite(rightFrequency) ? rightFrequency : 210;
-  const merger = ctx.createChannelMerger(2);
-  const leftGain = ctx.createGain();
-  const rightGain = ctx.createGain();
-  const gainValue = Number(track.params?.gain ?? track.gain ?? 0.25);
-  const clamped = Math.min(Math.max(Number.isFinite(gainValue) ? gainValue : 0.25, 0), 1);
-  leftGain.gain.value = clamped;
-  rightGain.gain.value = clamped;
-  leftOsc.connect(leftGain).connect(merger, 0, 0);
-  rightOsc.connect(rightGain).connect(merger, 0, 1);
-  merger.connect(ctx.destination);
-  leftOsc.start();
-  rightOsc.start();
-  return () => {
-    [leftOsc, rightOsc].forEach((osc) => {
-      try {
-        osc.stop();
-      } catch (err) {
-        /* oscillator already stopped */
-      }
-      osc.disconnect();
-    });
-    leftGain.disconnect();
-    rightGain.disconnect();
-    merger.disconnect();
-  };
-};
-
-const toggleTrackPlayback = (track, button) => {
-  if (!button) return;
-  if (audioEngine.active?.button === button) {
-    stopAudioPlayback();
-    return;
-  }
-  const ctx = ensureAudioContext();
-  if (!ctx) {
-    button.disabled = true;
-    button.textContent = "Audio unsupported";
-    return;
-  }
-  const mode = inferTrackAudioMode(track);
-  if (!mode) {
-    button.disabled = true;
-    button.textContent = "No preview";
-    return;
-  }
-  stopAudioPlayback();
-  const stopFn = mode === "binaural" ? startBinauralPreview(ctx, track) : startSinePreview(ctx, track);
-  audioEngine.active = {
-    stop: stopFn,
-    button,
-  };
-  button.textContent = "Stop";
-};
 
 const createTrackPreviewButton = (track) => {
-  if (!getAudioContextCtor()) return null;
-  if (!inferTrackAudioMode(track)) return null;
+  if (!audioEngine.isSupported || !audioEngine.supportsTrack(track)) {
+    return null;
+  }
   const button = document.createElement("button");
   button.type = "button";
   button.className = "ghost small";
   button.textContent = "Preview";
-  button.addEventListener("click", () => toggleTrackPlayback(track, button));
+  button.addEventListener("click", () => audioEngine.toggle(track, button));
   return button;
 };
 
@@ -318,7 +188,12 @@ const createOntologySlot = (kind, id) => {
   if (id) {
     slot.dataset.recordId = id;
   }
-  slot.textContent = "Ontology link placeholder";
+  const links = id ? rdfLinker.get(id) : [];
+  if (links.length) {
+    slot.textContent = `${links.length} ontology link${links.length > 1 ? "s" : ""}`;
+  } else {
+    slot.textContent = "Ontology link placeholder";
+  }
   return slot;
 };
 
@@ -422,88 +297,61 @@ const loadDashboardData = async () => {
   }
 };
 
-const ensureStructureData = () => {
-  if (structureData || structureLoadPromise) {
-    return structureLoadPromise ?? Promise.resolve(structureData);
-  }
-  if (typeof fetch !== "function") {
-    structureError = new Error("Fetch unavailable in this environment.");
-    return Promise.reject(structureError);
-  }
-  structureLoadPromise = fetch("data/structures/community-alpha-change-ringing.json")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Structure request failed (${response.status})`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      structureData = data;
-      structureError = null;
-    })
-    .catch((err) => {
-      structureError = err;
-      console.error("Structure data load failed", err);
-    })
-    .finally(() => {
-      const record = lastStructureRecord;
-      structureLoadPromise = null;
-      renderStructurePreview(record ?? null);
-    });
-  return structureLoadPromise;
-};
-
-function renderStructurePreview(record) {
+const renderStructurePreview = (record) => {
   if (record) {
     lastStructureRecord = record;
   }
   if (!ui.structureSection || !ui.structureSummary || !ui.structureList) {
     return;
   }
-  if (structureData) {
-    const method = structureData.source?.method ? ` · ${structureData.source.method}` : "";
-    ui.structureSummary.textContent = `${structureData.label} • ${structureData.description}${method}`;
-    ui.structureList.innerHTML = "";
-    (structureData.sequences ?? []).forEach((sequence) => {
-      const item = document.createElement("li");
-      item.className = "structure-card";
-      const heading = document.createElement("h5");
-      heading.textContent = sequence.label ?? sequence.id;
-      const meta = document.createElement("div");
-      meta.className = "structure-meta";
-      const dimension = document.createElement("span");
-      dimension.textContent = `${sequence.orderDimension ?? "?"} bells`;
-      const loop = document.createElement("span");
-      loop.textContent = sequence.loop ? "Loops" : "Stops";
-      meta.appendChild(dimension);
-      meta.appendChild(loop);
-      const rows = document.createElement("p");
-      rows.className = "structure-rows";
-      const previewRows = (sequence.rows ?? []).slice(0, 2).map((row) => row.join(" "));
-      rows.textContent = previewRows.length
-        ? previewRows.join(" / ")
-        : "No rows available.";
-      item.appendChild(heading);
-      item.appendChild(meta);
-      item.appendChild(rows);
-      ui.structureList.appendChild(item);
-    });
-    if (!structureData.sequences?.length) {
-      ui.structureList.innerHTML = "";
-      const empty = document.createElement("li");
-      empty.className = "structure-card";
-      empty.textContent = "No sequences delivered yet.";
-      ui.structureList.appendChild(empty);
-    }
-  } else if (structureError) {
-    ui.structureSummary.textContent = "Unable to load structure data.";
-    ui.structureList.innerHTML = "";
-  } else {
+  const { data, error, loading } = structureStore.snapshot();
+  if (loading && !data) {
     ui.structureSummary.textContent = "Loading structure preview…";
     ui.structureList.innerHTML = "";
-    ensureStructureData();
+    return;
   }
-}
+  if (error) {
+    ui.structureSummary.textContent = "Unable to load structure data.";
+    ui.structureList.innerHTML = "";
+    return;
+  }
+  if (!data) {
+    ui.structureSummary.textContent = "No structure payload available.";
+    ui.structureList.innerHTML = "";
+    return;
+  }
+  const method = data.source?.method ? ` · ${data.source.method}` : "";
+  ui.structureSummary.textContent = `${data.label} • ${data.description}${method}`;
+  ui.structureList.innerHTML = "";
+  (data.sequences ?? []).forEach((sequence) => {
+    const item = document.createElement("li");
+    item.className = "structure-card";
+    const heading = document.createElement("h5");
+    heading.textContent = sequence.label ?? sequence.id;
+    const meta = document.createElement("div");
+    meta.className = "structure-meta";
+    const dimension = document.createElement("span");
+    dimension.textContent = `${sequence.orderDimension ?? "?"} bells`;
+    const loop = document.createElement("span");
+    loop.textContent = sequence.loop ? "Loops" : "Stops";
+    meta.appendChild(dimension);
+    meta.appendChild(loop);
+    const rows = document.createElement("p");
+    rows.className = "structure-rows";
+    const previewRows = (sequence.rows ?? []).slice(0, 2).map((row) => row.join(" "));
+    rows.textContent = previewRows.length ? previewRows.join(" / ") : "No rows available.";
+    item.appendChild(heading);
+    item.appendChild(meta);
+    item.appendChild(rows);
+    ui.structureList.appendChild(item);
+  });
+  if (!data.sequences?.length) {
+    const empty = document.createElement("li");
+    empty.className = "structure-card";
+    empty.textContent = "No sequences delivered yet.";
+    ui.structureList.appendChild(empty);
+  }
+};
 
 const renderModalMeta = (record, kind) => {
   if (!ui.modalMeta) return;
@@ -546,7 +394,7 @@ const summariseTrackParams = (params = {}) => {
 
 const renderTrackList = (record) => {
   if (!ui.modalTracks || !ui.modalTrackHint) return;
-  stopAudioPlayback();
+  audioEngine.stop();
   clearList(ui.modalTracks);
   const tracks = record.voices ?? record.tracks ?? [];
   if (!tracks.length) {
@@ -639,7 +487,7 @@ const renderMartigliParams = (record) => {
 
 function closeDetailModal() {
   if (!ui.modal) return;
-  stopAudioPlayback();
+  audioEngine.stop();
   ui.modal.classList.add("hidden");
   ui.modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
@@ -653,41 +501,47 @@ function openDetailModal(record, kind) {
   renderTrackList(record);
   renderMartigliParams(record);
   renderStructurePreview(record);
+  videoEngine.registerLayer(record.id ?? `layer-${Date.now()}`, {
+    kind,
+    trackCount: getTrackCount(record),
+  });
   ui.modal.classList.remove("hidden");
   ui.modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
 }
 
-const updateMartigliPreview = () => {
-  if (!ui.martigliPreview) return;
-  const delta = martigliState.endPeriod - martigliState.startPeriod;
+const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
+  if (!ui.martigliPreview || !snapshot) return;
+  const delta = snapshot.endPeriod - snapshot.startPeriod;
   const direction = delta === 0 ? "steady" : delta > 0 ? "slows" : "quickens";
-  ui.martigliPreview.textContent = `Breath ${direction} from ${martigliState.startPeriod}s to ${martigliState.endPeriod}s on a ${martigliState.waveform} wave.`;
+  ui.martigliPreview.textContent = `Breath ${direction} from ${snapshot.startPeriod}s to ${snapshot.endPeriod}s on a ${snapshot.waveform} wave.`;
+};
+
+const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
+  if (!snapshot) return;
+  if (ui.martigliStart && document.activeElement !== ui.martigliStart) {
+    ui.martigliStart.value = String(snapshot.startPeriod);
+  }
+  if (ui.martigliEnd && document.activeElement !== ui.martigliEnd) {
+    ui.martigliEnd.value = String(snapshot.endPeriod);
+  }
+  if (ui.martigliWaveform && ui.martigliWaveform.value !== snapshot.waveform) {
+    ui.martigliWaveform.value = snapshot.waveform;
+  }
 };
 
 const bindMartigliWidget = () => {
   if (!ui.martigliStart || !ui.martigliEnd || !ui.martigliWaveform) return;
   ui.martigliStart.addEventListener("input", (event) => {
-    martigliState.startPeriod = Number(event.target.value);
-    if (martigliState.startPeriod > martigliState.endPeriod) {
-      martigliState.endPeriod = martigliState.startPeriod;
-      ui.martigliEnd.value = String(martigliState.endPeriod);
-    }
-    updateMartigliPreview();
+    martigliState.setStartPeriod(Number(event.target.value));
   });
   ui.martigliEnd.addEventListener("input", (event) => {
-    martigliState.endPeriod = Number(event.target.value);
-    if (martigliState.endPeriod < martigliState.startPeriod) {
-      martigliState.startPeriod = martigliState.endPeriod;
-      ui.martigliStart.value = String(martigliState.startPeriod);
-    }
-    updateMartigliPreview();
+    martigliState.setEndPeriod(Number(event.target.value));
   });
   ui.martigliWaveform.addEventListener("change", (event) => {
-    martigliState.waveform = event.target.value;
-    updateMartigliPreview();
+    martigliState.setWaveform(event.target.value);
   });
-  updateMartigliPreview();
+  syncMartigliInputs();
 };
 
 const updateAuthState = (user) => {
@@ -807,7 +661,13 @@ if (ui.toggleAuthMode) {
   });
 }
 
+structureStore.subscribe(() => renderStructurePreview(lastStructureRecord));
+
 bindMartigliWidget();
+martigliState.subscribe((snapshot) => {
+  syncMartigliInputs(snapshot);
+  updateMartigliPreview(snapshot);
+});
 
 if (ui.modalOverlay) {
   ui.modalOverlay.addEventListener("click", closeDetailModal);
@@ -825,14 +685,10 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    stopAudioPlayback();
+    audioEngine.stop();
   }
 });
 
 if (typeof window !== "undefined") {
-  window.addEventListener("pagehide", stopAudioPlayback);
+  window.addEventListener("pagehide", () => audioEngine.stop());
 }
-
-ensureStructureData().catch(() => {
-  /* handled in renderStructurePreview */
-});

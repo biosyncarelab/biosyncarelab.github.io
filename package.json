@@ -10,6 +10,7 @@
     "test:run:headed": "playwright test --headed",
     "test:run-seeded": "npm run seed:firestore && npm run test:run",
     "test:run-seeded:headed": "npm run seed:firestore && npm run test:run:headed",
+    "test:structures": "node tests/structures.test.mjs",
     "seed:firestore": "node scripts/firestore-seed.mjs"
   },
   "devDependencies": {
