@@ -229,6 +229,15 @@ select {
   border-radius: 0.5rem;
 }
 
+.ontology-slot a {
+  color: var(--accent, #38bdf8);
+  text-decoration: none;
+}
+
+.ontology-slot a:hover {
+  text-decoration: underline;
+}
+
 .muted-text {
   color: var(--muted);
   font-size: 0.85rem;
@@ -412,6 +421,36 @@ body.modal-open {
   font-size: 0.85rem;
   margin: 0.5rem 0 0;
   color: var(--muted);
+}
+
+.structure-sequence {
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.structure-sequence:first-of-type {
+  border-top: none;
+}
+
+.structure-sequence-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.video-widget {
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.video-widget canvas {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: #020617;
+  display: block;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 600px) {

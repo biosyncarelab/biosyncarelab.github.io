@@ -31,16 +31,22 @@ function range1(n) {
   return Array.from({ length: n }, (_, i) => i + 1);
 }
 
+let assetsChecked = 0;
+let sequencesChecked = 0;
+let rowsChecked = 0;
+
 function validateSequence(seq) {
   assert.ok(seq.id && seq.label, "sequence has id/label");
   assert.ok(Number.isInteger(seq.orderDimension) && seq.orderDimension > 0, "orderDimension is positive int");
   assert.ok(Array.isArray(seq.rows) && seq.rows.length > 1, "rows exist");
   const expectedRow = range1(seq.orderDimension);
+  sequencesChecked += 1;
 
   for (const row of seq.rows) {
     assert.equal(row.length, seq.orderDimension, "row matches orderDimension");
     const sorted = [...row].sort((a, b) => a - b);
     assert.deepEqual(sorted, expectedRow, "row is a permutation of 1..N");
+    rowsChecked += 1;
   }
 
   if (seq.loop) {
@@ -56,6 +62,7 @@ for (const asset of expectedAssets) {
     assert.ok(ids.has(needed), `${asset.path} includes ${needed}`);
   }
   data.sequences.forEach(validateSequence);
+  assetsChecked += 1;
 }
 
 // Stub fetch so the loader can operate in Node without HTTP.
@@ -78,4 +85,6 @@ assert.ok(seq, "sequence retrieved by id");
 assert.ok(Array.isArray(seq.rowsZeroBased), "rowsZeroBased present");
 assert.deepEqual(seq.rowsZeroBased[0], [0, 1, 2, 3, 4, 5], "zero-based conversion applied");
 
-console.log("Structure assets and loader OK");
+console.log(
+  `Structure assets OK: ${assetsChecked} assets, ${sequencesChecked} sequences, ${rowsChecked} rows checked; loader verified.`,
+);

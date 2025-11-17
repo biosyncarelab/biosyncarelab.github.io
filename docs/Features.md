@@ -111,6 +111,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Loader: `scripts/structures-loader.js` exports `loadStructures(url)` → adds `rowsZeroBased`, and `getSequence(structures, id)`.
 - TODO: add fixtures for regression and wire loader into the GUI once placement is confirmed.
 - Current work: `scripts/structures.js::StructureStore` caches the JSON payload and feeds the dashboard modal; still need fixtures + Firestore-backed selection flows.
+- Assets now include `data/structures/martigli-following-sequences.json` and `data/structures/symmetry-lines.json`; the manifest exposes them all so the GUI can preview Martigli-following and symmetry datasets in addition to change ringing.
 
 ## 4. Cross-Cutting Infrastructure
 

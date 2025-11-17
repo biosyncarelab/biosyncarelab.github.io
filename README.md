@@ -31,6 +31,8 @@ npm test
 
 `npm test` wraps the Playwright run inside `firebase emulators:exec --only auth,firestore`, so the suite can create/delete users and read/write sample documents without touching production. While the site is served from `localhost`/`127.0.0.1`, the UI auto-connects to the Auth emulator, disables Google sign-in (unsupported there), and surfaces "Using local Auth emulator" in the status bar. Flip the inline "Use production auth" button in the Google card (or run `localStorage.setItem('bsc.useProdAuth','1')` in DevTools) if you need to talk to the live project.
 
+`test:structures` now runs automatically before Playwright to verify the static sequence exports and loader helpers.
+
 Each test run seeds the Firestore emulator with:
 - `sessions/community-default-alpha`: canonical Martigli/binaural blend for dashboards to consume.
 - `presets/sine` and `presets/binaural-alpha`: starter track definitions for future UI flows.
@@ -54,9 +56,9 @@ in usual computers and mobile phones. It consists of a few core parts:
 - [x] Stub the Martigli widget (period sliders + waveform picker) and wire it to live state.
 - [x] **Request (Python Structures)**: schema delivered (`data/structures/community-alpha-change-ringing.json`) and previewed beneath the Martigli widget.
 - [x] After modal+widget, integrate audio synthesis baseline (pure Web Audio) for the sine/binaural tracks (modal track list now has Preview buttons).
-- [ ] Promote the new `scripts/structures.js` kernel (Martigli + audio + video + RDF) into dashboard flows by logging Firestore interactions and exposing a public API for other pods.
-- [ ] Fill `.ontology-slot` via the kernel's `RDFLinker` so dashboard cards render real NSO references.
-- [ ] Turn the `VideoEngine` stub into a visible Martigli-driven canvas widget to validate the abstraction.
+- [x] Promote the new `scripts/structures.js` kernel (Martigli + audio + video + RDF) into dashboard flows by logging Firestore interactions and exposing a public API for other pods.
+- [x] Fill `.ontology-slot` via the kernel's `RDFLinker` so dashboard cards render real NSO references.
+- [x] Turn the `VideoEngine` stub into a visible Martigli-driven canvas widget to validate the abstraction.
 
 The woking of the BSCLab has at least three parts of considerable complexity:
 1.1) the Firebase data persistence and sharing. The software should reports in real time the number of interactions performed by all users. And the kind of interactions, opening, creation and deletion of tracks and presets, parameter updates/setting, changes in the breathing cue's parameters and of its usage in the audiovisual tracks. The database is envisioned to keep/manage, at least: user's login and persona's data, interactions of users with the interface, presets for sessions and tracks.
@@ -212,6 +214,8 @@ To navigate the RDF structures, we should:
 - [x] Provide a tiny loader (ES module) that reads the JSON for the GUI pod (`scripts/structures-loader.js`).
 - [ ] **Request (GUI & Engines)**: confirm where in the UI these structures will surface first (modal or separate panel) before wiring the loader.
 - [x] Plan and ship follow-up exports (symmetry lines, Martigli-following sequences) once the first schema is accepted (`data/structures/symmetry-lines.json`, `data/structures/martigli-following-sequences.json`).
+
+All three datasets above are bundled into the shared StructureStore manifest so the dashboard modal can preview each family side-by-side.
 
 We'll be creating JSON data (or RDF data or maybe both JSON and RDF) represeting
 sequences or orderings. Such orderings are to be applied to notes or characteristics of notes, typically.

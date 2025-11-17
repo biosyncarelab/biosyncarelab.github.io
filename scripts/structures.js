@@ -1,11 +1,11 @@
-import { loadStructures } from "./structures-loader.js";
+import { loadStructureCatalog, STRUCTURE_MANIFEST } from "./structures-loader.js";
 
 const noop = () => {};
 
 export class StructureStore {
-  constructor(url) {
-    this.url = url;
-    this.data = null;
+  constructor(options = {}) {
+    this.manifest = options.manifest ?? STRUCTURE_MANIFEST;
+    this.catalog = new Map();
     this.error = null;
     this.loading = false;
     this._promise = null;
@@ -13,15 +13,15 @@ export class StructureStore {
   }
 
   async load() {
-    if (this.data || this.loading) {
-      return this._promise ?? this.data;
+    if (this.catalog.size || this.loading) {
+      return this._promise ?? this.catalog;
     }
     this.loading = true;
-    this._promise = loadStructures(this.url).then(
-      (payload) => {
-        this.data = payload;
+    this._promise = loadStructureCatalog(this.manifest).then(
+      (catalog) => {
+        this.catalog = catalog;
         this.error = null;
-        return payload;
+        return catalog;
       },
       (err) => {
         this.error = err;
@@ -39,7 +39,8 @@ export class StructureStore {
 
   snapshot() {
     return {
-      data: this.data,
+      catalog: this.catalog,
+      datasets: Array.from(this.catalog.values()),
       error: this.error,
       loading: this.loading,
     };
@@ -63,8 +64,17 @@ export class StructureStore {
     });
   }
 
-  getSequence(id) {
-    return this.data?.sequences?.find((sequence) => sequence.id === id) ?? null;
+  listDatasets() {
+    return Array.from(this.catalog.values());
+  }
+
+  getDataset(id) {
+    return this.catalog.get(id) ?? null;
+  }
+
+  getSequence(datasetId, sequenceId) {
+    const dataset = this.getDataset(datasetId);
+    return dataset?.sequences?.find((sequence) => sequence.id === sequenceId) ?? null;
   }
 }
 
@@ -272,27 +282,177 @@ export class VideoEngine {
   constructor({ martigli } = {}) {
     this.martigli = martigli ?? null;
     this.layers = new Map();
+    this.targets = new Set();
+    this._raf = null;
   }
 
   registerLayer(id, config = {}) {
     if (!id) return;
-    this.layers.set(id, { ...config, updatedAt: Date.now() });
+    const entry = { ...config, updatedAt: Date.now() };
+    if (!entry.color) {
+      entry.color = this._colorForKey(id);
+    }
+    this.layers.set(id, entry);
   }
 
   getLayer(id) {
     return this.layers.get(id) ?? null;
   }
 
-  renderFrame(targets = []) {
-    // Placeholder: hook Martigli value into visual renderers (Canvas/Pixi/etc.)
-    targets.forEach((target) => {
-      if (!target?.context) return;
+  attachCanvas(canvas, options = {}) {
+    if (!canvas?.getContext) return null;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const target = {
+      canvas,
+      context: ctx,
+      layerId: options.layerId ?? null,
+      color: options.color ?? "#38bdf8",
+      background: options.background ?? "#020617",
+    };
+    this.targets.add(target);
+    this._ensureLoop();
+    return {
+      setLayer: (layerId) => {
+        target.layerId = layerId;
+      },
+      refresh: () => {
+        this.renderFrame(this._now());
+      },
+      detach: () => {
+        this.targets.delete(target);
+        this._maybeStopLoop();
+      },
+    };
+  }
+
+  renderFrame(timestamp = this._now()) {
+    if (!this.targets.size) return;
+    const state = this._martigliSnapshot();
+    const avgPeriod = Math.max((state.startPeriod + state.endPeriod) / 2, 0.1);
+    const drift = state.endPeriod - state.startPeriod;
+    const breathPhase = (timestamp / 1000) * (1 / Math.max(avgPeriod, 0.1));
+    const breath = (Math.sin(breathPhase * Math.PI * 2) + 1) / 2;
+
+    this.targets.forEach((target) => {
       const ctx = target.context;
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.globalAlpha = 0.2;
-      ctx.fillStyle = target.color ?? "#38bdf8";
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      if (!ctx) return;
+      const layer = target.layerId ? this.getLayer(target.layerId) : null;
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = target.background;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i += 1) {
+        const x = (width / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let i = 1; i < 4; i += 1) {
+        const y = (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      const amplitude = (0.25 + 0.5 * breath) * (height / 2);
+      const color = layer?.color ?? target.color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 1) {
+        const t = x / width;
+        const localPeriod = state.startPeriod + drift * t;
+        const freq = 1 / Math.max(localPeriod, 0.2);
+        const phase = breathPhase * Math.PI * 2 + t * 6 * Math.PI;
+        const value = this._waveValue(state.waveform, phase * freq * avgPeriod);
+        const y = height / 2 + value * amplitude;
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(248, 250, 252, 0.85)";
+      ctx.font = "12px system-ui, -apple-system, BlinkMacSystemFont";
+      ctx.fillText(
+        `${state.waveform} · ${state.startPeriod}s → ${state.endPeriod}s`,
+        12,
+        height - 12,
+      );
+      if (layer) {
+        ctx.fillText(
+          `${layer.kind ?? "Layer"} · ${layer.trackCount ?? 0} tracks`,
+          12,
+          20,
+        );
+      }
     });
+  }
+
+  _ensureLoop() {
+    if (typeof window === "undefined" || this._raf) return;
+    const tick = (timestamp) => {
+      if (!this.targets.size) {
+        this._raf = null;
+        return;
+      }
+      this.renderFrame(timestamp);
+      this._raf = window.requestAnimationFrame(tick);
+    };
+    this._raf = window.requestAnimationFrame(tick);
+  }
+
+  _maybeStopLoop() {
+    if (typeof window === "undefined" || !this._raf || this.targets.size) return;
+    window.cancelAnimationFrame(this._raf);
+    this._raf = null;
+  }
+
+  _martigliSnapshot() {
+    if (this.martigli && typeof this.martigli.snapshot === "function") {
+      return this.martigli.snapshot();
+    }
+    return { startPeriod: 8, endPeriod: 12, waveform: "sine" };
+  }
+
+  _waveValue(type, phase) {
+    switch ((type ?? "sine").toLowerCase()) {
+      case "square":
+        return Math.sign(Math.sin(phase)) || 1;
+      case "triangle":
+        return (2 / Math.PI) * Math.asin(Math.sin(phase));
+      case "saw":
+      case "sawtooth": {
+        const wrapped = phase / (Math.PI * 2);
+        return 2 * (wrapped - Math.floor(wrapped + 0.5));
+      }
+      default:
+        return Math.sin(phase);
+    }
+  }
+
+  _colorForKey(key) {
+    const palette = ["#38bdf8", "#c084fc", "#f472b6", "#22d3ee"];
+    if (!key) return palette[0];
+    const hash = Array.from(String(key)).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return palette[hash % palette.length];
+  }
+
+  _now() {
+    if (typeof performance !== "undefined" && performance.now) {
+      return performance.now();
+    }
+    return Date.now();
   }
 }
 
@@ -321,7 +481,7 @@ export class RDFLinker {
 
 export class BSCLabKernel {
   constructor(options = {}) {
-    this.structures = options.structuresStore ?? new StructureStore(options.structuresUrl);
+    this.structures = options.structuresStore ?? new StructureStore(options.structures ?? {});
     this.martigli = options.martigliState ?? new MartigliState(options.martigli);
     this.audio = options.audioEngine ?? new AudioEngine({ martigli: this.martigli });
     this.video = options.videoEngine ?? new VideoEngine({ martigli: this.martigli });

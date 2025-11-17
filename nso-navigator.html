@@ -16,11 +16,24 @@
       </div>
       <div class="nso-header-controls">
         <select id="ontology-selector" class="ontology-selector">
-          <option value="bsc-owl">BSC Core (OWL)</option>
-          <option value="bsc-skos">BSC Core (SKOS)</option>
-          <option value="sso-ontology">SSO Ontology</option>
-          <option value="sso-extended">SSO Extended</option>
-          <option value="onc-ontology">ONC Ontology</option>
+          <optgroup label="BioSynCare Core">
+            <option value="bsc-owl">BSC Core (OWL)</option>
+            <option value="bsc-skos">BSC Core (SKOS)</option>
+          </optgroup>
+          <optgroup label="SSO (Sensory Stimulation)">
+            <option value="sso-ontology">SSO Ontology</option>
+            <option value="sso-extended">SSO Extended</option>
+            <option value="sso-initial">SSO Initial (with hierarchies)</option>
+            <option value="sso-updated">SSO Updated (with hierarchies)</option>
+          </optgroup>
+          <optgroup label="ONC (Neurosensory Care)">
+            <option value="onc-ontology">ONC Ontology (Attachment 2)</option>
+            <option value="onc-attachment">ONC Attachment (with hierarchies)</option>
+          </optgroup>
+          <optgroup label="HarmoniCare">
+            <option value="harmonicare-sso">HarmoniCare SSO</option>
+            <option value="harmonicare-sso-alt">HarmoniCare SSO Alt</option>
+          </optgroup>
         </select>
         <button type="button" id="reset-view" class="ghost small">Reset View</button>
         <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>

@@ -1,5 +1,6 @@
 import { firebaseConfig } from "./firebase-config.js";
 import { BSCLabKernel } from "./structures.js";
+import { STRUCTURE_MANIFEST } from "./structures-loader.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import {
   getAnalytics,
@@ -20,6 +21,8 @@ import {
   connectFirestoreEmulator,
   collection,
   getDocs,
+  addDoc,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -28,6 +31,22 @@ const isLocalhost =
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const useAuthEmulator = isLocalhost && !window.localStorage?.getItem("bsc.useProdAuth");
+
+const NSO_BASE_URI = "https://biosyncare.github.io/rdf/harmonicare/SSO_Ontology.owl#";
+const DASHBOARD_ONTOLOGY_LINKS = {
+  "community-default-alpha": [
+    { uri: `${NSO_BASE_URI}BrainwaveEntrainment`, label: "Brainwave Entrainment" },
+    { uri: `${NSO_BASE_URI}AudiovisualStimulation`, label: "Audiovisual Stimulation" },
+  ],
+  sine: [
+    { uri: `${NSO_BASE_URI}AudioStimulation`, label: "Audio Stimulation" },
+    { uri: `${NSO_BASE_URI}AudioTechniques`, label: "Audio Techniques" },
+  ],
+  "binaural-alpha": [
+    { uri: `${NSO_BASE_URI}BinauralBeats`, label: "Binaural Beats" },
+    { uri: `${NSO_BASE_URI}AudioTechniques`, label: "Audio Techniques" },
+  ],
+};
 
 const db = getFirestore(app);
 
@@ -77,9 +96,37 @@ const ui = {
   martigliEnd: document.getElementById("martigli-end"),
   martigliWaveform: document.getElementById("martigli-waveform"),
   martigliPreview: document.getElementById("martigli-preview"),
+  martigliCanvas: document.getElementById("martigli-canvas"),
   structureSection: document.getElementById("structure-section"),
   structureSummary: document.getElementById("structure-summary"),
   structureList: document.getElementById("structure-list"),
+};
+
+const logInteraction = (entry) => {
+  try {
+    const user = auth.currentUser;
+    const payload = {
+      kind: entry?.kind ?? "unknown",
+      payload: entry?.payload ?? {},
+      ts: entry?.ts ?? Date.now(),
+      recordedAt: serverTimestamp(),
+      user: user
+        ? {
+            uid: user.uid,
+            email: user.email ?? null,
+          }
+        : null,
+      client: {
+        emulator: useAuthEmulator,
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+      },
+    };
+    addDoc(collection(db, "telemetry"), payload).catch((err) =>
+      console.warn("Telemetry write failed", err),
+    );
+  } catch (err) {
+    console.warn("Telemetry enqueue failed", err);
+  }
 };
 
 const setMessage = (text, type = "") => {
@@ -93,7 +140,7 @@ const dashboardState = {
   sessions: [],
   presets: [],
 };
-const kernel = new BSCLabKernel({});
+const kernel = new BSCLabKernel({ onInteraction: logInteraction });
 kernel.init();
 const martigliState = kernel.martigli;
 const audioEngine = kernel.audio;
@@ -101,8 +148,24 @@ const structureStore = kernel.structures;
 const rdfLinker = kernel.rdf;
 const videoEngine = kernel.video;
 let lastStructureRecord = null;
+let activeVideoLayerId = null;
+let activeModalRecord = null;
+const videoCanvasController =
+  ui.martigliCanvas && typeof videoEngine.attachCanvas === "function"
+    ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
+    : null;
 
-const createTrackPreviewButton = (track) => {
+STRUCTURE_MANIFEST.forEach((entry) => {
+  rdfLinker.register(entry.id, `urn:nso:structure:${entry.id}`, { label: entry.label });
+});
+
+Object.entries(DASHBOARD_ONTOLOGY_LINKS).forEach(([recordId, links]) => {
+  (links ?? []).forEach((link) => {
+    rdfLinker.register(recordId, link.uri, { label: link.label });
+  });
+});
+
+const createTrackPreviewButton = (track, context = {}) => {
   if (!audioEngine.isSupported || !audioEngine.supportsTrack(track)) {
     return null;
   }
@@ -110,7 +173,17 @@ const createTrackPreviewButton = (track) => {
   button.type = "button";
   button.className = "ghost small";
   button.textContent = "Preview";
-  button.addEventListener("click", () => audioEngine.toggle(track, button));
+  button.addEventListener("click", () => {
+    const wasActive = audioEngine.active?.button === button;
+    audioEngine.toggle(track, button);
+    kernel.recordInteraction("track.preview.toggle", {
+      recordId: context.record?.id ?? null,
+      recordKind: context.kind ?? null,
+      trackId: track.id ?? context.index ?? track.label ?? null,
+      presetId: track.presetId ?? null,
+      state: wasActive ? "stopped" : "started",
+    });
+  });
   return button;
 };
 
@@ -190,9 +263,24 @@ const createOntologySlot = (kind, id) => {
   }
   const links = id ? rdfLinker.get(id) : [];
   if (links.length) {
-    slot.textContent = `${links.length} ontology link${links.length > 1 ? "s" : ""}`;
+    const primary = links[0];
+    slot.textContent = "";
+    slot.title = links.map((link) => link.label ?? link.uri).join(", ");
+    const anchor = document.createElement("a");
+    anchor.href = primary.uri;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.textContent = primary.label ?? primary.uri;
+    slot.appendChild(anchor);
+    if (links.length > 1) {
+      const extra = document.createElement("span");
+      extra.className = "muted-text";
+      extra.textContent = ` +${links.length - 1} more`;
+      slot.appendChild(extra);
+    }
   } else {
-    slot.textContent = "Ontology link placeholder";
+    slot.textContent = "Map to NSO";
+    slot.title = "No ontology references yet";
   }
   return slot;
 };
@@ -304,8 +392,8 @@ const renderStructurePreview = (record) => {
   if (!ui.structureSection || !ui.structureSummary || !ui.structureList) {
     return;
   }
-  const { data, error, loading } = structureStore.snapshot();
-  if (loading && !data) {
+  const { datasets, error, loading } = structureStore.snapshot();
+  if (loading && !datasets.length) {
     ui.structureSummary.textContent = "Loading structure preview…";
     ui.structureList.innerHTML = "";
     return;
@@ -315,42 +403,64 @@ const renderStructurePreview = (record) => {
     ui.structureList.innerHTML = "";
     return;
   }
-  if (!data) {
+  if (!datasets.length) {
     ui.structureSummary.textContent = "No structure payload available.";
     ui.structureList.innerHTML = "";
     return;
   }
-  const method = data.source?.method ? ` · ${data.source.method}` : "";
-  ui.structureSummary.textContent = `${data.label} • ${data.description}${method}`;
+  ui.structureSummary.textContent = `${datasets.length} structure set${datasets.length > 1 ? "s" : ""} ready.`;
   ui.structureList.innerHTML = "";
-  (data.sequences ?? []).forEach((sequence) => {
-    const item = document.createElement("li");
-    item.className = "structure-card";
+  datasets.forEach((dataset) => {
+    const container = document.createElement("li");
+    container.className = "structure-card";
     const heading = document.createElement("h5");
-    heading.textContent = sequence.label ?? sequence.id;
+    heading.textContent = dataset.label ?? dataset.id;
     const meta = document.createElement("div");
     meta.className = "structure-meta";
-    const dimension = document.createElement("span");
-    dimension.textContent = `${sequence.orderDimension ?? "?"} bells`;
-    const loop = document.createElement("span");
-    loop.textContent = sequence.loop ? "Loops" : "Stops";
-    meta.appendChild(dimension);
-    meta.appendChild(loop);
-    const rows = document.createElement("p");
-    rows.className = "structure-rows";
-    const previewRows = (sequence.rows ?? []).slice(0, 2).map((row) => row.join(" "));
-    rows.textContent = previewRows.length ? previewRows.join(" / ") : "No rows available.";
-    item.appendChild(heading);
-    item.appendChild(meta);
-    item.appendChild(rows);
-    ui.structureList.appendChild(item);
+    const method = document.createElement("span");
+    method.textContent = dataset.source?.method ?? "Unknown method";
+    const sequenceCount = document.createElement("span");
+    const totalSequences = dataset.sequences?.length ?? 0;
+    sequenceCount.textContent = `${totalSequences} sequence${totalSequences === 1 ? "" : "s"}`;
+    meta.appendChild(method);
+    meta.appendChild(sequenceCount);
+    container.appendChild(heading);
+    container.appendChild(meta);
+
+    const ontologyLinks = rdfLinker.get(dataset.id);
+    if (ontologyLinks.length) {
+      const ontHint = document.createElement("p");
+      ontHint.className = "muted-text";
+      const firstLink = ontologyLinks[0];
+      ontHint.textContent = `Ontology link: ${firstLink.label ?? firstLink.uri}`;
+      container.appendChild(ontHint);
+    }
+
+    (dataset.sequences ?? []).slice(0, 2).forEach((sequence) => {
+      const seqBlock = document.createElement("div");
+      seqBlock.className = "structure-sequence";
+      const seqTitle = document.createElement("p");
+      seqTitle.className = "structure-sequence-title";
+      seqTitle.textContent = sequence.label ?? sequence.id;
+      const rows = document.createElement("p");
+      rows.className = "structure-rows";
+      const previewRows = (sequence.rows ?? []).slice(0, 2).map((row) => row.join(" "));
+      rows.textContent = previewRows.length ? previewRows.join(" / ") : "No rows available.";
+      seqBlock.appendChild(seqTitle);
+      seqBlock.appendChild(rows);
+      container.appendChild(seqBlock);
+    });
+
+    if ((dataset.sequences?.length ?? 0) > 2) {
+      const more = document.createElement("p");
+      more.className = "muted-text";
+      const remaining = dataset.sequences.length - 2;
+      more.textContent = `+${remaining} more sequence${remaining === 1 ? "" : "s"}`;
+      container.appendChild(more);
+    }
+
+    ui.structureList.appendChild(container);
   });
-  if (!data.sequences?.length) {
-    const empty = document.createElement("li");
-    empty.className = "structure-card";
-    empty.textContent = "No sequences delivered yet.";
-    ui.structureList.appendChild(empty);
-  }
 };
 
 const renderModalMeta = (record, kind) => {
@@ -392,7 +502,7 @@ const summariseTrackParams = (params = {}) => {
   return parts.slice(0, 3).join(" · ") || "No parameters provided";
 };
 
-const renderTrackList = (record) => {
+const renderTrackList = (record, kind) => {
   if (!ui.modalTracks || !ui.modalTrackHint) return;
   audioEngine.stop();
   clearList(ui.modalTracks);
@@ -425,7 +535,7 @@ const renderTrackList = (record) => {
     card.appendChild(summary);
     const actions = document.createElement("div");
     actions.className = "track-actions";
-    const previewButton = createTrackPreviewButton(track);
+    const previewButton = createTrackPreviewButton(track, { record, kind, index });
     if (previewButton) {
       actions.appendChild(previewButton);
     } else {
@@ -491,19 +601,43 @@ function closeDetailModal() {
   ui.modal.classList.add("hidden");
   ui.modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
+  if (activeModalRecord) {
+    kernel.recordInteraction("modal.close", { ...activeModalRecord });
+  }
+  activeModalRecord = null;
+  activeVideoLayerId = null;
+  if (videoCanvasController?.setLayer) {
+    videoCanvasController.setLayer(null);
+  }
 }
 
 function openDetailModal(record, kind) {
   if (!ui.modal) return;
+  const normalizedKind = kind === "session" ? "session" : "preset";
+  activeModalRecord = {
+    id: record.id ?? null,
+    kind: normalizedKind,
+    label: record.label ?? record.name ?? record.id ?? null,
+  };
   ui.modalTitle.textContent = record.label ?? record.name ?? record.id ?? "Untitled";
-  ui.modalKind.textContent = kind === "session" ? "Session" : "Preset";
-  renderModalMeta(record, kind);
-  renderTrackList(record);
+  ui.modalKind.textContent = normalizedKind === "session" ? "Session" : "Preset";
+  renderModalMeta(record, normalizedKind);
+  renderTrackList(record, normalizedKind);
   renderMartigliParams(record);
   renderStructurePreview(record);
-  videoEngine.registerLayer(record.id ?? `layer-${Date.now()}`, {
-    kind,
+  activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
+  videoEngine.registerLayer(activeVideoLayerId, {
+    kind: normalizedKind,
     trackCount: getTrackCount(record),
+  });
+  if (videoCanvasController?.setLayer) {
+    videoCanvasController.setLayer(activeVideoLayerId);
+    videoCanvasController.refresh?.();
+  }
+  kernel.recordInteraction("modal.open", {
+    recordId: activeModalRecord.id,
+    kind: activeModalRecord.kind,
+    label: activeModalRecord.label,
   });
   ui.modal.classList.remove("hidden");
   ui.modal.setAttribute("aria-hidden", "false");
@@ -533,13 +667,19 @@ const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
 const bindMartigliWidget = () => {
   if (!ui.martigliStart || !ui.martigliEnd || !ui.martigliWaveform) return;
   ui.martigliStart.addEventListener("input", (event) => {
-    martigliState.setStartPeriod(Number(event.target.value));
+    const value = Number(event.target.value);
+    martigliState.setStartPeriod(value);
+    kernel.recordInteraction("martigli.update", { field: "startPeriod", value });
   });
   ui.martigliEnd.addEventListener("input", (event) => {
-    martigliState.setEndPeriod(Number(event.target.value));
+    const value = Number(event.target.value);
+    martigliState.setEndPeriod(value);
+    kernel.recordInteraction("martigli.update", { field: "endPeriod", value });
   });
   ui.martigliWaveform.addEventListener("change", (event) => {
-    martigliState.setWaveform(event.target.value);
+    const value = event.target.value;
+    martigliState.setWaveform(value);
+    kernel.recordInteraction("martigli.update", { field: "waveform", value });
   });
   syncMartigliInputs();
 };

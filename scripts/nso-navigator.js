@@ -41,7 +41,12 @@ const ontologyFiles = {
   "bsc-skos": "rdf/core/bsc-skos.ttl",
   "sso-ontology": "rdf/external/sso/sso-ontology.ttl",
   "sso-extended": "rdf/external/sso/sso-ontology-extended.ttl",
+  "sso-initial": "rdf/external/sso/sso-initial.owl",
+  "sso-updated": "rdf/external/sso/sso-updated.owl",
   "onc-ontology": "rdf/external/onc/onc-ontology-attachment-2.ttl",
+  "onc-attachment": "rdf/Attachment 2_ONC_Ontology.ttl",
+  "harmonicare-sso": "rdf/external/harmonicare/SSO_Ontology.owl",
+  "harmonicare-sso-alt": "rdf/external/harmonicare/SSO_Ontology_.owl",
 };
 
 // UI Elements
@@ -623,6 +628,165 @@ async function saveComment(uri, text) {
   }
 }
 
+// Parse OWL/XML format (handles both typed elements and rdf:Description)
+function parseOwlXml(xmlText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+  const triples = [];
+  const resources = new Map();
+  const prefixes = {
+    rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+    owl: "http://www.w3.org/2002/07/owl#",
+    skos: "http://www.w3.org/2004/02/skos/core#",
+  };
+
+  // Extract namespace prefixes from root element
+  const root = xmlDoc.documentElement;
+  for (const attr of root.attributes) {
+    if (attr.name.startsWith("xmlns:")) {
+      const prefix = attr.name.substring(6);
+      prefixes[prefix] = attr.value;
+    }
+  }
+
+  // Helper to expand URIs
+  const expandUri = (uri) => {
+    if (!uri) return uri;
+    if (uri.startsWith("http://") || uri.startsWith("https://")) return uri;
+    const colonIndex = uri.indexOf(":");
+    if (colonIndex > 0) {
+      const prefix = uri.substring(0, colonIndex);
+      const local = uri.substring(colonIndex + 1);
+      return prefixes[prefix] ? prefixes[prefix] + local : uri;
+    }
+    return uri;
+  };
+
+  // Parse all rdf:Description elements (generic RDF/XML format)
+  const descriptions = xmlDoc.querySelectorAll("rdf\\:Description, Description");
+  descriptions.forEach((desc) => {
+    const about = desc.getAttribute("rdf:about") || desc.getAttribute("about");
+    if (!about) return;
+
+    const subjectUri = expandUri(about);
+
+    // Get rdf:type to determine resource type
+    const typeElements = desc.querySelectorAll("rdf\\:type, type");
+    const types = [];
+    typeElements.forEach((typeEl) => {
+      const typeResource = typeEl.getAttribute("rdf:resource") || typeEl.getAttribute("resource");
+      if (typeResource) {
+        const typeUri = expandUri(typeResource);
+        types.push(typeUri);
+
+        // Add type triple
+        triples.push({
+          subject: subjectUri,
+          predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          object: typeUri,
+          objectType: "uri",
+        });
+      }
+    });
+
+    // Create or update resource
+    if (!resources.has(subjectUri)) {
+      resources.set(subjectUri, {
+        uri: subjectUri,
+        properties: {},
+        types: types,
+        label: getLocalName(subjectUri),
+      });
+    } else {
+      // Merge types
+      const resource = resources.get(subjectUri);
+      types.forEach((t) => {
+        if (!resource.types.includes(t)) {
+          resource.types.push(t);
+        }
+      });
+    }
+
+    const resource = resources.get(subjectUri);
+
+    // Parse all child elements as properties
+    for (const child of desc.children) {
+      const tagName = child.tagName;
+      const localName = tagName.includes(":") ? tagName.split(":")[1] : tagName;
+      const namespace = tagName.includes(":") ? tagName.split(":")[0] : null;
+
+      // Skip rdf:type as we already handled it
+      if (localName === "type" && namespace === "rdf") continue;
+
+      // Get predicate URI
+      const predicateUri = namespace && prefixes[namespace]
+        ? prefixes[namespace] + localName
+        : tagName;
+
+      // Check if it's a resource reference or literal
+      const resourceAttr = child.getAttribute("rdf:resource") || child.getAttribute("resource");
+
+      if (resourceAttr) {
+        // It's a URI reference
+        const objectUri = expandUri(resourceAttr);
+        triples.push({
+          subject: subjectUri,
+          predicate: predicateUri,
+          object: objectUri,
+          objectType: "uri",
+        });
+
+        // Store in properties
+        if (!resource.properties[predicateUri]) {
+          resource.properties[predicateUri] = [];
+        }
+        resource.properties[predicateUri].push({
+          value: objectUri,
+          type: "uri",
+        });
+      } else if (child.textContent) {
+        // It's a literal value
+        const value = child.textContent.trim();
+        if (value) {
+          // Special handling for labels
+          if (predicateUri.endsWith("label") || predicateUri.endsWith("prefLabel")) {
+            resource.label = value;
+          }
+
+          if (!resource.properties[predicateUri]) {
+            resource.properties[predicateUri] = [];
+          }
+          resource.properties[predicateUri].push({
+            value: value,
+            type: "literal",
+          });
+        }
+      }
+    }
+  });
+
+  // Also parse typed elements (owl:Class, owl:ObjectProperty) for compatibility
+  const classes = xmlDoc.querySelectorAll("owl\\:Class, Class");
+  classes.forEach((cls) => {
+    const about = cls.getAttribute("rdf:about") || cls.getAttribute("about");
+    if (!about) return;
+
+    const uri = expandUri(about);
+    if (!resources.has(uri)) {
+      resources.set(uri, {
+        uri,
+        properties: {},
+        types: ["http://www.w3.org/2002/07/owl#Class"],
+        label: getLocalName(uri),
+      });
+    }
+  });
+
+  return { triples, resources, prefixes };
+}
+
 // Load ontology from file
 async function loadOntology(ontologyKey) {
   const filePath = ontologyFiles[ontologyKey];
@@ -640,8 +804,12 @@ async function loadOntology(ontologyKey) {
       throw new Error(`Failed to load ${filePath}`);
     }
 
-    const ttlText = await response.text();
-    const rdfData = parseTurtle(ttlText);
+    const fileContent = await response.text();
+
+    // Detect format: XML if starts with <?xml, otherwise Turtle
+    const isXml = fileContent.trim().startsWith("<?xml") || fileContent.trim().startsWith("<rdf:RDF");
+
+    const rdfData = isXml ? parseOwlXml(fileContent) : parseTurtle(fileContent);
     const elements = buildGraph(rdfData);
 
     initCytoscape(elements);

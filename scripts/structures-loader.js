@@ -1,5 +1,23 @@
 const DEFAULT_URL = "data/structures/community-alpha-change-ringing.json";
 
+export const STRUCTURE_MANIFEST = [
+  {
+    id: "community-alpha-change-ringing",
+    label: "Community Alpha · Change Ringing",
+    url: "data/structures/community-alpha-change-ringing.json",
+  },
+  {
+    id: "martigli-following-sequences",
+    label: "Martigli-Following Sequences",
+    url: "data/structures/martigli-following-sequences.json",
+  },
+  {
+    id: "symmetry-lines",
+    label: "Symmetry Lines",
+    url: "data/structures/symmetry-lines.json",
+  },
+];
+
 async function fetchJson(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load structures from ${url} (${res.status})`);
@@ -10,15 +28,30 @@ function toZeroBased(rows) {
   return rows.map((row) => row.map((v) => v - 1));
 }
 
-export async function loadStructures(url = DEFAULT_URL) {
-  const data = await fetchJson(url);
+function normalizeStructure(data, overrides = {}) {
   return {
     ...data,
-    sequences: data.sequences.map((sequence) => ({
+    ...overrides,
+    sequences: (data.sequences ?? []).map((sequence) => ({
       ...sequence,
-      rowsZeroBased: toZeroBased(sequence.rows),
+      rowsZeroBased: sequence.rows ? toZeroBased(sequence.rows) : [],
     })),
   };
+}
+
+export async function loadStructures(url = DEFAULT_URL, overrides = {}) {
+  const data = await fetchJson(url);
+  return normalizeStructure(data, overrides);
+}
+
+export async function loadStructureCatalog(manifest = STRUCTURE_MANIFEST) {
+  const entries = await Promise.all(
+    manifest.map(async (entry) => {
+      const data = await loadStructures(entry.url ?? entry.href ?? DEFAULT_URL, entry);
+      return [entry.id ?? data.id, data];
+    }),
+  );
+  return new Map(entries);
 }
 
 export function getSequence(structures, id) {
