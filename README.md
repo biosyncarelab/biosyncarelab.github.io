@@ -31,6 +31,8 @@ npm test
 
 `npm test` spins up `python3 -m http.server 4173` automatically, runs the browser test headlessly, and tears everything down.
 
+CI mirrors this flow via `.github/workflows/playwright.yml`, so every push and PR to `main` runs the smoke suite in GitHub Actions' Ubuntu runners.
+
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
 in usual computers and mobile phones. It consists of a few core parts:
 1) A Web GUI which allows for the usage of sessions and track presets, and allow for the parametrization on the fly of the parameters involved, such as the frequency of the left channel of a binaural beat, or how much it oscillates with the breathing cue (which is an oscillation itself). The full specification of this software is in the next session.
