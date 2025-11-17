@@ -994,7 +994,8 @@ const updateMartigliOscillationStatus = (snapshot = martigliState.snapshot()) =>
 };
 
 const addMartigliOscillation = ({ requireSession = false, autoShowModal = false } = {}) => {
-  if (requireSession && !getActiveSessionRecord()) {
+  const hasSession = Boolean(getActiveSessionRecord());
+  if (requireSession && !hasSession) {
     setMessage(
       "Open a session from the Sessions card before adding Martigli oscillations.",
       "info",
@@ -1018,8 +1019,13 @@ const addMartigliOscillation = ({ requireSession = false, autoShowModal = false 
     sourceId: reference?.id ?? null,
     label,
   });
-  setMessage("New Martigli oscillation added. Use the sliders to fine-tune it.", "success");
-  if (autoShowModal) {
+  setMessage(
+    hasSession
+      ? "New Martigli oscillation added. Use the sliders to fine-tune it."
+      : "New Martigli oscillation added. Open a session to edit its parameters.",
+    hasSession ? "success" : "info",
+  );
+  if (autoShowModal && hasSession) {
     ensureSessionModalVisible();
   }
   return newOsc;
@@ -1428,7 +1434,7 @@ const bindMartigliAddButton = (button, options = {}) => {
 };
 
 bindMartigliAddButton(ui.martigliAdd);
-bindMartigliAddButton(ui.martigliAddDashboard, { requireSession: true, autoShowModal: true });
+bindMartigliAddButton(ui.martigliAddDashboard, { autoShowModal: true });
 
 const handleMartigliRename = () => {
   if (!ensureSessionModalVisible()) return;
