@@ -475,6 +475,12 @@ body.modal-open {
   flex: 1;
 }
 
+.martigli-dashboard-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .martigli-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

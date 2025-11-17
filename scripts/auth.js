@@ -138,6 +138,7 @@ const ui = {
   martigliCanvas: document.getElementById("martigli-canvas"),
   martigliOscillationSelect: document.getElementById("martigli-oscillation-select"),
   martigliAdd: document.getElementById("martigli-add"),
+  martigliAddDashboard: document.getElementById("martigli-add-dashboard"),
   audioSensoryList: document.getElementById("audio-sensory-list"),
   audioSensoryStatus: document.getElementById("audio-sensory-status"),
   visualSensoryList: document.getElementById("visual-sensory-list"),
@@ -718,13 +719,17 @@ const copyToClipboard = async (text) => {
   return false;
 };
 
+const noteActiveSessionRecord = (record) => {
+  dashboardState.activeSessionId = record?.id ?? null;
+  dashboardState.activeSessionLabel = record?.label ?? record?.name ?? record?.id ?? null;
+  updateSessionNavigatorLink(record ?? null);
+};
+
 const setActiveSessionContext = (record, kind) => {
   if (kind !== "session") return;
-  dashboardState.activeSessionId = record.id ?? null;
-  dashboardState.activeSessionLabel = record.label ?? record.name ?? record.id ?? null;
+  noteActiveSessionRecord(record);
   renderSensoryPanelsForRecord(record, kind);
   updateMartigliPreview(martigliState.snapshot());
-  updateSessionNavigatorLink(record);
 };
 
 const handleSessionApply = () => {
@@ -926,6 +931,62 @@ const renderSensoryPanelsForRecord = (record, kind) => {
   updateSensoryPanel("haptic", buckets.haptic, record, kind);
 };
 
+const getActiveSessionRecord = () => {
+  if (activeModalRecord?.kind === "session" && activeModalData) {
+    return activeModalData;
+  }
+  if (dashboardState.activeSessionId) {
+    return (
+      dashboardState.sessions.find((session) => session.id === dashboardState.activeSessionId) ?? null
+    );
+  }
+  return null;
+};
+
+const ensureSessionModalVisible = () => {
+  const record = getActiveSessionRecord();
+  if (!record) {
+    setMessage("Open a session from the Sessions card before editing Martigli oscillations.", "info");
+    return false;
+  }
+  if (ui.modal?.classList.contains("hidden")) {
+    openDetailModal(record, "session");
+  }
+  return true;
+};
+
+const addMartigliOscillation = ({ requireSession = false, autoShowModal = false } = {}) => {
+  if (requireSession && !getActiveSessionRecord()) {
+    setMessage(
+      "Open a session from the Sessions card before adding Martigli oscillations.",
+      "info",
+    );
+    return null;
+  }
+  const snapshot = martigliState.snapshot();
+  const oscillations = snapshot.oscillations ?? [];
+  const reference = martigliState.getReference();
+  const baseConfig = reference?.toJSON?.() ?? null;
+  const { id: _ignoredId, label: baseLabel, ...rest } = baseConfig ?? {};
+  const label = baseLabel
+    ? `${baseLabel} Copy`
+    : `Oscillation ${oscillations.length + 1}`;
+  const newOsc = reference ? martigliState.addOscillator({ ...rest, label }) : martigliState.addOscillator({ label });
+  if (newOsc?.id) {
+    martigliState.setReference(newOsc.id);
+  }
+  kernel.recordInteraction("martigli.oscillation.create", {
+    oscillatorId: newOsc?.id ?? null,
+    sourceId: reference?.id ?? null,
+    label,
+  });
+  setMessage("New Martigli oscillation added. Use the sliders to fine-tune it.", "success");
+  if (autoShowModal) {
+    ensureSessionModalVisible();
+  }
+  return newOsc;
+};
+
 const labelMartigliOscillation = (osc, index) => {
   if (!osc) return `Oscillation ${index + 1}`;
   const trimmed = typeof osc.label === "string" ? osc.label.trim() : "";
@@ -1088,7 +1149,7 @@ function openDetailModal(record, kind) {
   renderSensoryPanelsForRecord(record, normalizedKind);
   renderMartigliParams(record);
   if (normalizedKind === "session") {
-    updateSessionNavigatorLink(record);
+    noteActiveSessionRecord(record);
   }
   renderStructurePreview(record);
   activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
@@ -1307,27 +1368,15 @@ if (ui.martigliOscillationSelect) {
   });
 }
 
-if (ui.martigliAdd) {
-  ui.martigliAdd.addEventListener("click", () => {
-    const snapshot = martigliState.snapshot();
-    const reference = martigliState.getReference();
-    const base = reference?.toJSON?.() ?? {};
-    const { id: _ignoredId, ...rest } = base;
-    const label = reference?.label
-      ? `${reference.label} Copy`
-      : `Oscillation ${snapshot.oscillations.length + 1}`;
-    const newOsc = martigliState.addOscillator({ ...rest, label });
-    if (newOsc?.id) {
-      martigliState.setReference(newOsc.id);
-    }
-    kernel.recordInteraction("martigli.oscillation.create", {
-      oscillatorId: newOsc?.id ?? null,
-      sourceId: reference?.id ?? null,
-      label,
-    });
-    setMessage("New Martigli oscillation added. Adjust the sliders to customize it.", "success");
+const bindMartigliAddButton = (button, options = {}) => {
+  if (!button) return;
+  button.addEventListener("click", () => {
+    addMartigliOscillation(options);
   });
-}
+};
+
+bindMartigliAddButton(ui.martigliAdd);
+bindMartigliAddButton(ui.martigliAddDashboard, { requireSession: true, autoShowModal: true });
 
 if (ui.sessionNavigator) {
   ui.sessionNavigator.addEventListener("click", () => {
