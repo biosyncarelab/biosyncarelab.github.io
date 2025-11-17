@@ -66,6 +66,14 @@ make seed-prod
 
 The helper exports `BSC_FIREBASE_PROJECT=bsc-lab` and points `GOOGLE_APPLICATION_CREDENTIALS` at that hidden path for you. You can also execute `bash scripts/seed-prod.sh` directly or override those env vars when needed.
 
+After seeding production for the first time, deploy the Firestore security rules so the UI can read the new collections:
+
+```bash
+npm run deploy:firestore-rules
+```
+
+The command targets `bsc-lab` explicitly; ensure you are logged into Firebase CLI with access to that project. Rerun it any time `firestore.rules` changes or you notice `Missing or insufficient permissions` errors despite permissive local rules.
+
 Need to seed the live Firestore project instead? Authenticate with Application Default Credentials (e.g., `gcloud auth application-default login` or set `GOOGLE_APPLICATION_CREDENTIALS`) and run:
 
 ```bash
