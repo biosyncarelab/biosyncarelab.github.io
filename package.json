@@ -4,10 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed"
+    "test": "firebase emulators:exec --only auth --project emulator-bsc-lab \"npm run test:run\"",
+    "test:headed": "firebase emulators:exec --only auth --project emulator-bsc-lab \"npm run test:run:headed\"",
+    "test:run": "playwright test",
+    "test:run:headed": "playwright test --headed"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "firebase-tools": "^13.29.1"
   }
 }

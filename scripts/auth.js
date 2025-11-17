@@ -12,10 +12,19 @@ import {
   signOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  connectAuthEmulator,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const isLocalhost =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const useAuthEmulator = isLocalhost && !window.localStorage?.getItem("bsc.useProdAuth");
+
+if (useAuthEmulator) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+}
 auth.useDeviceLanguage();
 
 // Load analytics only on supported targets to avoid reference errors on Node-like UA.
@@ -51,7 +60,11 @@ const refreshControls = () => {
   const user = auth.currentUser;
   const emailSubmit = ui.emailForm.querySelector("button[type='submit']");
   if (ui.googleSignIn) {
-    ui.googleSignIn.disabled = isBusy || !!user;
+    const emulatorBlocksFederated = useAuthEmulator;
+    ui.googleSignIn.disabled = isBusy || !!user || emulatorBlocksFederated;
+    ui.googleSignIn.title = emulatorBlocksFederated
+      ? "Google sign-in is disabled when the Auth emulator is active."
+      : "";
   }
   if (ui.googleSignOut) {
     ui.googleSignOut.disabled = isBusy || !user;
@@ -164,5 +177,5 @@ ui.emailSignUp.addEventListener("click", async () => {
   }
 });
 
-setMessage("Ready.", "info");
+setMessage(useAuthEmulator ? "Using local Auth emulator." : "Ready.", "info");
 refreshControls();

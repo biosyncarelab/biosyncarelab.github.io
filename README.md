@@ -29,9 +29,9 @@ npm install
 npm test
 ```
 
-`npm test` spins up `python3 -m http.server 4173` automatically, runs the browser test headlessly, and tears everything down.
+`npm test` wraps the Playwright run inside `firebase emulators:exec --only auth`, so the suite can create/delete users without ever touching production. While the site is served from `localhost`/`127.0.0.1`, the UI auto-connects to the emulator, disables Google sign-in (unsupported there), and surfaces "Using local Auth emulator" in the status bar. To opt into production auth locally, run `localStorage.setItem('bsc.useProdAuth','1')` in DevTools before refreshing.
 
-CI mirrors this flow via `.github/workflows/playwright.yml`, so every push and PR to `main` runs the smoke suite in GitHub Actions' Ubuntu runners.
+CI mirrors this flow via `.github/workflows/playwright.yml`, so every push and PR to `main` runs the emulator-backed smoke suite in GitHub Actions' Ubuntu runners.
 
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
 in usual computers and mobile phones. It consists of a few core parts:
