@@ -27,7 +27,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 
 ### 1.3 GUI/UX System (🧩)
 - Slider/knob library selection, layout strategy for dense parameter space.
-- Dedicated Martigli widget with waveform editor, inhale/exhale ratio control, live value display (period range 0.1–120 s; sine/saw/square/triangle).
+- Dedicated Martigli widget with waveform editor, inhale/exhale ratio control, live value display (period range 0.1–120 s; sine/saw/square/triangle) plus real-time period overrides so users can lengthen/shorten breathing at any moment.
 - Documentation hooks: tooltips, modals, deep links to RDF entries, status bar for inline help.
 - Decisions: must work on all screens, desktop is reference. English-first UI; provide translate helper.
 - Todo: codify help/tooltip rules in UI kit.
@@ -42,6 +42,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 ### 1.5 Video Engine Abstraction (🧩)
 - Toggle between Canvas baseline and optional engine (PixiJS / Three.js / p5.js).
 - Quadrant-based blinking/oscillation tied to Martigli value; support particle trajectories.
+- Sentence-collection tracks render guidance text in the background, synced to Martigli tempo and optionally linked to audio narration.
 - Need presets for visual scenes and parameter binding DSL similar to audio side.
 - Decisions: Canvas baseline ships first; advanced engines follow once adapter ready.
 
@@ -50,6 +51,23 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Guard rails on value ranges (frequency, gain) with rationale documented in RDF.
 - Need UX for scaling coefficients (linear vs exponential mapping).
 - Decisions: multi-preset libraries w/ share capability; tie metrics to usage of each preset.
+
+### 1.7 Conversational Session Assistant (🧩)
+- Embedded AI chat that captures user feelings/goals and generates session presets.
+- Suggests track lists, breathing shapes, and parameter tweaks while citing ontology concepts.
+- Must log prompts/responses for auditability and let users accept, tweak, or discard suggestions.
+- Safety rails to prevent invalid parameter ranges; integrates with preset CRUD (1.1).
+
+### 1.8 Multi-User Sessions & Presence (🧩)
+- Scheduling layer so users across timezones can start synchronized sessions with countdowns.
+- Allow mid-session joins with state sync and ownership/precedence rules for edits.
+- Track lifecycle events (create/join/end/interact) for analytics; evaluate optional chat/mic/cam support (decision pending).
+- Requires presence indicators, notifications, and simple conflict resolution UI.
+
+### 1.9 Guided Sentence Audio Tracks (🧩)
+- Mirror sentence collections as audio tracks via TTS or recorded narrations.
+- Provide asset pipeline (text sources, TTS voices, uploads) and sync sentences with Martigli tempo.
+- UI needs library selection, preview, and mix controls per track.
 
 ## 2. NSO / RDF Tooling
 
@@ -70,17 +88,11 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 
 ## 3. Python Musical Structures
 
-- Scripts leveraging PyPI `music` package (recommend editable install) to generate permutations.
-- Export to JSON/RDF for loading as audio modulation sequences.
-- Provide test fixtures verifying expected permutation cycles.
 ### 3.1 Change Ringing & Group Permutations (🚧)
 - Scripts leveraging PyPI `music` package (recommend editable install) to generate permutations.
 - Export to JSON/RDF for loading as audio modulation sequences (static assets in repo).
 - Provide test fixtures verifying expected permutation cycles.
 - Decisions: `music` package is first-party; license-clear to use all generated sequences.
-- Scripts leveraging PyPI `music` package (recommend editable install) to generate permutations.
-- Export to JSON/RDF for loading as audio modulation sequences.
-- Provide test fixtures verifying expected permutation cycles.
 
 ### 3.2 Integration Pipeline (🧩)
 - Define transport format between Python outputs and BSCLab (REST? static JSON?).
@@ -103,7 +115,13 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Versioning scheme for ontology data and musical libraries.
 - Decisions: weekly RDF releases need matching deploy cadence; include telemetry + disclaimer updates.
 
+### 4.4 Global Neurosensory Registry & Standards (🧩)
+- Provide submission workflow for initiatives to register practices, devices, and services (with metadata + compliance info).
+- Generate public recommendation pages and authority-ready packets (similar to W3C notes) based on aggregated data.
+- Offer moderation, verification, and export tools so stakeholders can engage regulators and health authorities.
+- Tie registry entries back to RDF concepts for discoverability.
+
 ## Immediate Next Steps
 1. Implement Firebase persistence first (per clarified priorities), then BSCLab UI tied to presets, then migrate/simplify biosyncare algorithms.
 2. Stand up telemetry disclaimer + quota dashboard.
-3. Define Martigli widget UI spec with validated ranges/waveforms and session mode toggle.
+3. Define Martigli widget UI spec with validated ranges/waveforms, instant override controls, session mode toggle, and conversational assistant entrypoints.

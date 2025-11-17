@@ -10,30 +10,29 @@ These briefs align with the principles in `README.md`: keep diffs small, define 
 - Record assumptions; if anything is unclear, append to the clarifications list before coding.
 - Respect clarified priorities: 1) Firebase persistence, 2) BSCLab UI tied to Firebase, 3) migrate biosyncare algorithms with simplification.
 
-## Agent: BSCLab UI/UX
 - **Mandate:** Build the client-side PWA (sessions, tracks, audio/video controls, documentation hooks).
 - **Inputs:** Feature entries 1.x, approved UI wireframes, Firestore schema, Martigli parameter ranges.
-- **Deliverables:** Modular UI components, audio/video engine integration, Firebase wiring, UX copy tied to RDF entries.
+- **Deliverables:** Modular UI components, audio/video engine integration, Firebase wiring, UX copy tied to RDF entries, conversational-assistant surfaces, multi-user scheduling/presence UI.
 - **Stack preferences:** Start with vanilla + lightweight components; baseline Web Audio + Canvas first, then add Tone.js/Pixi adapters.
-- **Key checks:** Cross-browser audio timing, responsive layout (desktop reference), translation helper UX, Martigli widget respecting 0.1–120 s + waveforms.
+- **Key checks:** Cross-browser audio timing, responsive layout (desktop reference), translation helper UX, Martigli widget respecting 0.1–120 s + waveforms with instant overrides, smooth entry to collaborative sessions.
 
 ## Agent: Firebase & Telemetry
 - **Mandate:** Authentication, Firestore rules, event logging, preset storage.
-- **Inputs:** Data models from README/Features doc, security requirements, quota constraints.
-- **Deliverables:** Firestore collections, rule set, multi-preset libraries, telemetry dashboard (quota usage, KPIs), disclaimer/legal copy.
-- **Key checks:** Rules unit tests, anonymization, opt-in name sharing, quota monitoring, offline persistence strategy.
+- **Inputs:** Data models from README/Features doc, security requirements, quota constraints, multi-user scheduling requirements.
+- **Deliverables:** Firestore collections, rule set, multi-preset libraries, telemetry dashboard (quota usage, KPIs), disclaimer/legal copy, presence/scheduling services, registry submissions, conversational-assistant logs.
+- **Key checks:** Rules unit tests, anonymization, opt-in name sharing, quota monitoring, offline persistence strategy, conflict-resolution enforcement for collaborative edits.
 
 ## Agent: Martigli & Audio Algorithms
 - **Mandate:** Implement breathing/Martigli oscillator, modulation routing, audio synthesis primitives (binaural, isochronous, symmetry lines).
-- **Inputs:** Mathematical definitions in README/docs, parameter ranges, integration contracts from UI agent.
-- **Deliverables:** Engine-agnostic parameter graph, modulation DSL (`value = base + coeff * martigli`), presets.
-- **Key checks:** Numerical stability, aliasing limits, automation smoothing, Web Audio baseline parity with future Tone.js adapter.
+- **Inputs:** Mathematical definitions in README/docs, parameter ranges, integration contracts from UI agent, guidance sentence libraries.
+- **Deliverables:** Engine-agnostic parameter graph, modulation DSL (`value = base + coeff * martigli`), presets, guided-sentence audio tracks (TTS/recorded) with sync metadata.
+- **Key checks:** Numerical stability, aliasing limits, automation smoothing, Web Audio baseline parity with future Tone.js adapter, safe TTS integration.
 
 ## Agent: Video & Visualizations
 - **Mandate:** Quadrant blinks, oscillations, particle trajectories driven by Martigli values.
 - **Inputs:** Visual spec, engine selection (Canvas baseline + optional advanced engine), parameter contracts.
-- **Deliverables:** Visual scenes, performance budget guidelines, hooks for documentation overlays.
-- **Key checks:** Frame-sync with audio, accessibility (flash frequency limits), GPU/CPU usage caps, clean switch from Canvas baseline to Pixi/Three/p5 when ready.
+- **Deliverables:** Visual scenes, performance budget guidelines, hooks for documentation overlays, sentence-track rendering (background guidance text synced to Martigli/AIs).
+- **Key checks:** Frame-sync with audio, accessibility (flash frequency limits), GPU/CPU usage caps, clean switch from Canvas baseline to Pixi/Three/p5 when ready, readability of text overlays.
 
 ## Agent: RDF/NSO Navigator
 - **Mandate:** Build ontology viewer/editor with annotations.
@@ -46,6 +45,18 @@ These briefs align with the principles in `README.md`: keep diffs small, define 
 - **Inputs:** Updates from all agents, stakeholder feedback.
 - **Deliverables:** Up-to-date documentation, Q&A backlog, decision records, onboarding guides.
 - **Key checks:** Docs stay concise, cross-link nicely, reflect current implementation status; close clarifications once actioned and link to commits.
+
+## Agent: Conversational Session Assistant
+- **Mandate:** Build and maintain the AI chat workflow that captures user intent and generates/edit session presets safely.
+- **Inputs:** Prompt templates, safety rules, ontology-backed explanations, telemetry feedback.
+- **Deliverables:** Prompt/response pipelines, validation hooks before presets are saved, audit logs, fallback UX when AI suggestions fail.
+- **Key checks:** Parameter bounds respected, reproducibility of generated sessions, latency targets, privacy of user narratives.
+
+## Agent: Standards & Registry
+- **Mandate:** Operate the global Neurosensory Stimulation registry and recommendation publishing workflow.
+- **Inputs:** Submission schemas, verification rules, authority requirements, RDF mappings.
+- **Deliverables:** Submission portal UI, moderation tooling, exportable reports/whitepapers, links from registry entries to ontology concepts.
+- **Key checks:** Data accuracy, compliance with disclosure requirements, scalable moderation queue, alignment with simplicity directive (avoid bloated workflows).
 
 ## Agent: Python Musical Structures
 - **Mandate:** Use the `music` package (and other math libraries if required) to generate change-ringing peals, group permutations, and other sequences.
