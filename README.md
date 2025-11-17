@@ -48,6 +48,13 @@ in usual computers and mobile phones. It consists of a few core parts:
 
 ## 1) BSCLab
 
+### GUI & Engines Pod · Next Actions
+- [ ] Render the seeded sessions/presets as cards with summary metadata and an "Open" button.
+- [ ] Build a lightweight detail modal showing Martigli parameters + track list; link "Open" to it.
+- [ ] Stub the Martigli widget (period sliders + waveform picker) and wire it to live state.
+- [ ] **Request (Python Structures)**: provide sample `structure` JSON schema so the modal can preview upcoming sequence data.
+- [ ] After modal+widget, integrate audio synthesis baseline (pure Web Audio) for the sine/binaural tracks.
+
 The woking of the BSCLab has at least three parts of considerable complexity:
 1.1) the Firebase data persistence and sharing. The software should reports in real time the number of interactions performed by all users. And the kind of interactions, opening, creation and deletion of tracks and presets, parameter updates/setting, changes in the breathing cue's parameters and of its usage in the audiovisual tracks. The database is envisioned to keep/manage, at least: user's login and persona's data, interactions of users with the interface, presets for sessions and tracks.
 1.2) The user interface, with sliders and knobs, with the presets, with user data. It has a lot of information to display and a lot of interaction possibilities to enable, with numbers, names, buttons, switches, sliders, knobs and other GUI elements. The UX challenge here is not transcurable.
@@ -165,6 +172,13 @@ This software has had different incarnations, the last one is at biosyncare.gith
 
 ## 2) NSO
 
+### RDF Navigator Pod · Next Actions
+- [ ] Prototype Cytoscape viewer pointed at `rdf/core/bsc-owl.ttl` (standalone page for now).
+- [ ] Add URI inspector sidebar pulling label/definition/comments, storing annotations in Firestore.
+- [ ] Visual key differentiating class vs property edges with colors/icons.
+- [ ] Hook ontology links into the dashboard cards (e.g., session links to relevant NSO concept).
+- [ ] **Request (GUI & Engines)**: expose a placeholder area in the dashboard cards for ontology links so this pod can populate it later.
+
 The RDF data should work as the basis for BSCLab, giving it the definitions used in the algorithms and the texts for documentations and links to further context in the RDF data itself.
 
 It consits of OWL ontologies and SKOS vocabularies about Neurosensory Stimulation.
@@ -187,6 +201,13 @@ To navigate the RDF structures, we should:
 6) It should have some smart way of dealing with new versions of the NSO: new URIs, fixed or enhanced this or that.
 
 ## 3) Python-derived musical structures
+
+### Python Structures Pod · Next Actions
+- [ ] Recreate the "Community Alpha" change-ringing set via the `music` package and export deterministic JSON.
+- [ ] Document the export schema + provenance in `docs/Features.md` 3.x.
+- [ ] Provide a tiny loader (ES module) that reads the JSON for the GUI pod.
+- [ ] **Request (GUI & Engines)**: confirm where in the UI these structures will surface first (modal or separate panel) before wiring the loader.
+- [ ] Plan follow-up exports (symmetry lines, Martigli-following sequences) once the first schema is accepted.
 
 We'll be creating JSON data (or RDF data or maybe both JSON and RDF) represeting
 sequences or orderings. Such orderings are to be applied to notes or characteristics of notes, typically.
