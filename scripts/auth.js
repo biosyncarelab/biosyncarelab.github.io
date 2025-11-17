@@ -129,6 +129,7 @@ const ui = {
   sessionSave: document.getElementById("session-save"),
   sessionHint: document.getElementById("session-card-hint"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
+  martigliDashboardSummary: document.getElementById("martigli-dashboard-summary"),
   modalMartigli: document.getElementById("modal-martigli"),
   modalClose: document.getElementById("modal-close"),
   martigliStart: document.getElementById("martigli-start"),
@@ -138,6 +139,9 @@ const ui = {
   martigliCanvas: document.getElementById("martigli-canvas"),
   martigliOscillationSelect: document.getElementById("martigli-oscillation-select"),
   martigliAdd: document.getElementById("martigli-add"),
+  martigliRename: document.getElementById("martigli-rename"),
+  martigliDelete: document.getElementById("martigli-delete"),
+  martigliOscillationStatus: document.getElementById("martigli-oscillation-status"),
   martigliAddDashboard: document.getElementById("martigli-add-dashboard"),
   audioSensoryList: document.getElementById("audio-sensory-list"),
   audioSensoryStatus: document.getElementById("audio-sensory-status"),
@@ -158,9 +162,11 @@ const ui = {
 
 const defaultDashboardCopy = {
   martigliPreview: ui.martigliDashboardPreview?.textContent ?? "",
+  martigliDashboardSummary: ui.martigliDashboardSummary?.textContent ?? "",
   audioSensoryStatus: ui.audioSensoryStatus?.textContent ?? "",
   visualSensoryStatus: ui.visualSensoryStatus?.textContent ?? "",
   hapticSensoryStatus: ui.hapticSensoryStatus?.textContent ?? "",
+  martigliOscillationStatus: ui.martigliOscillationStatus?.textContent ?? "",
 };
 
 const sensoryPanels = {
@@ -356,6 +362,12 @@ const resetDashboardContext = () => {
   resetSensoryPanels();
   if (ui.martigliDashboardPreview) {
     ui.martigliDashboardPreview.textContent = defaultDashboardCopy.martigliPreview;
+  }
+  if (ui.martigliDashboardSummary) {
+    ui.martigliDashboardSummary.textContent = defaultDashboardCopy.martigliDashboardSummary;
+  }
+  if (ui.martigliOscillationStatus) {
+    ui.martigliOscillationStatus.textContent = defaultDashboardCopy.martigliOscillationStatus;
   }
   updateSessionNavigatorLink();
 };
@@ -723,6 +735,7 @@ const noteActiveSessionRecord = (record) => {
   dashboardState.activeSessionId = record?.id ?? null;
   dashboardState.activeSessionLabel = record?.label ?? record?.name ?? record?.id ?? null;
   updateSessionNavigatorLink(record ?? null);
+  updateMartigliOscillationStatus(martigliState.snapshot());
 };
 
 const setActiveSessionContext = (record, kind) => {
@@ -936,9 +949,7 @@ const getActiveSessionRecord = () => {
     return activeModalData;
   }
   if (dashboardState.activeSessionId) {
-    return (
-      dashboardState.sessions.find((session) => session.id === dashboardState.activeSessionId) ?? null
-    );
+    return dashboardState.sessions.find((session) => session.id === dashboardState.activeSessionId) ?? null;
   }
   return null;
 };
@@ -953,6 +964,33 @@ const ensureSessionModalVisible = () => {
     openDetailModal(record, "session");
   }
   return true;
+};
+
+const getOscillationLabel = (snapshot, id) => {
+  if (!id) return null;
+  const match = (snapshot.oscillations ?? []).find((osc) => osc.id === id);
+  return match?.label ?? null;
+};
+
+const updateMartigliOscillationStatus = (snapshot = martigliState.snapshot()) => {
+  const oscillations = snapshot.oscillations ?? [];
+  const count = oscillations.length;
+  const plural = count === 1 ? "" : "s";
+  const activeLabel = getOscillationLabel(snapshot, snapshot.referenceId) ?? "Unnamed";
+  if (ui.martigliOscillationStatus) {
+    ui.martigliOscillationStatus.textContent = count
+      ? `${count} oscillation${plural}. Active: ${activeLabel}`
+      : "No oscillations loaded yet.";
+  }
+  if (ui.martigliDashboardSummary) {
+    if (!dashboardState.activeSessionId) {
+      ui.martigliDashboardSummary.textContent = defaultDashboardCopy.martigliDashboardSummary;
+    } else if (!count) {
+      ui.martigliDashboardSummary.textContent = "Session has no Martigli oscillations yet.";
+    } else {
+      ui.martigliDashboardSummary.textContent = `${count} oscillation${plural} • Active: ${activeLabel}`;
+    }
+  }
 };
 
 const addMartigliOscillation = ({ requireSession = false, autoShowModal = false } = {}) => {
@@ -1010,6 +1048,9 @@ const renderMartigliOscillationSelect = (snapshot = martigliState.snapshot()) =>
     option.textContent = "No oscillations loaded";
     select.appendChild(option);
     select.disabled = true;
+    if (ui.martigliRename) ui.martigliRename.disabled = true;
+    if (ui.martigliDelete) ui.martigliDelete.disabled = true;
+    updateMartigliOscillationStatus(snapshot);
     return;
   }
   oscillations.forEach((osc, index) => {
@@ -1019,6 +1060,8 @@ const renderMartigliOscillationSelect = (snapshot = martigliState.snapshot()) =>
     select.appendChild(option);
   });
   select.disabled = false;
+  if (ui.martigliRename) ui.martigliRename.disabled = false;
+  if (ui.martigliDelete) ui.martigliDelete.disabled = false;
   const fallbackId = snapshot.referenceId ?? oscillations[0].id ?? select.options[0].value;
   if (fallbackId) {
     select.value = fallbackId;
@@ -1026,6 +1069,15 @@ const renderMartigliOscillationSelect = (snapshot = martigliState.snapshot()) =>
   if (!select.value && select.options.length) {
     select.selectedIndex = 0;
   }
+  updateMartigliOscillationStatus(snapshot);
+};
+
+const getSelectedOscillationId = () => {
+  if (ui.martigliOscillationSelect && ui.martigliOscillationSelect.value) {
+    return ui.martigliOscillationSelect.value;
+  }
+  const snapshot = martigliState.snapshot();
+  return snapshot.referenceId ?? snapshot.oscillations?.[0]?.id ?? null;
 };
 
 const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
@@ -1378,6 +1430,63 @@ const bindMartigliAddButton = (button, options = {}) => {
 bindMartigliAddButton(ui.martigliAdd);
 bindMartigliAddButton(ui.martigliAddDashboard, { requireSession: true, autoShowModal: true });
 
+const handleMartigliRename = () => {
+  if (!ensureSessionModalVisible()) return;
+  const oscillatorId = getSelectedOscillationId();
+  if (!oscillatorId) return;
+  const snapshot = martigliState.snapshot();
+  const currentLabel = getOscillationLabel(snapshot, oscillatorId) ?? "Martigli Oscillation";
+  if (typeof window === "undefined" || typeof window.prompt !== "function") {
+    setMessage("Rename is only available in the browser UI.", "error");
+    return;
+  }
+  const nextLabel = window.prompt("Rename oscillation", currentLabel);
+  if (nextLabel === null) return;
+  const trimmed = nextLabel.trim();
+  if (!trimmed) {
+    setMessage("Oscillation name cannot be empty.", "error");
+    return;
+  }
+  martigliState.renameOscillation(trimmed, oscillatorId);
+  kernel.recordInteraction("martigli.oscillation.rename", {
+    oscillatorId,
+    label: trimmed,
+  });
+  setMessage(`Oscillation renamed to ${trimmed}.`, "success");
+};
+
+const handleMartigliDelete = () => {
+  if (!ensureSessionModalVisible()) return;
+  const oscillatorId = getSelectedOscillationId();
+  if (!oscillatorId) return;
+  const snapshot = martigliState.snapshot();
+  const label = getOscillationLabel(snapshot, oscillatorId) ?? "Martigli Oscillation";
+  if (typeof window === "undefined" || typeof window.confirm !== "function") {
+    setMessage("Delete is only available in the browser UI.", "error");
+    return;
+  }
+  const confirmed = window.confirm(`Delete "${label}"? This cannot be undone.`);
+  if (!confirmed) return;
+  martigliState.removeOscillation(oscillatorId);
+  const afterRemoval = martigliState.snapshot();
+  if (!afterRemoval.oscillations?.length) {
+    martigliState.addOscillator();
+  }
+  kernel.recordInteraction("martigli.oscillation.delete", {
+    oscillatorId,
+    label,
+  });
+  setMessage(`Removed oscillation "${label}".`, "info");
+};
+
+if (ui.martigliRename) {
+  ui.martigliRename.addEventListener("click", handleMartigliRename);
+}
+
+if (ui.martigliDelete) {
+  ui.martigliDelete.addEventListener("click", handleMartigliDelete);
+}
+
 if (ui.sessionNavigator) {
   ui.sessionNavigator.addEventListener("click", () => {
     const href = ui.sessionNavigator.dataset.href;
@@ -1393,6 +1502,7 @@ martigliState.subscribe((snapshot) => {
   renderMartigliOscillationSelect(snapshot);
 });
 updateMartigliPreview(martigliState.snapshot());
+updateMartigliOscillationStatus(martigliState.snapshot());
 
 if (ui.modalOverlay) {
   ui.modalOverlay.addEventListener("click", closeDetailModal);

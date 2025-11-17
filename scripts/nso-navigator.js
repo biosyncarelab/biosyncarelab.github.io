@@ -118,9 +118,10 @@ let currentUser = null;
 let currentURI = null;
 let cy = null;
 let currentOntology =
-  requestedOntology && ontologyFiles[requestedOntology] ? requestedOntology : "bsc-owl";
+  requestedOntology && ontologyFiles[requestedOntology] ? requestedOntology : "bsc-outcomes";
 let currentLayout = "cose";
-let pendingConceptFocus = requestedConcept;
+// Default to CognitiveOutcome if no concept requested
+let pendingConceptFocus = requestedConcept || "https://biosyncarelab.github.io/ont#CognitiveOutcome";
 let showPropertiesAsNodes = true;
 
 // UI Elements
@@ -139,6 +140,7 @@ const ui = {
   commentInput: document.getElementById("comment-input"),
   cancelComment: document.getElementById("cancel-comment"),
   ontologySelector: document.getElementById("ontology-selector"),
+  ontologyDescription: document.getElementById("ontology-description"),
   layoutSelector: document.getElementById("layout-selector"),
   toggleProperties: document.getElementById("toggle-properties"),
   propertiesToggleText: document.getElementById("properties-toggle-text"),
@@ -696,7 +698,8 @@ function focusConceptIfNeeded() {
   if (!node || node.empty()) {
     return;
   }
-  cy.fit(node, 120);
+  // Center node without excessive zoom - just pan to it
+  cy.center(node);
   node.select();
   const resource = node.data("resource");
   if (resource) {
@@ -1074,9 +1077,21 @@ ui.commentForm.addEventListener("submit", async (e) => {
   }
 });
 
+// Update ontology description display
+function updateOntologyDescription() {
+  const selectedOption = ui.ontologySelector.selectedOptions[0];
+  const description = selectedOption?.getAttribute('data-description') || '';
+  if (ui.ontologyDescription) {
+    ui.ontologyDescription.textContent = description;
+  }
+}
+
 ui.ontologySelector.addEventListener("change", (e) => {
   currentOntology = e.target.value;
   hideURIInspector();
+
+  // Update description display
+  updateOntologyDescription();
 
   // Update URL with new ontology (removes concept since we're loading new graph)
   updateURLState(null);
@@ -1230,4 +1245,5 @@ window.addEventListener('popstate', (event) => {
 });
 
 // Initial load
+updateOntologyDescription();
 loadOntology(currentOntology);

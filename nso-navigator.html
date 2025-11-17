@@ -15,31 +15,58 @@
         <p class="muted-text">Neurosensory Stimulation Ontology Browser</p>
       </div>
       <div class="nso-header-controls">
-        <select id="ontology-selector" class="ontology-selector">
-          <optgroup label="BioSynCare Core">
-            <option value="bsc-consolidated">NSO Consolidated v1.0 (ALL MODULES)</option>
-            <option value="bsc-owl">BSC Core (OWL)</option>
-            <option value="bsc-skos">BSC Core (SKOS)</option>
-            <option value="bsc-audio">BSC Audio Module</option>
-            <option value="bsc-visual">BSC Visual Module</option>
-            <option value="bsc-mixed">BSC Mixed-Modality Module</option>
-            <option value="bsc-outcomes">BSC Outcomes Taxonomy</option>
+        <select id="ontology-selector" class="ontology-selector" title="Select an ontology to visualize">
+          <optgroup label="━━━ Main Ontologies ━━━">
+            <option value="bsc-consolidated" data-description="Complete: 60+ classes across audio, visual, multimodal techniques and outcomes (evidence 0-5 scale)">
+              NSO Consolidated v1.0
+            </option>
+            <option value="bsc-audio" data-description="6 audio techniques: binaural/monaural beats, isochronic, solfeggio (evidence 0.5-2.5)">
+              Audio Techniques
+            </option>
+            <option value="bsc-visual" data-description="7 visual: flicker, color, entrainment, Ganzfeld (evidence 1.2-3.8, epilepsy warnings)">
+              Visual Techniques
+            </option>
+            <option value="bsc-mixed" data-description="9 multimodal: audiovisual, vibroacoustic, VR, haptic (evidence 1.5-3.5)">
+              Multimodal Techniques
+            </option>
+            <option value="bsc-outcomes" data-description="30+ outcomes: cognitive, emotional, physiological, behavioral with measurement standards" selected>
+              Outcomes Taxonomy
+            </option>
           </optgroup>
-          <optgroup label="SSO (Sensory Stimulation)">
-            <option value="sso-ontology">SSO Ontology</option>
-            <option value="sso-extended">SSO Extended</option>
-            <option value="sso-initial">SSO Initial (with hierarchies)</option>
-            <option value="sso-updated">SSO Updated (with hierarchies)</option>
-          </optgroup>
-          <optgroup label="ONC (Neurosensory Care)">
-            <option value="onc-ontology">ONC Ontology (Attachment 2)</option>
-            <option value="onc-attachment">ONC Attachment (with hierarchies)</option>
-          </optgroup>
-          <optgroup label="HarmoniCare">
-            <option value="harmonicare-sso">HarmoniCare SSO</option>
-            <option value="harmonicare-sso-alt">HarmoniCare SSO Alt</option>
+          <optgroup label="━━━ Core & Legacy ━━━">
+            <option value="bsc-owl" data-description="Core classes (Project, Session, Technique, Outcome) + 11 safety/evidence properties">
+              BSC Core (OWL)
+            </option>
+            <option value="bsc-skos" data-description="SKOS concept schemes for neurosensory stimulation">
+              BSC Core (SKOS)
+            </option>
+            <option value="sso-ontology" data-description="External: Sensory Stimulation Ontology (legacy)">
+              SSO Ontology (legacy)
+            </option>
+            <option value="sso-extended" data-description="External: Extended SSO (legacy)">
+              SSO Extended (legacy)
+            </option>
+            <option value="sso-initial" data-description="External: SSO with hierarchies (legacy)">
+              SSO Initial (legacy)
+            </option>
+            <option value="sso-updated" data-description="External: Updated SSO (legacy)">
+              SSO Updated (legacy)
+            </option>
+            <option value="onc-ontology" data-description="External: Neurosensory Care Ontology (legacy)">
+              ONC Ontology (legacy)
+            </option>
+            <option value="onc-attachment" data-description="External: ONC with hierarchies (legacy)">
+              ONC Attachment (legacy)
+            </option>
+            <option value="harmonicare-sso" data-description="External: HarmoniCare SSO variant (legacy)">
+              HarmoniCare SSO (legacy)
+            </option>
+            <option value="harmonicare-sso-alt" data-description="External: HarmoniCare SSO alt (legacy)">
+              HarmoniCare SSO Alt (legacy)
+            </option>
           </optgroup>
         </select>
+        <div id="ontology-description" class="ontology-description" style="font-size: 0.85em; color: #666; margin-top: 4px; max-width: 600px;"></div>
         <select id="layout-selector" class="layout-selector">
           <option value="cose">Force-Directed (COSE)</option>
           <option value="circle">Circle</option>

@@ -488,6 +488,15 @@ export class MartigliState {
     osc.setConceptUri(uri);
     this._emit();
   }
+
+  renameOscillation(label, id = this.referenceId) {
+    const trimmed = typeof label === "string" ? label.trim() : "";
+    if (!trimmed) return;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.label = trimmed;
+    this._emit();
+  }
 }
 
 export class AudioEngine {

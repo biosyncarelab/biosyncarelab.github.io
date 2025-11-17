@@ -89,6 +89,7 @@
             <div class="martigli-dashboard-actions">
               <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add Oscillation</button>
             </div>
+            <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
           </article>
 
           <article class="neuro-card" id="dashboard-sensory-card">
@@ -153,8 +154,13 @@
             <label for="martigli-oscillation-select">Active Oscillation</label>
             <div class="martigli-oscillation-actions">
               <select id="martigli-oscillation-select"></select>
-              <button type="button" id="martigli-add" class="ghost tiny">Add Oscillation</button>
+              <div class="martigli-oscillation-buttons">
+                <button type="button" id="martigli-add" class="ghost tiny">Add</button>
+                <button type="button" id="martigli-rename" class="ghost tiny">Rename</button>
+                <button type="button" id="martigli-delete" class="ghost tiny">Delete</button>
+              </div>
             </div>
+            <p id="martigli-oscillation-status" class="muted-text small"></p>
           </div>
           <div class="martigli-card-grid">
             <div>

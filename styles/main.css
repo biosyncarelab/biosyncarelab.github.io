@@ -469,10 +469,18 @@ body.modal-open {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .martigli-oscillation-actions select {
   flex: 1;
+  min-width: 180px;
+}
+
+.martigli-oscillation-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .martigli-dashboard-actions {
