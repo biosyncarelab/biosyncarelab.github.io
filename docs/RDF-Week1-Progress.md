@@ -82,17 +82,30 @@ bsc:BinauralBeat
 
 ### Tasks
 1. ✅ Create `rdf/modules/visual.ttl` with:
-   - `bsc:VisualTechnique` base class
-   - `bsc:FlickerStimulation` (with serious photosensitive epilepsy warning)
-   - `bsc:ColorTherapy`
-   - `bsc:VisualEntrainment`
+   - ✅ `bsc:VisualTechnique` base class
+   - ✅ `bsc:FlickerStimulation` (with SERIOUS photosensitive epilepsy warning)
+   - ✅ `bsc:ColorTherapy`
+   - ✅ `bsc:VisualEntrainment`
+   - ✅ `bsc:StroboscopicStimulation` (high-intensity clinical variant)
+   - ✅ `bsc:SoftLightPulsing` (gentle relaxation variant)
+   - ✅ `bsc:GanzfeldStimulation` (sensory deprivation variant)
 
-2. Create `rdf/modules/mixed.ttl` with:
-   - `bsc:AudiovisualTechnique` (intersection class)
-   - Martigli breathing cue techniques
+2. ✅ Create `rdf/modules/mixed.ttl` with:
+   - ✅ `bsc:AudiovisualTechnique` (intersection class)
+   - ✅ `bsc:MartigliBreathingCue` technique
+   - ✅ `bsc:AudiovisualEntrainment` (AVE)
+   - ✅ `bsc:MindMachine` (commercial AVE devices)
+   - ✅ `bsc:SynestheticStimulation`
+   - ✅ `bsc:VibroacousticTherapy`
+   - ✅ `bsc:HapticEntrainment`
+   - ✅ `bsc:ImmersiveVRNeurostimulation`
 
-3. Create `rdf/modules/outcomes.ttl` with:
-   - Cognitive, emotional, physiological outcome taxonomies
+3. ✅ Create `rdf/modules/outcomes.ttl` with:
+   - ✅ Cognitive outcomes taxonomy (attention, memory, executive function, processing speed, cognitive flexibility)
+   - ✅ Emotional outcomes taxonomy (anxiety, mood, depression, emotional regulation, relaxation)
+   - ✅ Physiological outcomes taxonomy (brainwave entrainment, HRV, cortisol, blood pressure, respiratory rate)
+   - ✅ Behavioral outcomes taxonomy (sleep quality, physical activity, pain reduction)
+   - ✅ Measurement metadata properties (measurementType, measurementTool, validatedScale, typicalLatency)
 
 4. Add 3 expert validations to existing audio techniques (reach out to specialists)
 

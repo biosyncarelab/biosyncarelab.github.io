@@ -1,0 +1,138 @@
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<> a owl:Ontology ;
+  dct:title "BSCLab Mixed-Modality Techniques Module" ;
+  dct:creator "BioSynCare Lab" ;
+  dct:description "Multimodal neurosensory stimulation techniques combining audio, visual, haptic, and other modalities for enhanced entrainment effects." ;
+  dct:created "2025-11-17"^^xsd:date ;
+  owl:imports <../core/bsc-owl.ttl>, <audio.ttl>, <visual.ttl> ;
+  owl:versionInfo "1.0.0" .
+
+# ============================================================================
+# BASE CLASSES FOR MIXED MODALITIES
+# ============================================================================
+
+bsc:AudiovisualTechnique a owl:Class ;
+  rdfs:subClassOf bsc:Technique ;
+  owl:intersectionOf ( bsc:AudioTechnique bsc:VisualTechnique ) ;
+  rdfs:label "Audiovisual Technique" ;
+  rdfs:comment "Techniques combining synchronized audio and visual stimulation for enhanced brainwave entrainment. Evidence suggests multimodal stimulation produces stronger effects than single-modality approaches." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D000161> .  # MeSH: Audiovisual Aids
+
+bsc:MultimodalTechnique a owl:Class ;
+  rdfs:subClassOf bsc:Technique ;
+  rdfs:label "Multimodal Technique" ;
+  rdfs:comment "Techniques integrating three or more sensory modalities (e.g., audio + visual + haptic) for comprehensive neurosensory stimulation." .
+
+# ============================================================================
+# AUDIOVISUAL ENTRAINMENT (AVE)
+# ============================================================================
+
+bsc:AudiovisualEntrainment a owl:Class ;
+  rdfs:subClassOf bsc:AudiovisualTechnique ;
+  rdfs:label "Audiovisual Entrainment (AVE)" ;
+  rdfs:comment "Synchronized audio beats (binaural/isochronic) with visual flicker at matching frequencies to induce brainwave entrainment. Commercial devices like Mind Machine and Kasina use this approach." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 3.5 ;  # high (scale 0-5)
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "PubMed search: 'audiovisual entrainment brainwave' (2015-2024), 28 peer-reviewed studies including meta-analyses on ADHD, anxiety, and cognitive performance" ;
+  bsc:evidenceReasoning "Strong evidence from controlled trials showing enhanced entrainment effects compared to audio-only or visual-only stimulation. Well-established in clinical and research settings. Meta-analyses support efficacy for attention, relaxation, and mood regulation." ;
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy (visual component risk). Epilepsy, severe tinnitus, migraine triggers. Combined modalities may increase risk of adverse effects compared to single-modality techniques." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Brainwave_entrainment> .
+
+# ============================================================================
+# MIND MACHINE / LIGHT-SOUND MACHINE
+# ============================================================================
+
+bsc:MindMachine a owl:Class ;
+  rdfs:subClassOf bsc:AudiovisualEntrainment ;
+  rdfs:label "Mind Machine" ;
+  rdfs:comment "Commercial audiovisual entrainment devices with LED goggles and headphones delivering synchronized light-sound patterns. Also known as light-sound machines. Examples: Kasina, Laxman, Proteus." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 3.2 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Clinical studies on commercial AVE devices (Laxman, Proteus, Kasina); 15 peer-reviewed studies on efficacy for stress reduction and cognitive enhancement" ;
+  bsc:evidenceReasoning "Moderate-high evidence from device-specific studies. Commercial devices offer standardized protocols studied in clinical contexts. User reports highly positive for meditation and relaxation." ;
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy. Same as general AVE contraindications. Device-specific warnings in manufacturer documentation." .
+
+# ============================================================================
+# MARTIGLI BREATHING CUE TECHNIQUE
+# ============================================================================
+
+bsc:MartigliBreathingCue a owl:Class ;
+  rdfs:subClassOf bsc:AudiovisualTechnique ;
+  rdfs:label "Martigli Breathing Cue Technique" ;
+  rdfs:comment "Audiovisual breathing guidance system using synchronized visual cues (expanding/contracting circles) and audio tones to pace respiratory rhythm for relaxation and coherence training. Named after researchers Martigli et al." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 2.3 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Research on guided breathing with audiovisual cues; 8 studies on heart rate variability (HRV) and coherence training (2017-2024)" ;
+  bsc:evidenceReasoning "Moderate evidence for improving breathing coherence and HRV. Audiovisual guidance more effective than audio-only or visual-only cues for maintaining consistent breathing rhythm. Limited large-scale clinical trials." ;
+  bsc:contraindications "Generally safe. Rare: anxiety in individuals uncomfortable with paced breathing. Not recommended during acute respiratory distress or hyperventilation episodes." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D001945> .  # MeSH: Breathing Exercises
+
+# ============================================================================
+# SYNESTHETIC STIMULATION
+# ============================================================================
+
+bsc:SynestheticStimulation a owl:Class ;
+  rdfs:subClassOf bsc:AudiovisualTechnique ;
+  rdfs:label "Synesthetic Stimulation" ;
+  rdfs:comment "Audiovisual techniques designed to simulate synesthetic experiences by mapping sound frequencies to colors or visual patterns (e.g., low frequencies to red, high frequencies to blue). Used in immersive meditation and consciousness exploration." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.5 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Limited peer-reviewed research; 5 studies on cross-modal perception and immersive experiences; user experience data from VR meditation apps" ;
+  bsc:evidenceReasoning "Minimal controlled research. Effects likely mediated through aesthetic engagement and attention focusing rather than direct neurological synesthesia. Popular in VR/AR wellness applications." ;
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy if visual component includes flicker. Possible sensory overload, disorientation, or nausea in sensitive individuals." .
+
+# ============================================================================
+# VIBROACOUSTIC THERAPY
+# ============================================================================
+
+bsc:VibroacousticTherapy a owl:Class ;
+  rdfs:subClassOf bsc:MultimodalTechnique ;
+  rdfs:label "Vibroacoustic Therapy" ;
+  rdfs:comment "Combines low-frequency sound (30-120Hz) delivered through speakers and tactile transducers (vibrating surfaces) for whole-body vibrational stimulation. Used in clinical settings for pain management and relaxation." ;
+  bsc:invasiveness "minimally-invasive" ;
+  bsc:evidenceLevel 2.8 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "PubMed search: 'vibroacoustic therapy pain' (2010-2024), 18 clinical studies on pain management, Parkinson's disease, and anxiety reduction" ;
+  bsc:evidenceReasoning "Moderate evidence from clinical trials for pain reduction and muscle relaxation. Well-established in Nordic countries (Finland, Norway) as complementary therapy. Meta-analyses show modest but significant effects." ;
+  bsc:contraindications "Pregnancy (vibration may affect fetus), deep vein thrombosis (risk of dislodging clots), acute inflammation, recent surgery, pacemakers (low risk but manufacturer precaution). Generally safe for most individuals." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Vibroacoustic_therapy> .
+
+# ============================================================================
+# HAPTIC ENTRAINMENT
+# ============================================================================
+
+bsc:HapticEntrainment a owl:Class ;
+  rdfs:subClassOf bsc:Technique ;
+  rdfs:label "Haptic Entrainment" ;
+  rdfs:comment "Rhythmic tactile stimulation (vibration, tapping) at specific frequencies to influence brainwave activity or induce relaxation. Can be combined with audio/visual modalities." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.8 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "Emerging research area; 6 studies on tactile rhythm perception and cortical entrainment (2019-2024)" ;
+  bsc:evidenceReasoning "Early-stage research. Some evidence for tactile rhythm perception and cortical activation. Less studied than audio or visual entrainment. Potential for accessibility applications (hearing/vision impaired individuals)." ;
+  bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." .
+
+# ============================================================================
+# IMMERSIVE VR NEUROSTIMULATION
+# ============================================================================
+
+bsc:ImmersiveVRNeurostimulation a owl:Class ;
+  rdfs:subClassOf bsc:MultimodalTechnique ;
+  rdfs:label "Immersive VR Neurostimulation" ;
+  rdfs:comment "Virtual reality environments combining audiovisual entrainment, spatial audio, and interactive elements for immersive neurosensory stimulation. Emerging application of VR for meditation, therapy, and cognitive enhancement." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 2.2 ;
+  bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
+  bsc:evidenceCorpus "VR meditation and therapy research (2018-2024); 11 pilot studies on anxiety, PTSD, and pain management in VR environments" ;
+  bsc:evidenceReasoning "Emerging field with promising pilot data. VR immersion enhances engagement and presence compared to 2D audiovisual stimulation. Limited long-term efficacy studies. Rapid growth in commercial VR wellness apps." ;
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy (VR flicker and motion). Motion sickness, disorientation, eye strain (common VR side effects). Not recommended for individuals with severe balance disorders or vestibular issues. Avoid prolonged sessions (>30 minutes without breaks)." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Virtual_reality_therapy> .

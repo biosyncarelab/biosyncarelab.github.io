@@ -109,9 +109,7 @@ const ui = {
   messages: document.getElementById("messages"),
   dashboard: document.getElementById("dashboard"),
   sessionList: document.getElementById("session-list"),
-  presetList: document.getElementById("preset-list"),
   sessionStatus: document.getElementById("session-status"),
-  presetStatus: document.getElementById("preset-status"),
   authModeText: document.getElementById("auth-mode-text"),
   toggleAuthMode: document.getElementById("toggle-auth-mode"),
   modal: document.getElementById("detail-modal"),
@@ -122,6 +120,7 @@ const ui = {
   sessionApply: document.getElementById("session-apply"),
   sessionSave: document.getElementById("session-save"),
   sessionHint: document.getElementById("session-card-hint"),
+  martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
   modalMartigli: document.getElementById("modal-martigli"),
   modalClose: document.getElementById("modal-close"),
   martigliStart: document.getElementById("martigli-start"),
@@ -129,6 +128,12 @@ const ui = {
   martigliWaveform: document.getElementById("martigli-waveform"),
   martigliPreview: document.getElementById("martigli-preview"),
   martigliCanvas: document.getElementById("martigli-canvas"),
+  audioSensoryList: document.getElementById("audio-sensory-list"),
+  audioSensoryStatus: document.getElementById("audio-sensory-status"),
+  visualSensoryList: document.getElementById("visual-sensory-list"),
+  visualSensoryStatus: document.getElementById("visual-sensory-status"),
+  hapticSensoryList: document.getElementById("haptic-sensory-list"),
+  hapticSensoryStatus: document.getElementById("haptic-sensory-status"),
   audioTrackList: document.getElementById("audio-track-list"),
   audioTrackHint: document.getElementById("audio-track-hint"),
   videoTrackList: document.getElementById("video-track-list"),
@@ -138,6 +143,34 @@ const ui = {
   structureSection: document.getElementById("structure-section"),
   structureSummary: document.getElementById("structure-summary"),
   structureList: document.getElementById("structure-list"),
+};
+
+const defaultDashboardCopy = {
+  martigliPreview: ui.martigliDashboardPreview?.textContent ?? "",
+  audioSensoryStatus: ui.audioSensoryStatus?.textContent ?? "",
+  visualSensoryStatus: ui.visualSensoryStatus?.textContent ?? "",
+  hapticSensoryStatus: ui.hapticSensoryStatus?.textContent ?? "",
+};
+
+const sensoryPanels = {
+  audio: {
+    label: "audio",
+    list: ui.audioSensoryList,
+    status: ui.audioSensoryStatus,
+    defaultStatus: defaultDashboardCopy.audioSensoryStatus,
+  },
+  visual: {
+    label: "visual",
+    list: ui.visualSensoryList,
+    status: ui.visualSensoryStatus,
+    defaultStatus: defaultDashboardCopy.visualSensoryStatus,
+  },
+  haptic: {
+    label: "haptic",
+    list: ui.hapticSensoryList,
+    status: ui.hapticSensoryStatus,
+    defaultStatus: defaultDashboardCopy.hapticSensoryStatus,
+  },
 };
 
 const logInteraction = (entry) => {
@@ -176,7 +209,8 @@ let isBusy = false;
 let isFetchingDashboard = false;
 const dashboardState = {
   sessions: [],
-  presets: [],
+  activeSessionId: null,
+  activeSessionLabel: null,
 };
 const kernel = new BSCLabKernel({ onInteraction: logInteraction });
 kernel.init();
@@ -293,6 +327,29 @@ const clearList = (list) => {
     list.removeChild(list.firstChild);
   }
 };
+
+const resetSensoryPanels = () => {
+  Object.values(sensoryPanels).forEach((panel) => {
+    if (panel.list) {
+      clearList(panel.list);
+    }
+    if (panel.status) {
+      panel.status.textContent = panel.defaultStatus;
+    }
+  });
+};
+
+const resetDashboardContext = () => {
+  dashboardState.activeSessionId = null;
+  dashboardState.activeSessionLabel = null;
+  resetSensoryPanels();
+  if (ui.martigliDashboardPreview) {
+    ui.martigliDashboardPreview.textContent = defaultDashboardCopy.martigliPreview;
+  }
+};
+
+const formatPanelLabel = (label = "") =>
+  label.length ? label.charAt(0).toUpperCase() + label.slice(1) : "";
 
 const getTrackCount = (entry) =>
   entry.trackCount ?? entry.voices?.length ?? entry.tracks?.length ?? 0;
@@ -482,22 +539,14 @@ const loadDashboardData = async () => {
   isFetchingDashboard = true;
   setDashboardVisibility(true);
   ui.sessionStatus.textContent = "Loading sessions…";
-  ui.presetStatus.textContent = "Loading presets…";
   try {
-    const [sessionSnap, presetSnap] = await Promise.all([
-      getDocs(collection(db, "sessions")),
-      getDocs(collection(db, "presets")),
-    ]);
+    const sessionSnap = await getDocs(collection(db, "sessions"));
     const sessions = sessionSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    const presets = presetSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     dashboardState.sessions = sessions;
-    dashboardState.presets = presets;
     renderDashboardList(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.", "session");
-    renderDashboardList(ui.presetList, ui.presetStatus, presets, "No presets found.", "preset");
   } catch (err) {
     console.error("Dashboard load failed", err);
     ui.sessionStatus.textContent = "Unable to load sessions.";
-    ui.presetStatus.textContent = "Unable to load presets.";
   } finally {
     isFetchingDashboard = false;
   }
@@ -640,11 +689,20 @@ const copyToClipboard = async (text) => {
   return false;
 };
 
+const setActiveSessionContext = (record, kind) => {
+  if (kind !== "session") return;
+  dashboardState.activeSessionId = record.id ?? null;
+  dashboardState.activeSessionLabel = record.label ?? record.name ?? record.id ?? null;
+  renderSensoryPanelsForRecord(record, kind);
+  updateMartigliPreview(martigliState.snapshot());
+};
+
 const handleSessionApply = () => {
   const record = ensureSessionTarget();
   if (!record) return;
   const martigliApplied = applyMartigliFromRecord(record);
   if (martigliApplied) {
+    setActiveSessionContext(record, "session");
     setMessage("Martigli oscillations synced from session. Audio/video presets will follow once editable.", "success");
   }
 };
@@ -652,7 +710,7 @@ const handleSessionApply = () => {
 const handleSessionSave = async () => {
   const contextRecord = activeModalData ?? null;
   if (!contextRecord) {
-    setMessage("Open a preset or session first.", "info");
+    setMessage("Open a session first.", "info");
     return;
   }
   const draft = collectSessionDraft(contextRecord);
@@ -760,6 +818,82 @@ const buildTrackCard = (track, record, kind, index) => {
   }
   card.appendChild(actions);
   return card;
+};
+
+const createSensoryListItem = (track, record, kind, index, panelLabel) => {
+  const item = document.createElement("li");
+  item.className = "sensory-item";
+  const head = document.createElement("div");
+  head.className = "sensory-item-head";
+  const title = document.createElement("span");
+  title.className = "sensory-item-title";
+  title.textContent = track.label ?? `Track ${index + 1}`;
+  const hint = document.createElement("span");
+  hint.className = "muted-text small";
+  hint.textContent = track.presetId
+    ? `Preset · ${track.presetId}`
+    : formatPanelLabel(panelLabel);
+  head.appendChild(title);
+  head.appendChild(hint);
+  item.appendChild(head);
+
+  const summary = document.createElement("p");
+  summary.className = "muted-text small";
+  summary.textContent = summariseTrackParams(track.params ?? {});
+  item.appendChild(summary);
+
+  const previewButton = createTrackPreviewButton(track, { record, kind, index });
+  if (previewButton) {
+    previewButton.classList.add("tiny");
+    previewButton.classList.remove("small");
+    const actions = document.createElement("div");
+    actions.className = "sensory-item-actions";
+    actions.appendChild(previewButton);
+    item.appendChild(actions);
+  }
+
+  return item;
+};
+
+const updateSensoryPanel = (panelKey, entries, record, kind) => {
+  const panel = sensoryPanels[panelKey];
+  if (!panel || !panel.list || !panel.status) return;
+  clearList(panel.list);
+  if (!entries.length) {
+    panel.status.textContent = `No ${panel.label} tracks stored yet.`;
+    return;
+  }
+  const plural = entries.length === 1 ? "" : "s";
+  panel.status.textContent = `${entries.length} ${panel.label} track${plural}`;
+  entries.forEach(({ track, index }) => {
+    panel.list.appendChild(createSensoryListItem(track, record, kind, index, panel.label));
+  });
+};
+
+const renderSensoryPanelsForRecord = (record, kind) => {
+  if (kind !== "session") {
+    resetSensoryPanels();
+    return;
+  }
+  const tracks = record.voices ?? record.tracks ?? [];
+  const buckets = {
+    audio: [],
+    visual: [],
+    haptic: [],
+  };
+  tracks.forEach((track, index) => {
+    const modality = detectTrackModality(track);
+    if (modality === "video") {
+      buckets.visual.push({ track, index });
+    } else if (modality === "haptics") {
+      buckets.haptic.push({ track, index });
+    } else {
+      buckets.audio.push({ track, index });
+    }
+  });
+  updateSensoryPanel("audio", buckets.audio, record, kind);
+  updateSensoryPanel("visual", buckets.visual, record, kind);
+  updateSensoryPanel("haptic", buckets.haptic, record, kind);
 };
 
 const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
@@ -880,6 +1014,7 @@ function openDetailModal(record, kind) {
   }
   renderModalMeta(record, normalizedKind);
   renderModalTrackSections(record, normalizedKind);
+  renderSensoryPanelsForRecord(record, normalizedKind);
   renderMartigliParams(record);
   renderStructurePreview(record);
   activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
@@ -902,10 +1037,23 @@ function openDetailModal(record, kind) {
 }
 
 const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
-  if (!ui.martigliPreview || !snapshot) return;
+  if (!snapshot) return;
   const delta = snapshot.endPeriod - snapshot.startPeriod;
   const direction = delta === 0 ? "steady" : delta > 0 ? "slows" : "quickens";
-  ui.martigliPreview.textContent = `Breath ${direction} from ${snapshot.startPeriod}s to ${snapshot.endPeriod}s on a ${snapshot.waveform} wave.`;
+  const summary = `Breath ${direction} from ${snapshot.startPeriod}s to ${snapshot.endPeriod}s on a ${snapshot.waveform} wave.`;
+  if (ui.martigliPreview) {
+    ui.martigliPreview.textContent = summary;
+  }
+  if (ui.martigliDashboardPreview) {
+    if (dashboardState.activeSessionId) {
+      const prefix = dashboardState.activeSessionLabel
+        ? `${dashboardState.activeSessionLabel}: `
+        : "";
+      ui.martigliDashboardPreview.textContent = `${prefix}${summary}`;
+    } else {
+      ui.martigliDashboardPreview.textContent = defaultDashboardCopy.martigliPreview;
+    }
+  }
 };
 
 const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
@@ -950,9 +1098,8 @@ const updateAuthState = (user) => {
     refreshControls();
     setDashboardVisibility(false);
     clearList(ui.sessionList);
-    clearList(ui.presetList);
     if (ui.sessionStatus) ui.sessionStatus.textContent = "Sign in to load sessions.";
-    if (ui.presetStatus) ui.presetStatus.textContent = "Sign in to load presets.";
+    resetDashboardContext();
     closeDetailModal();
     return;
   }
@@ -1082,6 +1229,7 @@ martigliState.subscribe((snapshot) => {
   syncMartigliInputs(snapshot);
   updateMartigliPreview(snapshot);
 });
+updateMartigliPreview(martigliState.snapshot());
 
 if (ui.modalOverlay) {
   ui.modalOverlay.addEventListener("click", closeDetailModal);

@@ -53,28 +53,70 @@
       <section id="messages" aria-live="polite"></section>
 
       <section id="dashboard" class="auth-section dashboard hidden" aria-live="polite">
-        <div class="dashboard-group">
-          <div class="dashboard-head">
-            <h2>Seeded Sessions</h2>
-            <p id="session-status" class="muted-text">Sign in to load sessions.</p>
-          </div>
-          <ul id="session-list"></ul>
-        </div>
+        <div class="neuro-grid">
+          <article class="neuro-card" id="dashboard-session-card">
+            <div class="card-headline">
+              <div>
+                <h2>Sessions</h2>
+                <p id="session-status" class="muted-text">Sign in to load sessions.</p>
+              </div>
+              <div class="session-actions">
+                <button type="button" id="session-apply" class="ghost tiny">Apply Session</button>
+                <button type="button" id="session-save" class="ghost tiny">Save Current State</button>
+              </div>
+            </div>
+            <p id="session-card-hint" class="muted-text small">
+              Pick a record to hydrate Martigli and sensory controls.
+            </p>
+            <ul id="session-list" class="stack-list"></ul>
+            <a class="ghost small" href="nso-navigator.html">Open NSO Navigator</a>
+          </article>
 
-        <div class="dashboard-group">
-          <div class="dashboard-head">
-            <h2>Seeded Presets</h2>
-            <p id="preset-status" class="muted-text">Sign in to load presets.</p>
-          </div>
-          <ul id="preset-list"></ul>
-        </div>
+          <article class="neuro-card" id="dashboard-martigli-card">
+            <div class="card-headline">
+              <div>
+                <h2>Martigli / Breathing Oscillations</h2>
+                <p id="martigli-dashboard-preview" class="muted-text">
+                  Live Martigli widget syncs with your current dashboard session.
+                </p>
+              </div>
+            </div>
+            <p class="muted-text small">
+              Adjustments happen in the detail modal; this snapshot mirrors the live oscillation window.
+            </p>
+          </article>
 
-        <div class="dashboard-group">
-          <div class="dashboard-head">
-            <h2>NSO Navigator</h2>
-            <p class="muted-text">Browse the ontology graph and annotations.</p>
-          </div>
-          <a class="primary" href="nso-navigator.html">Open NSO Navigator</a>
+          <article class="neuro-card" id="dashboard-sensory-card">
+            <div class="card-headline">
+              <h2>Sensory Controls</h2>
+              <p class="muted-text small">
+                Audio, visual, and haptic tracks sourced from the selected session.
+              </p>
+            </div>
+            <div class="sensory-grid">
+              <section class="sensory-panel">
+                <div class="section-headline">
+                  <h3>Audio Tracks</h3>
+                  <p id="audio-sensory-status" class="muted-text">Select a session to preview audio layers.</p>
+                </div>
+                <ul id="audio-sensory-list" class="sensory-list"></ul>
+              </section>
+              <section class="sensory-panel">
+                <div class="section-headline">
+                  <h3>Visual Tracks</h3>
+                  <p id="visual-sensory-status" class="muted-text">Waiting for a session with video cues.</p>
+                </div>
+                <ul id="visual-sensory-list" class="sensory-list"></ul>
+              </section>
+              <section class="sensory-panel">
+                <div class="section-headline">
+                  <h3>Haptic Tracks</h3>
+                  <p id="haptic-sensory-status" class="muted-text">Waiting for a session with haptic cues.</p>
+                </div>
+                <ul id="haptic-sensory-list" class="sensory-list"></ul>
+              </section>
+            </div>
+          </article>
         </div>
       </section>
     </main>
@@ -90,23 +132,9 @@
           <button type="button" id="modal-close" class="ghost small" aria-label="Close dialog">Close</button>
         </header>
 
-        <section class="modal-card" id="session-card" aria-labelledby="session-card-label">
-          <div class="section-head">
-            <div>
-              <h4 id="session-card-label">Session</h4>
-              <p id="session-card-hint" class="muted-text">Choose or save sessions to set all modalities.</p>
-            </div>
-            <div class="session-actions">
-              <button type="button" id="session-apply" class="ghost tiny">Apply Session</button>
-              <button type="button" id="session-save" class="ghost tiny">Save Current State</button>
-            </div>
-          </div>
+        <section aria-labelledby="modal-meta-label">
+          <h4 id="modal-meta-label">Summary</h4>
           <dl id="modal-meta" class="modal-meta"></dl>
-          <section aria-labelledby="structure-label" id="structure-section" class="modal-subsection">
-            <h5 id="structure-label">Change-Ringing Structures</h5>
-            <p id="structure-summary" class="muted-text"></p>
-            <ul id="structure-list" class="structure-list"></ul>
-          </section>
         </section>
 
         <section class="modal-card" id="martigli-card" aria-labelledby="martigli-card-label">
@@ -179,6 +207,16 @@
             </div>
           </div>
           <ul id="haptic-track-list" class="track-list"></ul>
+        </section>
+
+        <section class="modal-card" id="structure-section" aria-labelledby="structure-label">
+          <div class="section-head">
+            <div>
+              <h4 id="structure-label">Change-Ringing Structures</h4>
+              <p id="structure-summary" class="muted-text"></p>
+            </div>
+          </div>
+          <ul id="structure-list" class="structure-list"></ul>
         </section>
       </div>
     </section>

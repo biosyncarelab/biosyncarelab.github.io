@@ -30,6 +30,7 @@ test.describe("Auth shell", () => {
     await expect(dashboard).toBeVisible();
     await expect(page.locator("#session-list")).toContainText("Community Alpha Session");
     await expect(page.locator("#preset-list")).toContainText("Pure sine");
+    await expect(page.locator("#preset-list")).toContainText("Binaural beat");
 
     const signOutButton = page.getByRole("button", { name: "Sign out" });
     await expect(signOutButton).toBeEnabled();

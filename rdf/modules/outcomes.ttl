@@ -1,0 +1,263 @@
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+
+<> a owl:Ontology ;
+  dct:title "BSCLab Outcomes Taxonomy Module" ;
+  dct:creator "BioSynCare Lab" ;
+  dct:description "Comprehensive taxonomy of neurosensory stimulation outcomes across cognitive, emotional, physiological, and behavioral dimensions with measurement standards." ;
+  dct:created "2025-11-17"^^xsd:date ;
+  owl:imports <../core/bsc-owl.ttl> ;
+  owl:versionInfo "1.0.0" .
+
+# ============================================================================
+# OUTCOME TAXONOMY STRUCTURE
+# ============================================================================
+
+bsc:Outcome a owl:Class ;
+  rdfs:label "Outcome" ;
+  rdfs:comment "Measurable result or effect of a neurosensory stimulation session or protocol. Outcomes are categorized by domain (cognitive, emotional, physiological, behavioral) and measurement type (subjective, objective, mixed)." .
+
+# ============================================================================
+# TOP-LEVEL OUTCOME DOMAINS
+# ============================================================================
+
+bsc:CognitiveOutcome a owl:Class ;
+  rdfs:subClassOf bsc:Outcome ;
+  rdfs:label "Cognitive Outcome" ;
+  rdfs:comment "Outcomes related to mental processes including attention, memory, executive function, processing speed, and cognitive flexibility." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D003071> .  # MeSH: Cognition
+
+bsc:EmotionalOutcome a owl:Class ;
+  rdfs:subClassOf bsc:Outcome ;
+  rdfs:label "Emotional Outcome" ;
+  rdfs:comment "Outcomes related to affective states, mood, emotional regulation, and psychological well-being." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D004644> .  # MeSH: Emotions
+
+bsc:PhysiologicalOutcome a owl:Class ;
+  rdfs:subClassOf bsc:Outcome ;
+  rdfs:label "Physiological Outcome" ;
+  rdfs:comment "Outcomes related to measurable biological processes including heart rate variability, brainwave patterns, cortisol levels, and autonomic nervous system activity." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D010827> .  # MeSH: Physiology
+
+bsc:BehavioralOutcome a owl:Class ;
+  rdfs:subClassOf bsc:Outcome ;
+  rdfs:label "Behavioral Outcome" ;
+  rdfs:comment "Outcomes related to observable actions and behavioral patterns including sleep quality, activity levels, and habit formation." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D001519> .  # MeSH: Behavior
+
+# ============================================================================
+# COGNITIVE OUTCOMES
+# ============================================================================
+
+bsc:AttentionEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:CognitiveOutcome ;
+  rdfs:label "Attention Enhancement" ;
+  rdfs:comment "Improved ability to focus, sustain attention, and resist distraction. Measured via continuous performance tests (CPT), attention span assessments, or subjective self-reports." ;
+  skos:altLabel "Focus Improvement", "Concentration Enhancement" .
+
+bsc:MemoryEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:CognitiveOutcome ;
+  rdfs:label "Memory Enhancement" ;
+  rdfs:comment "Improved working memory, short-term memory, or long-term memory consolidation. Measured via recall tests, recognition tasks, or memory span assessments." ;
+  skos:narrower bsc:WorkingMemoryEnhancement, bsc:LongTermMemoryEnhancement .
+
+bsc:WorkingMemoryEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:MemoryEnhancement ;
+  rdfs:label "Working Memory Enhancement" ;
+  rdfs:comment "Improved capacity to hold and manipulate information in short-term memory. Measured via N-back tasks, digit span tests, or operation span tasks." .
+
+bsc:LongTermMemoryEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:MemoryEnhancement ;
+  rdfs:label "Long-Term Memory Enhancement" ;
+  rdfs:comment "Improved consolidation and retrieval of long-term memories. Measured via delayed recall tests, recognition memory tasks, or autobiographical memory assessments." .
+
+bsc:ExecutiveFunctionEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:CognitiveOutcome ;
+  rdfs:label "Executive Function Enhancement" ;
+  rdfs:comment "Improved planning, decision-making, cognitive flexibility, and inhibitory control. Measured via Stroop test, Wisconsin Card Sorting Test, or Trail Making Test." .
+
+bsc:ProcessingSpeedEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:CognitiveOutcome ;
+  rdfs:label "Processing Speed Enhancement" ;
+  rdfs:comment "Faster information processing and reaction times. Measured via reaction time tasks, symbol coding tests, or processing speed indices." .
+
+bsc:CognitiveFlexibilityEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:CognitiveOutcome ;
+  rdfs:label "Cognitive Flexibility Enhancement" ;
+  rdfs:comment "Improved ability to switch between tasks, adapt to changing rules, and think creatively. Measured via task-switching paradigms or set-shifting tests." .
+
+# ============================================================================
+# EMOTIONAL OUTCOMES
+# ============================================================================
+
+bsc:AnxietyReduction a owl:Class ;
+  rdfs:subClassOf bsc:EmotionalOutcome ;
+  rdfs:label "Anxiety Reduction" ;
+  rdfs:comment "Decreased anxiety symptoms, worry, or nervousness. Measured via State-Trait Anxiety Inventory (STAI), Generalized Anxiety Disorder (GAD-7) scale, or heart rate variability (HRV) as physiological proxy." ;
+  skos:altLabel "Stress Reduction", "Worry Reduction" .
+
+bsc:MoodEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:EmotionalOutcome ;
+  rdfs:label "Mood Enhancement" ;
+  rdfs:comment "Improved overall mood, positive affect, or subjective well-being. Measured via Positive and Negative Affect Schedule (PANAS), Profile of Mood States (POMS), or visual analog mood scales." .
+
+bsc:DepressionReduction a owl:Class ;
+  rdfs:subClassOf bsc:EmotionalOutcome ;
+  rdfs:label "Depression Reduction" ;
+  rdfs:comment "Decreased depressive symptoms, anhedonia, or negative affect. Measured via Beck Depression Inventory (BDI), Patient Health Questionnaire (PHQ-9), or clinical assessment." ;
+  skos:related bsc:MoodEnhancement .
+
+bsc:EmotionalRegulationImprovement a owl:Class ;
+  rdfs:subClassOf bsc:EmotionalOutcome ;
+  rdfs:label "Emotional Regulation Improvement" ;
+  rdfs:comment "Enhanced ability to manage, modulate, and respond to emotional experiences adaptively. Measured via Difficulties in Emotion Regulation Scale (DERS) or physiological measures (HRV coherence)." .
+
+bsc:RelaxationResponse a owl:Class ;
+  rdfs:subClassOf bsc:EmotionalOutcome ;
+  rdfs:label "Relaxation Response" ;
+  rdfs:comment "Immediate relaxation state characterized by decreased arousal and subjective calm. Measured via subjective relaxation scales, heart rate, or muscle tension (EMG)." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Relaxation_response> .
+
+# ============================================================================
+# PHYSIOLOGICAL OUTCOMES
+# ============================================================================
+
+bsc:BrainwaveEntrainment a owl:Class ;
+  rdfs:subClassOf bsc:PhysiologicalOutcome ;
+  rdfs:label "Brainwave Entrainment" ;
+  rdfs:comment "Synchronization of brainwave activity to external stimulus frequency. Measured via EEG spectral analysis showing increased power in target frequency bands (delta, theta, alpha, beta, gamma)." ;
+  skos:narrower bsc:AlphaEnhancement, bsc:ThetaEnhancement, bsc:BetaEnhancement, bsc:GammaEnhancement, bsc:DeltaEnhancement .
+
+bsc:AlphaEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:BrainwaveEntrainment ;
+  rdfs:label "Alpha Enhancement" ;
+  rdfs:comment "Increased alpha wave activity (8-12Hz) associated with relaxed alertness and meditative states. Measured via EEG alpha power or alpha/theta ratio." .
+
+bsc:ThetaEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:BrainwaveEntrainment ;
+  rdfs:label "Theta Enhancement" ;
+  rdfs:comment "Increased theta wave activity (4-8Hz) associated with deep meditation, creativity, and light sleep states. Measured via EEG theta power." .
+
+bsc:BetaEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:BrainwaveEntrainment ;
+  rdfs:label "Beta Enhancement" ;
+  rdfs:comment "Increased beta wave activity (12-30Hz) associated with active thinking, focus, and alertness. Measured via EEG beta power." .
+
+bsc:GammaEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:BrainwaveEntrainment ;
+  rdfs:label "Gamma Enhancement" ;
+  rdfs:comment "Increased gamma wave activity (30-100Hz) associated with high-level cognitive processing, perception, and consciousness. Measured via EEG gamma power." .
+
+bsc:DeltaEnhancement a owl:Class ;
+  rdfs:subClassOf bsc:BrainwaveEntrainment ;
+  rdfs:label "Delta Enhancement" ;
+  rdfs:comment "Increased delta wave activity (0.5-4Hz) associated with deep sleep and restorative processes. Measured via EEG delta power." .
+
+bsc:HeartRateVariabilityImprovement a owl:Class ;
+  rdfs:subClassOf bsc:PhysiologicalOutcome ;
+  rdfs:label "Heart Rate Variability (HRV) Improvement" ;
+  rdfs:comment "Increased HRV indicating enhanced autonomic nervous system flexibility and resilience. Measured via RMSSD, SDNN, or coherence ratio from heart rate monitors or ECG." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Heart_rate_variability> .
+
+bsc:CortisolReduction a owl:Class ;
+  rdfs:subClassOf bsc:PhysiologicalOutcome ;
+  rdfs:label "Cortisol Reduction" ;
+  rdfs:comment "Decreased cortisol levels indicating reduced physiological stress response. Measured via salivary cortisol assays." .
+
+bsc:BloodPressureReduction a owl:Class ;
+  rdfs:subClassOf bsc:PhysiologicalOutcome ;
+  rdfs:label "Blood Pressure Reduction" ;
+  rdfs:comment "Decreased systolic and/or diastolic blood pressure. Measured via sphygmomanometer or automated blood pressure monitors." .
+
+bsc:RespiratoryRateReduction a owl:Class ;
+  rdfs:subClassOf bsc:PhysiologicalOutcome ;
+  rdfs:label "Respiratory Rate Reduction" ;
+  rdfs:comment "Slower, deeper breathing patterns associated with relaxation and parasympathetic activation. Measured via respiratory rate monitors or breath counting." .
+
+# ============================================================================
+# BEHAVIORAL OUTCOMES
+# ============================================================================
+
+bsc:SleepQualityImprovement a owl:Class ;
+  rdfs:subClassOf bsc:BehavioralOutcome ;
+  rdfs:label "Sleep Quality Improvement" ;
+  rdfs:comment "Enhanced subjective sleep quality, reduced sleep latency, or increased sleep duration. Measured via Pittsburgh Sleep Quality Index (PSQI), sleep diaries, or actigraphy." ;
+  skos:narrower bsc:SleepLatencyReduction, bsc:SleepDurationIncrease .
+
+bsc:SleepLatencyReduction a owl:Class ;
+  rdfs:subClassOf bsc:SleepQualityImprovement ;
+  rdfs:label "Sleep Latency Reduction" ;
+  rdfs:comment "Faster transition from wakefulness to sleep. Measured via sleep diaries, actigraphy, or polysomnography." .
+
+bsc:SleepDurationIncrease a owl:Class ;
+  rdfs:subClassOf bsc:SleepQualityImprovement ;
+  rdfs:label "Sleep Duration Increase" ;
+  rdfs:comment "Longer total sleep time. Measured via sleep diaries, actigraphy, or polysomnography." .
+
+bsc:PhysicalActivityIncrease a owl:Class ;
+  rdfs:subClassOf bsc:BehavioralOutcome ;
+  rdfs:label "Physical Activity Increase" ;
+  rdfs:comment "Increased physical activity levels, movement, or exercise frequency. Measured via activity trackers, pedometers, or self-report questionnaires." .
+
+bsc:PainReduction a owl:Class ;
+  rdfs:subClassOf bsc:BehavioralOutcome ;
+  rdfs:label "Pain Reduction" ;
+  rdfs:comment "Decreased subjective pain intensity or pain-related interference. Measured via Visual Analog Scale (VAS), Numeric Rating Scale (NRS), or McGill Pain Questionnaire." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D010146> .  # MeSH: Pain
+
+# ============================================================================
+# MEASUREMENT PROPERTIES
+# ============================================================================
+
+bsc:measurementType a owl:DatatypeProperty ;
+  rdfs:label "measurement type" ;
+  rdfs:comment "Type of measurement used to assess outcome: subjective (self-report), objective (physiological/behavioral), or mixed" ;
+  rdfs:domain bsc:Outcome ;
+  rdfs:range xsd:string .
+
+bsc:measurementTool a owl:DatatypeProperty ;
+  rdfs:label "measurement tool" ;
+  rdfs:comment "Specific assessment tool, questionnaire, or device used to measure the outcome (e.g., 'STAI', 'EEG', 'PSQI')" ;
+  rdfs:domain bsc:Outcome ;
+  rdfs:range xsd:string .
+
+bsc:validatedScale a owl:DatatypeProperty ;
+  rdfs:label "validated scale" ;
+  rdfs:comment "Whether the measurement uses a psychometrically validated scale (true/false)" ;
+  rdfs:domain bsc:Outcome ;
+  rdfs:range xsd:boolean .
+
+bsc:typicalLatency a owl:DatatypeProperty ;
+  rdfs:label "typical latency" ;
+  rdfs:comment "Typical time delay (in days) between intervention and observable outcome manifestation" ;
+  rdfs:domain bsc:Outcome ;
+  rdfs:range xsd:decimal .
+
+# ============================================================================
+# EXAMPLE OUTCOME ANNOTATIONS (demonstrating metadata usage)
+# ============================================================================
+
+bsc:AttentionEnhancement
+  bsc:measurementType "mixed" ;
+  bsc:measurementTool "Continuous Performance Test (CPT), self-report attention scales" ;
+  bsc:validatedScale true ;
+  bsc:typicalLatency 0.0 ;  # immediate to same-day effects
+  rdfs:comment "Example: Can be measured objectively via CPT reaction times or subjectively via self-report. Typical latency: immediate to same-day effects." .
+
+bsc:AnxietyReduction
+  bsc:measurementType "mixed" ;
+  bsc:measurementTool "State-Trait Anxiety Inventory (STAI), Heart Rate Variability (HRV)" ;
+  bsc:validatedScale true ;
+  bsc:typicalLatency 0.0 ;  # immediate effects
+  rdfs:comment "Example: Measured via validated STAI questionnaire (subjective) or HRV coherence (objective). Typical latency: immediate to same-day effects." .
+
+bsc:SleepQualityImprovement
+  bsc:measurementType "mixed" ;
+  bsc:measurementTool "Pittsburgh Sleep Quality Index (PSQI), actigraphy" ;
+  bsc:validatedScale true ;
+  bsc:typicalLatency 1.0 ;  # next-day assessment
+  rdfs:comment "Example: Measured via PSQI (subjective) or actigraphy sleep metrics (objective). Typical latency: next-day assessment required." .

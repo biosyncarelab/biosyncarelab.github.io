@@ -31,7 +31,7 @@ npm test
 
 `npm test` wraps the Playwright run inside `firebase emulators:exec --only auth,firestore`, so the suite can create/delete users and read/write sample documents without touching production. While the site is served from `localhost`/`127.0.0.1`, the UI auto-connects to the Auth emulator, disables Google sign-in (unsupported there), and surfaces "Using local Auth emulator" in the status bar. Flip the inline "Use production auth" button in the Google card (or run `localStorage.setItem('bsc.useProdAuth','1')` in DevTools) if you need to talk to the live project.
 
-`test:structures` now runs automatically before Playwright to verify the static sequence exports and loader helpers.
+`test:structures` and `test:rdf` now run automatically before Playwright to verify the static sequence exports, loader helpers, and RDF syntax/quad counts.
 
 Each test run seeds the Firestore emulator with:
 - `sessions/community-default-alpha`: canonical Martigli/binaural blend for dashboards to consume.
