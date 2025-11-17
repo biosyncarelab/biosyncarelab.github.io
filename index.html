@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BSCLab · Sign In</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body>
+    <main class="auth-card">
+      <header>
+        <h1>BioSynCare Lab</h1>
+        <p>Sign in to sync presets, sessions, and telemetry.</p>
+      </header>
+
+      <section id="auth-status" aria-live="polite" class="auth-status">
+        <p>Status: <span id="auth-state">Checking…</span></p>
+        <p id="user-email"></p>
+        <p id="user-id"></p>
+      </section>
+
+      <section class="auth-section">
+        <h2>Google Sign-in</h2>
+        <button id="google-sign-in" class="primary">Continue with Google</button>
+        <button id="google-sign-out" class="ghost" disabled>Sign out</button>
+      </section>
+
+      <section class="auth-section">
+        <h2>Email Sign-in</h2>
+        <form id="email-form">
+          <label>
+            Email
+            <input type="email" id="email" required autocomplete="email" />
+          </label>
+          <label>
+            Password
+            <input type="password" id="password" required minlength="6" autocomplete="current-password" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Sign in</button>
+            <button type="button" id="email-sign-up" class="ghost">Create account</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="messages" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="scripts/auth.js"></script>
+  </body>
+</html>
