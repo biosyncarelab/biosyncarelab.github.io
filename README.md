@@ -39,6 +39,14 @@ Each test run seeds the Firestore emulator with:
 
 Need the data without running the suite? Start the emulators in another terminal and execute `npm run seed:firestore`.
 
+Prefer Make targets whenever possible—each essential workflow is wired up for consistency:
+
+- `make firebase-login` → authenticated Firebase CLI session (set `FIREBASE_LOGIN_FLAGS="--reauth"` if needed).
+- `make seed-local` → runs the emulator seeding script (`npm run seed:firestore`).
+- `make test` / `make test-structures` → wrappers around `npm test` and `npm run test:structures`.
+- `make seed-prod` → production seeding helper (see below for env vars).
+- `make deploy-firestore-rules` → pushes `firestore.rules` to the project in `BSC_FIREBASE_PROJECT`.
+
 Need to prime the live Firestore project? Use the guarded script:
 
 ```bash
@@ -127,9 +135,11 @@ A session preset may have this data structure, for example:
   },
   "tags": [],
   "updatedAt": "16 novembre 2025 alle ore 23:41:15 UTC+1",
-  "version": 1,
-  "visibility": "private",
+  ```
+  make deploy-firestore-rules
+  ```
 
+  That Make target wraps `firebase deploy --only firestore:rules --project $(BSC_FIREBASE_PROJECT)` so you never forget which project you are touching. Run `make firebase-login` beforehand (once per machine or after switching Google accounts). Trigger it again whenever `firestore.rules` changes or you hit `Missing or insufficient permissions` in the UI despite permissive local rules.
   "voices": [
     {
       "durationSec": null,

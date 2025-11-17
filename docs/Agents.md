@@ -4,6 +4,7 @@ These briefs align with the principles in `README.md`: keep diffs small, define 
 
 ## Shared Guardrails
 - Always validate that new work preserves existing functionality; rerun relevant checks after each change.
+- Prefer Make targets for essential workflows (`make firebase-login`, `make seed-local`, `make deploy-firestore-rules`, `make test`, etc.) so commands stay reproducible across agents.
 - Prefer simplifying or deleting code over adding complexity; document why additions are unavoidable.
 - Track line counts and file additions in every PR; if the diff grows, explain the payback plan (e.g., forthcoming deletions, consolidation).
 - Keep specs (`docs/Features.md`, clarifications log) in sync with implementation decisions.

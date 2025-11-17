@@ -1,4 +1,4 @@
-.PHONY := up aup serve seed-prod
+.PHONY := up aup serve seed-prod seed-local firebase-login deploy-firestore-rules test test-structures
 
 BSC_FIREBASE_PROJECT ?= bsc-lab
 
@@ -21,6 +21,21 @@ seed-prod:
 	@BSC_FIREBASE_PROJECT="$(BSC_FIREBASE_PROJECT)" \
 	GOOGLE_APPLICATION_CREDENTIALS="$$PWD/hidden/bsc-lab-firebase-adminsdk-fbsvc-9262a53b1c.json" \
 	bash scripts/seed-prod.sh
+
+seed-local:
+	npm run seed:firestore
+
+firebase-login:
+	firebase login $(FIREBASE_LOGIN_FLAGS)
+
+deploy-firestore-rules:
+	firebase deploy --only firestore:rules --project "$(BSC_FIREBASE_PROJECT)"
+
+test:
+	npm test
+
+test-structures:
+	npm run test:structures
 
 ifneq ($(strip $(RAW_ARGS)),)
 .PHONY += $(RAW_ARGS)
