@@ -93,11 +93,20 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Export to JSON/RDF for loading as audio modulation sequences (static assets in repo).
 - Provide test fixtures verifying expected permutation cycles.
 - Decisions: `music` package is first-party; license-clear to use all generated sequences.
+- Current asset: `data/structures/community-alpha-change-ringing.json` (plain-hunt rows for 4/6 bells, loops to rounds).
 
 ### 3.2 Integration Pipeline (🧩)
 - Define transport format between Python outputs and BSCLab (REST? static JSON?).
 - UI hooks to browse and assign sequences to tracks/parameters.
 - Decisions: keep backend-free; load static JSON/RDF, link to tracks via IDs.
+
+### 3.3 Export Schema & Loader (🚧)
+- Format shape (1-based rows; convert to 0-based in UI):
+	- `id`, `label`, `description`
+	- `source`: `method`, `library`, `generator`, `generated`, `notes`
+	- `sequences[]`: `id`, `label`, `orderDimension`, `rows[][]`, `loop`
+- Loader: `scripts/structures-loader.js` exports `loadStructures(url)` → adds `rowsZeroBased`, and `getSequence(structures, id)`.
+- TODO: add fixtures for regression and wire loader into the GUI once placement is confirmed.
 
 ## 4. Cross-Cutting Infrastructure
 

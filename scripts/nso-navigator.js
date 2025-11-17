@@ -86,6 +86,57 @@ function parseTurtle(ttlText) {
   let currentSubject = null;
   let currentPredicate = null;
 
+  // Expand prefixed URIs
+  const expandURI = (uri) => {
+    if (uri.startsWith("<") && uri.endsWith(">")) {
+      return uri.slice(1, -1);
+    }
+    const colonIndex = uri.indexOf(":");
+    if (colonIndex > 0) {
+      const prefix = uri.substring(0, colonIndex);
+      const local = uri.substring(colonIndex + 1);
+      if (prefixes[prefix]) {
+        return prefixes[prefix] + local;
+      }
+    }
+    return uri;
+  };
+
+  // Parse object values
+  const parseObject = (objStr) => {
+    objStr = objStr.trim().replace(/[;.]\s*$/, "");
+
+    // Literal with language tag
+    if (objStr.match(/"([^"]*)"@(\w+)/)) {
+      const match = objStr.match(/"([^"]*)"@(\w+)/);
+      return { value: match[1], type: "literal", lang: match[2] };
+    }
+
+    // Literal with datatype
+    if (objStr.match(/"([^"]*)"\^\^/)) {
+      const match = objStr.match(/"([^"]*)"\^\^(.+)/);
+      return { value: match[1], type: "literal", datatype: match[2] };
+    }
+
+    // Simple literal
+    if (objStr.startsWith('"') && objStr.endsWith('"')) {
+      return { value: objStr.slice(1, -1), type: "literal" };
+    }
+
+    // URI
+    if (objStr.startsWith("<") && objStr.endsWith(">")) {
+      return { value: objStr.slice(1, -1), type: "uri" };
+    }
+
+    // Prefixed URI
+    if (objStr.includes(":")) {
+      const expanded = expandURI(objStr);
+      return { value: expanded, type: "uri" };
+    }
+
+    return { value: objStr, type: "literal" };
+  };
+
   for (let line of lines) {
     line = line.trim();
 
@@ -100,22 +151,6 @@ function parseTurtle(ttlText) {
       }
       continue;
     }
-
-    // Expand prefixed URIs
-    const expandURI = (uri) => {
-      if (uri.startsWith("<") && uri.endsWith(">")) {
-        return uri.slice(1, -1);
-      }
-      const colonIndex = uri.indexOf(":");
-      if (colonIndex > 0) {
-        const prefix = uri.substring(0, colonIndex);
-        const local = uri.substring(colonIndex + 1);
-        if (prefixes[prefix]) {
-          return prefixes[prefix] + local;
-        }
-      }
-      return uri;
-    };
 
     // Parse triples (simplified - handles basic subject predicate object patterns)
     const parts = line.split(/\s+/);
@@ -153,40 +188,6 @@ function parseTurtle(ttlText) {
         }
       }
     }
-  }
-
-  function parseObject(objStr) {
-    objStr = objStr.trim().replace(/[;.]\s*$/, "");
-
-    // Literal with language tag
-    if (objStr.match(/"([^"]*)"@(\w+)/)) {
-      const match = objStr.match(/"([^"]*)"@(\w+)/);
-      return { value: match[1], type: "literal", lang: match[2] };
-    }
-
-    // Literal with datatype
-    if (objStr.match(/"([^"]*)"\^\^/)) {
-      const match = objStr.match(/"([^"]*)"\^\^(.+)/);
-      return { value: match[1], type: "literal", datatype: match[2] };
-    }
-
-    // Simple literal
-    if (objStr.startsWith('"') && objStr.endsWith('"')) {
-      return { value: objStr.slice(1, -1), type: "literal" };
-    }
-
-    // URI
-    if (objStr.startsWith("<") && objStr.endsWith(">")) {
-      return { value: objStr.slice(1, -1), type: "uri" };
-    }
-
-    // Prefixed URI
-    if (objStr.includes(":")) {
-      const expanded = expandURI(objStr);
-      return { value: expanded, type: "uri" };
-    }
-
-    return { value: objStr, type: "literal" };
   }
 
   // Build resource map

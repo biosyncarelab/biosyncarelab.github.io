@@ -52,8 +52,8 @@ in usual computers and mobile phones. It consists of a few core parts:
 - [x] Render the seeded sessions/presets as cards with summary metadata and an "Open" button.
 - [x] Build a lightweight detail modal showing Martigli parameters + track list; link "Open" to it.
 - [x] Stub the Martigli widget (period sliders + waveform picker) and wire it to live state.
-- [ ] **Request (Python Structures)**: provide sample `structure` JSON schema so the detail modal (below the Martigli widget) can preview upcoming sequence data.
-- [ ] After modal+widget, integrate audio synthesis baseline (pure Web Audio) for the sine/binaural tracks.
+- [x] **Request (Python Structures)**: schema delivered (`data/structures/community-alpha-change-ringing.json`) and previewed beneath the Martigli widget.
+- [x] After modal+widget, integrate audio synthesis baseline (pure Web Audio) for the sine/binaural tracks (modal track list now has Preview buttons).
 
 The woking of the BSCLab has at least three parts of considerable complexity:
 1.1) the Firebase data persistence and sharing. The software should reports in real time the number of interactions performed by all users. And the kind of interactions, opening, creation and deletion of tracks and presets, parameter updates/setting, changes in the breathing cue's parameters and of its usage in the audiovisual tracks. The database is envisioned to keep/manage, at least: user's login and persona's data, interactions of users with the interface, presets for sessions and tracks.
@@ -205,8 +205,8 @@ To navigate the RDF structures, we should:
 
 ### Python Structures Pod · Next Actions
 - [x] Recreate the "Community Alpha" change-ringing set via the `music` package and export deterministic JSON (`data/structures/community-alpha-change-ringing.json`).
-- [ ] Document the export schema + provenance in `docs/Features.md` 3.x.
-- [ ] Provide a tiny loader (ES module) that reads the JSON for the GUI pod.
+- [x] Document the export schema + provenance in `docs/Features.md` 3.x.
+- [x] Provide a tiny loader (ES module) that reads the JSON for the GUI pod (`scripts/structures-loader.js`).
 - [ ] **Request (GUI & Engines)**: confirm where in the UI these structures will surface first (modal or separate panel) before wiring the loader.
 - [ ] Plan follow-up exports (symmetry lines, Martigli-following sequences) once the first schema is accepted.
 
@@ -226,5 +226,4 @@ One such sequence of orderings may act on a sequence of notes
 or in a specific parameter of a sequence of notes, for example;
 it can swap the duration of the notes in each iteration,
 or a control parameter used in distortion or spatialization.
-
 
