@@ -75,105 +75,100 @@
           <option value="grid">Grid</option>
           <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
         </select>
-        <button type="button" id="toggle-properties" class="ghost small">
-          <span id="properties-toggle-text">Hide Properties</span>
-        </button>
-        <button type="button" id="toggle-filters" class="ghost small">🔍 Semantic Filters</button>
         <button type="button" id="reset-view" class="ghost small">Reset View</button>
         <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
       </div>
     </header>
 
-    <!-- Semantic Filters Panel -->
-    <div id="semantic-filters" class="semantic-filters hidden">
-      <div class="filters-header">
-        <h3 style="margin: 0; color: #1e40af; font-size: 1em;">🔍 Semantic Filters</h3>
-        <button type="button" id="close-filters" class="ghost small" aria-label="Close filters">×</button>
+    <!-- Inline Semantic & Edge Filters Row -->
+    <div class="filter-row">
+      <div class="filter-block">
+        <div class="filter-label">📊 Evidence</div>
+        <div class="filter-control">
+          <input type="range" id="evidence-level-slider" min="0" max="5" step="0.1" value="0" />
+          <span class="filter-note"><span id="evidence-level-value">0.0+</span>/5</span>
+        </div>
       </div>
 
-      <div class="filters-content">
-        <!-- Evidence Level Filter -->
-        <div class="filter-section">
-          <label for="evidence-level-slider" style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">
-            📊 Evidence Strength: <span id="evidence-level-value">0.0+</span>/5
-          </label>
-          <input type="range" id="evidence-level-slider" min="0" max="5" step="0.1" value="0" style="width: 100%;" />
-          <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: #6b7280; margin-top: 0.25rem;">
-            <span>Anecdotal</span>
-            <span>Low</span>
-            <span>Moderate</span>
-            <span>High</span>
-          </div>
-        </div>
+      <div class="filter-block">
+        <div class="filter-label">⚠️ Safety</div>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-serious-warnings" />
+          <span>Hide SERIOUS</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-safe-only" />
+          <span>Safe only</span>
+        </label>
+      </div>
 
-        <!-- Safety Filter -->
-        <div class="filter-section">
-          <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">
-            ⚠️ Safety Warnings
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" id="filter-serious-warnings" />
-            <span>Hide techniques with SERIOUS warnings</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-safe-only" />
-            <span>Show only techniques with no warnings</span>
-          </label>
-        </div>
+      <div class="filter-block">
+        <div class="filter-label">🎵 Modality</div>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-audio" checked />
+          <span>Audio</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-visual" checked />
+          <span>Visual</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-mixed" checked />
+          <span>Mixed</span>
+        </label>
+      </div>
 
-        <!-- Modality Filter -->
-        <div class="filter-section">
-          <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">
-            🎵 Technique Modality
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" id="filter-audio" checked />
-            <span>Audio Techniques</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-visual" checked />
-            <span>Visual Techniques</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-mixed" checked />
-            <span>Multimodal Techniques</span>
-          </label>
-        </div>
+      <div class="filter-block">
+        <div class="filter-label">🎯 Outcomes</div>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-cognitive" checked />
+          <span>Cognitive</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-emotional" checked />
+          <span>Emotional</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-physiological" checked />
+          <span>Physiological</span>
+        </label>
+        <label class="filter-checkbox inline">
+          <input type="checkbox" id="filter-behavioral" checked />
+          <span>Behavioral</span>
+        </label>
+      </div>
 
-        <!-- Outcome Type Filter -->
-        <div class="filter-section">
-          <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">
-            🎯 Outcome Categories
+      <div class="filter-block">
+        <div class="filter-label">🕸️ Edges</div>
+        <div id="edge-filters" class="edge-inline">
+          <label class="filter-checkbox inline">
+            <input type="checkbox" id="filter-subclass" checked />
+            <span>Subclass/Hierarchy</span>
           </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" id="filter-cognitive" checked />
-            <span>Cognitive Outcomes</span>
+          <label class="filter-checkbox inline">
+            <input type="checkbox" id="filter-domain" checked />
+            <span>Domain</span>
           </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-emotional" checked />
-            <span>Emotional Outcomes</span>
+          <label class="filter-checkbox inline">
+            <input type="checkbox" id="filter-range" checked />
+            <span>Range</span>
           </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-physiological" checked />
-            <span>Physiological Outcomes</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
-            <input type="checkbox" id="filter-behavioral" checked />
-            <span>Behavioral Outcomes</span>
+          <label class="filter-checkbox inline">
+            <input type="checkbox" id="filter-related" checked />
+            <span>Related</span>
           </label>
         </div>
+      </div>
 
-        <!-- Filter Actions -->
-        <div class="filter-actions" style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-          <button type="button" id="apply-filters" class="primary small" style="flex: 1;">Apply Filters</button>
-          <button type="button" id="reset-filters" class="ghost small" style="flex: 1;">Reset All</button>
-        </div>
-
-        <div id="filter-results" style="margin-top: 0.75rem; padding: 0.5rem; background: #f0f9ff; border-radius: 4px; font-size: 0.85em; color: #0c4a6e; display: none;">
-          <strong>Results:</strong> <span id="filter-count">0</span> nodes match filters
-        </div>
+      <div class="filter-block">
+        <div class="filter-label">⚙️ View</div>
+        <button type="button" id="toggle-properties" class="ghost small">
+          <span id="properties-toggle-text">Hide Properties</span>
+        </button>
+        <button type="button" id="reset-filters" class="ghost small">Reset Filters</button>
       </div>
     </div>
+    <div id="filter-status" class="filter-status" aria-live="polite"></div>
 
     <div class="nso-container">
       <aside id="uri-inspector" class="uri-inspector hidden">
@@ -231,28 +226,6 @@
 
       <main class="graph-container">
         <div id="cy-canvas" class="cy-canvas"></div>
-
-        <div id="edge-filters" class="edge-filters hidden">
-          <h4>Edge Visibility</h4>
-          <div class="filter-group">
-            <label class="filter-checkbox">
-              <input type="checkbox" id="filter-subclass" checked />
-              <span>Subclass/Hierarchy</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" id="filter-domain" checked />
-              <span>Domain</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" id="filter-range" checked />
-              <span>Range</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" id="filter-related" checked />
-              <span>Related/Other</span>
-            </label>
-          </div>
-        </div>
 
         <div class="graph-legend">
           <h4>Legend</h4>

@@ -233,6 +233,18 @@
       </div>
     </section>
 
+    <section id="visualizer-modal" class="modal hidden" aria-hidden="true">
+      <div id="visualizer-overlay" class="modal-overlay" role="presentation"></div>
+      <div class="modal-panel visualizer-panel" role="dialog" aria-modal="true" aria-labelledby="visualizer-title">
+        <header class="modal-head">
+          <h3 id="visualizer-title">Track Preview</h3>
+          <button type="button" id="visualizer-close" class="ghost small" aria-label="Close visualizer">Close</button>
+        </header>
+        <canvas id="visualizer-canvas" width="760" height="280" aria-label="Expanded track visualization"></canvas>
+        <p id="visualizer-summary" class="muted-text small"></p>
+      </div>
+    </section>
+
     <script type="module" src="scripts/auth.js"></script>
   </body>
 </html>

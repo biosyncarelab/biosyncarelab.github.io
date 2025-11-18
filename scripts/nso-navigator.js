@@ -144,10 +144,7 @@ const ui = {
   layoutSelector: document.getElementById("layout-selector"),
   toggleProperties: document.getElementById("toggle-properties"),
   propertiesToggleText: document.getElementById("properties-toggle-text"),
-  toggleFilters: document.getElementById("toggle-filters"),
   edgeFilters: document.getElementById("edge-filters"),
-  semanticFilters: document.getElementById("semantic-filters"),
-  closeFilters: document.getElementById("close-filters"),
   evidenceLevelSlider: document.getElementById("evidence-level-slider"),
   evidenceLevelValue: document.getElementById("evidence-level-value"),
   filterSeriousWarnings: document.getElementById("filter-serious-warnings"),
@@ -159,10 +156,10 @@ const ui = {
   filterEmotional: document.getElementById("filter-emotional"),
   filterPhysiological: document.getElementById("filter-physiological"),
   filterBehavioral: document.getElementById("filter-behavioral"),
-  applyFilters: document.getElementById("apply-filters"),
   resetFilters: document.getElementById("reset-filters"),
   filterResults: document.getElementById("filter-results"),
   filterCount: document.getElementById("filter-count"),
+  filterStatus: document.getElementById("filter-status"),
   filterSubclass: document.getElementById("filter-subclass"),
   filterDomain: document.getElementById("filter-domain"),
   filterRange: document.getElementById("filter-range"),
@@ -2197,6 +2194,49 @@ const updateEvidenceSliderLabel = () => {
   ui.evidenceLevelValue.textContent = `${value.toFixed(1)}+`;
 };
 
+const updateFilterSummary = () => {
+  if (!ui.filterStatus) return;
+
+  const evidenceThreshold = parseFloat(ui.evidenceLevelSlider?.value || "0") || 0;
+  const hideSeriousWarnings = !!ui.filterSeriousWarnings?.checked;
+  const safeOnly = !!ui.filterSafeOnly?.checked;
+
+  const modalitySelection = {
+    Audio: !!ui.filterAudio?.checked,
+    Visual: !!ui.filterVisual?.checked,
+    Mixed: !!ui.filterMixed?.checked,
+  };
+  const outcomeSelection = {
+    Cognitive: !!ui.filterCognitive?.checked,
+    Emotional: !!ui.filterEmotional?.checked,
+    Physiological: !!ui.filterPhysiological?.checked,
+    Behavioral: !!ui.filterBehavioral?.checked,
+  };
+
+  const activeModalities = Object.entries(modalitySelection)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+  const activeOutcomes = Object.entries(outcomeSelection)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+
+  const safetyText = safeOnly
+    ? "Safety: safe only"
+    : hideSeriousWarnings
+      ? "Safety: hide SERIOUS"
+      : "Safety: all";
+
+  const modalityText = activeModalities.length === 0
+    ? "Modality: none selected"
+    : `Modality: ${activeModalities.join(", ")}`;
+
+  const outcomeText = activeOutcomes.length === 0
+    ? "Outcomes: none selected"
+    : `Outcomes: ${activeOutcomes.join(", ")}`;
+
+  ui.filterStatus.innerHTML = `<strong>Filters</strong> Evidence ≥ ${evidenceThreshold.toFixed(1)} | ${safetyText} | ${modalityText} | ${outcomeText}`;
+};
+
 function applySemanticFilters() {
   if (!cy) return;
 
@@ -2274,6 +2314,8 @@ function applySemanticFilters() {
     ui.filterCount.textContent = visibleCount;
     ui.filterResults.style.display = "block";
   }
+
+  updateFilterSummary();
 }
 
 function resetSemanticFilters() {
@@ -2297,6 +2339,9 @@ function resetSemanticFilters() {
   if (ui.filterResults) {
     ui.filterResults.style.display = "none";
   }
+
+  applySemanticFilters();
+  updateFilterSummary();
 }
 
 // Event listeners
@@ -2357,35 +2402,37 @@ ui.layoutSelector.addEventListener("change", (e) => {
   }
 });
 
-// Toggle semantic filters panel
-ui.toggleFilters.addEventListener("click", () => {
-  ui.semanticFilters.classList.toggle("hidden");
-  if (ui.edgeFilters) {
-    ui.edgeFilters.classList.toggle("hidden");
+if (ui.evidenceLevelSlider) {
+  ui.evidenceLevelSlider.addEventListener("input", () => {
+    updateEvidenceSliderLabel();
+    applySemanticFilters();
+    });
+    updateEvidenceSliderLabel();
   }
-});
 
-if (ui.closeFilters) {
-  ui.closeFilters.addEventListener("click", () => {
-    ui.semanticFilters.classList.add("hidden");
-    if (ui.edgeFilters) {
-      ui.edgeFilters.classList.add("hidden");
+  const autoApplyCheckboxes = [
+    "filterSeriousWarnings",
+    "filterSafeOnly",
+    "filterAudio",
+    "filterVisual",
+    "filterMixed",
+    "filterCognitive",
+    "filterEmotional",
+    "filterPhysiological",
+    "filterBehavioral",
+  ];
+
+  autoApplyCheckboxes.forEach((key) => {
+    if (ui[key]) {
+      ui[key].addEventListener("change", applySemanticFilters);
     }
   });
-}
 
-if (ui.evidenceLevelSlider) {
-  ui.evidenceLevelSlider.addEventListener("input", updateEvidenceSliderLabel);
-  updateEvidenceSliderLabel();
-}
+  if (ui.resetFilters) {
+    ui.resetFilters.addEventListener("click", resetSemanticFilters);
+  }
 
-if (ui.applyFilters) {
-  ui.applyFilters.addEventListener("click", applySemanticFilters);
-}
-
-if (ui.resetFilters) {
-  ui.resetFilters.addEventListener("click", resetSemanticFilters);
-}
+  updateFilterSummary();
 
 // Toggle property nodes visibility
 ui.toggleProperties.addEventListener("click", () => {

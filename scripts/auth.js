@@ -157,6 +157,12 @@ const ui = {
   structureSection: document.getElementById("structure-section"),
   structureSummary: document.getElementById("structure-summary"),
   structureList: document.getElementById("structure-list"),
+  visualizerModal: document.getElementById("visualizer-modal"),
+  visualizerOverlay: document.getElementById("visualizer-overlay"),
+  visualizerClose: document.getElementById("visualizer-close"),
+  visualizerCanvas: document.getElementById("visualizer-canvas"),
+  visualizerSummary: document.getElementById("visualizer-summary"),
+  visualizerTitle: document.getElementById("visualizer-title"),
 };
 
 const defaultDashboardCopy = {
@@ -194,6 +200,9 @@ const sensoryPanels = {
     defaultStatus: defaultDashboardCopy.hapticSensoryStatus,
   },
 };
+
+const trackExpansionState = new Map();
+const trackVisualizerRegistry = new Map();
 
 const logInteraction = (entry) => {
   try {
@@ -338,7 +347,19 @@ const normalizeTrackModel = (track = {}, context = {}) => {
   };
 };
 
-const getRecordTracks = (record) => {
+const shouldUseLiveMartigliForRecord = (record, options = {}) => {
+  if (typeof options.useLiveMartigli === "boolean") {
+    return options.useLiveMartigli;
+  }
+  const recordId = record?.id ?? record?.uid ?? null;
+  if (!recordId) return false;
+  if (recordId === dashboardState.activeSessionId) return true;
+  if (recordId === activeModalRecord?.id) return true;
+  if (recordId === "martigli-lab") return true;
+  return false;
+};
+
+const getRecordTracks = (record, options = {}) => {
   if (!record) return [];
   const recordId = record.id ?? record.uid ?? "record";
   const rawTracks = Array.isArray(record.tracks)
@@ -351,11 +372,36 @@ const getRecordTracks = (record) => {
   if (hasMartigliTrack) {
     return normalized;
   }
-  const snapshot = normalizeMartigliSnapshot(extractMartigliParams(record));
+  const useLiveMartigli = shouldUseLiveMartigliForRecord(record, options);
+  const martigliSource = useLiveMartigli ? martigliState.snapshot?.() : extractMartigliParams(record);
+  const snapshot = normalizeMartigliSnapshot(martigliSource);
   const martigliTracks = snapshot?.oscillations
     ? snapshot.oscillations.map((osc, index) => createMartigliTrackModel(record, osc, index)).filter(Boolean)
     : [];
   return [...martigliTracks, ...normalized];
+};
+
+const getSessionTrackBucket = (record) => record?.id ?? record?.uid ?? "lab";
+
+const getTrackExpansionBucket = (sessionId) => {
+  if (!trackExpansionState.has(sessionId)) {
+    trackExpansionState.set(sessionId, Object.create(null));
+  }
+  return trackExpansionState.get(sessionId);
+};
+
+const getTrackExpansionState = (sessionId, trackId) => {
+  const bucket = getTrackExpansionBucket(sessionId);
+  if (typeof bucket[trackId] === "boolean") {
+    return bucket[trackId];
+  }
+  bucket[trackId] = true;
+  return true;
+};
+
+const setTrackExpansionState = (sessionId, trackId, expanded) => {
+  const bucket = getTrackExpansionBucket(sessionId);
+  bucket[trackId] = Boolean(expanded);
 };
 
 const ensureTrackBindingState = (track) => {
@@ -412,10 +458,12 @@ const updateTrackBindingPreview = (trackId) => {
   const metrics = martigliState.getRuntimeMetrics?.(oscillatorId);
   if (!metrics) {
     entry.elements.preview.textContent = `Output ${baseValue.toFixed(1)} Hz · awaiting Martigli runtime`;
+    redrawTrackVisualizer(trackId);
     return;
   }
   const applied = baseValue + depthValue * (metrics.value ?? 0);
   entry.elements.preview.textContent = `Output ${applied.toFixed(1)} Hz · value ${(metrics.value ?? 0).toFixed(2)} · base ${baseValue.toFixed(1)} ± ${depthValue.toFixed(1)}`;
+  redrawTrackVisualizer(trackId);
 };
 
 const refreshTrackBindingOptions = (snapshot = martigliState.snapshot?.()) => {
@@ -454,6 +502,7 @@ const refreshTrackBindingOptions = (snapshot = martigliState.snapshot?.()) => {
 
 const refreshAllTrackBindings = () => {
   trackBindingRegistry.forEach((entry) => updateTrackBindingPreview(entry.trackId));
+  refreshTrackVisualizers();
 };
 
 const createTrackBindingControls = (track) => {
@@ -509,7 +558,7 @@ const createTrackBindingControls = (track) => {
     () => updateTrackBindingPreview(track.id),
   );
   const depthRange = createRangeField(
-    "Depth", 
+    "Depth",
     (val) => `${Number(val ?? 0).toFixed(1)} Hz`,
     { key: "depth", min: MARTIGLI_BINDING_LIMITS.depthMin, max: MARTIGLI_BINDING_LIMITS.depthMax, step: 0.5 },
     () => updateTrackBindingPreview(track.id),
@@ -578,7 +627,238 @@ const serializeTrackState = (track) => {
   };
 };
 
-const describeMartigliLiveSummary = (reference) => {
+const TRACK_VISUALIZER_DEFAULT = {
+  width: 320,
+  height: 120,
+};
+
+let activeVisualizerTrack = null;
+let activeVisualizerContext = null;
+
+const registerTrackVisualizer = (track, canvas, options = {}) => {
+  if (!track || !canvas) return;
+  if (track.id) {
+    trackVisualizerRegistry.set(track.id, { track, canvas, options });
+  }
+  drawTrackVisualizer(canvas, track, options);
+};
+
+const unregisterTrackVisualizer = (trackId) => {
+  if (!trackId) return;
+  trackVisualizerRegistry.delete(trackId);
+};
+
+const redrawTrackVisualizer = (trackId) => {
+  if (!trackId) return;
+  const entry = trackVisualizerRegistry.get(trackId);
+  if (!entry) return;
+  drawTrackVisualizer(entry.canvas, entry.track, entry.options);
+};
+
+const refreshTrackVisualizers = () => {
+  trackVisualizerRegistry.forEach((_, trackId) => redrawTrackVisualizer(trackId));
+  if (activeVisualizerTrack && ui.visualizerModal && !ui.visualizerModal.classList.contains("hidden")) {
+    drawTrackVisualizer(ui.visualizerCanvas, activeVisualizerTrack, {
+      width: ui.visualizerCanvas?.clientWidth || ui.visualizerCanvas?.width || 760,
+      height: ui.visualizerCanvas?.clientHeight || ui.visualizerCanvas?.height || 280,
+    });
+    if (ui.visualizerSummary) {
+      ui.visualizerSummary.textContent = describeTrackVisualizerSummary(activeVisualizerTrack, activeVisualizerContext);
+    }
+  }
+};
+
+const prepareVisualizerCanvas = (canvas, fallbackWidth, fallbackHeight) => {
+  if (!canvas) return null;
+  const width = fallbackWidth || canvas.clientWidth || TRACK_VISUALIZER_DEFAULT.width;
+  const height = fallbackHeight || canvas.clientHeight || TRACK_VISUALIZER_DEFAULT.height;
+  const ratio = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  const ctx = canvas.getContext("2d");
+  if (ctx?.setTransform) {
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  return { ctx, width, height };
+};
+
+const drawTrackVisualizer = (canvas, track, options = {}) => {
+  if (!canvas || !track) return;
+  const dims = prepareVisualizerCanvas(canvas, options.width, options.height);
+  if (!dims?.ctx) return;
+  const ctx = dims.ctx;
+  const width = dims.width;
+  const height = dims.height;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = options.background ?? "rgba(2, 6, 23, 0.92)";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+  ctx.lineWidth = 1;
+  const gridSteps = 4;
+  for (let i = 1; i < gridSteps; i += 1) {
+    const x = (width / gridSteps) * i;
+    ctx.beginPath();
+    ctx.moveTo(x, 6);
+    ctx.lineTo(x, height - 6);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(6, height / 2);
+  ctx.lineTo(width - 6, height / 2);
+  ctx.stroke();
+
+  const previewTrack = serializeTrackState(track);
+  const params = previewTrack.params ?? {};
+  const base = Number(params.frequency ?? params.base ?? params.rate ?? params.beat ?? 4);
+  const depth = Number(params.martigliDepth ?? params.depth ?? 0.5);
+  const gain = Number(params.gain ?? 1);
+  const cycles = Math.max(2, Math.min(8, base / 8));
+  const amplitude = Math.max(0.15, Math.min(0.45, gain * 0.3 + 0.2));
+  const stroke = track.isMartigli
+    ? "rgba(56, 189, 248, 0.95)"
+    : /video|visual/.test((track.modality ?? track.type ?? "").toLowerCase())
+      ? "rgba(244, 114, 182, 0.95)"
+      : "rgba(248, 250, 252, 0.95)";
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = 0; x <= width; x += 1) {
+    const progress = (x / width) * Math.PI * 2 * cycles;
+    const modulation = Math.sin(progress * 0.5) * (depth || 0.5) * 0.25;
+    const y = height / 2 + Math.sin(progress) * (height * amplitude) - modulation * 18;
+    if (x === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+};
+
+const describeTrackVisualizerSummary = (track, context = {}) => {
+  if (!track) return "";
+  const previewTrack = serializeTrackState(track);
+  const params = previewTrack.params ?? {};
+  if (track.isMartigli) {
+    return describeMartigliLiveSummary(track.martigli ?? params);
+  }
+  const base = Number(params.frequency ?? params.base ?? params.rate ?? 0);
+  const depth = Number(params.martigliDepth ?? params.depth ?? 0);
+  const gain = Number(params.gain ?? 0);
+  const chips = [];
+  if (Number.isFinite(base) && base > 0) {
+    chips.push(`${base.toFixed(1)} Hz base`);
+  }
+  if (Number.isFinite(depth) && depth !== 0) {
+    chips.push(`±${depth.toFixed(1)} depth`);
+  }
+  if (Number.isFinite(gain) && gain > 0) {
+    chips.push(`${gain.toFixed(1)} gain`);
+  }
+  if (context.record?.label) {
+    chips.push(`Session · ${context.record.label}`);
+  }
+  return chips.join(" • ") || summariseTrackParams(params);
+};
+
+const formatMartigliDuration = (value) => {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 120) {
+    return `${(value / 60).toFixed(1)}m`;
+  }
+  return `${value.toFixed(1)}s`;
+};
+
+const getMartigliVisualizerMetrics = (track) => {
+  const params = track.params ?? {};
+  const oscillatorId = track.martigli?.oscillatorId ?? track.id ?? null;
+  const runtime = oscillatorId ? martigliState.getRuntimeMetrics?.(oscillatorId) : null;
+  return {
+    start: runtime?.startPeriodSec ?? runtime?.startPeriod ?? params.startPeriodSec ?? params.startPeriod ?? null,
+    end: runtime?.endPeriodSec ?? runtime?.endPeriod ?? params.endPeriodSec ?? params.endPeriod ?? null,
+    waveform: runtime?.waveform ?? params.waveform ?? "sine",
+    amplitude: Number.isFinite(runtime?.amplitude) ? runtime.amplitude : Number(params.amplitude ?? 1),
+  };
+};
+
+const createMartigliMiniStats = (track) => {
+  const metrics = getMartigliVisualizerMetrics(track);
+  const entries = [
+    { label: "Start", value: Number.isFinite(metrics.start) ? formatMartigliDuration(metrics.start) : "—" },
+    { label: "End", value: Number.isFinite(metrics.end) ? formatMartigliDuration(metrics.end) : "—" },
+    { label: "Wave", value: (metrics.waveform ?? "").toString().slice(0, 8).toUpperCase() || "—" },
+    {
+      label: "Amp",
+      value: Number.isFinite(metrics.amplitude) ? `${metrics.amplitude.toFixed(2)}×` : null,
+    },
+  ].filter((entry) => entry.value);
+  if (!entries.length) return null;
+  const stats = document.createElement("div");
+  stats.className = "martigli-mini-stats";
+  entries.forEach((entry) => {
+    const stat = document.createElement("div");
+    stat.className = "martigli-mini-stat";
+    const label = document.createElement("span");
+    label.className = "martigli-mini-stat-label";
+    label.textContent = entry.label;
+    const value = document.createElement("span");
+    value.className = "martigli-mini-stat-value";
+    value.textContent = entry.value;
+    stat.appendChild(label);
+    stat.appendChild(value);
+    stats.appendChild(stat);
+  });
+  return stats;
+};
+
+const openTrackVisualizerModal = (track, context = {}) => {
+  if (!ui.visualizerModal || !ui.visualizerCanvas) return;
+  activeVisualizerTrack = track;
+  activeVisualizerContext = context;
+  if (ui.visualizerTitle) {
+    ui.visualizerTitle.textContent = track.label ?? "Track preview";
+  }
+  if (ui.visualizerSummary) {
+    ui.visualizerSummary.textContent = describeTrackVisualizerSummary(track, context);
+  }
+  ui.visualizerModal.classList.remove("hidden");
+  ui.visualizerModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("visualizer-open");
+  drawTrackVisualizer(ui.visualizerCanvas, track, {
+    width: ui.visualizerCanvas.clientWidth || ui.visualizerCanvas.width || 760,
+    height: ui.visualizerCanvas.clientHeight || ui.visualizerCanvas.height || 280,
+  });
+  kernel.recordInteraction("track.visualizer.open", {
+    trackId: track.id ?? null,
+    trackLabel: track.label ?? null,
+    recordId: context.record?.id ?? null,
+    recordKind: context.kind ?? null,
+  });
+};
+
+const closeTrackVisualizerModal = (options = {}) => {
+  if (!ui.visualizerModal || ui.visualizerModal.classList.contains("hidden")) {
+    activeVisualizerTrack = null;
+    activeVisualizerContext = null;
+    return;
+  }
+  ui.visualizerModal.classList.add("hidden");
+  ui.visualizerModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("visualizer-open");
+  if (ui.visualizerSummary) {
+    ui.visualizerSummary.textContent = "";
+  }
+  kernel.recordInteraction("track.visualizer.close", {
+    trackId: activeVisualizerTrack?.id ?? null,
+    reason: options.reason ?? "user",
+  });
+  activeVisualizerTrack = null;
+  activeVisualizerContext = null;
+};
+
+function describeMartigliLiveSummary(reference) {
   if (!reference) {
     return "Awaiting Martigli data.";
   }
@@ -591,7 +871,7 @@ const describeMartigliLiveSummary = (reference) => {
   const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
   const amplitudeText = `${amplitude.toFixed(2)}× amp`;
   return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
-};
+}
 
 const MARTIGLI_TELEMETRY_INTERVAL_MS = 140;
 let martigliTelemetryFrame = null;
@@ -631,6 +911,42 @@ const createTrackPreviewButton = (track, context = {}) => {
     });
   });
   return button;
+};
+
+const createTrackVisualizer = (track, context = {}) => {
+  if (!track) return null;
+  const container = document.createElement("div");
+  container.className = "track-visualizer";
+  const label = document.createElement("p");
+  label.className = "muted-text small";
+  label.textContent = track.isMartigli ? "Breath envelope preview" : "Preview envelope";
+  container.appendChild(label);
+
+  if (track.isMartigli) {
+    container.classList.add("track-visualizer--martigli");
+    const stats = createMartigliMiniStats(track);
+    if (stats) {
+      container.appendChild(stats);
+    }
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = TRACK_VISUALIZER_DEFAULT.width;
+  canvas.height = TRACK_VISUALIZER_DEFAULT.height;
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", `${track.label ?? "Track"} preview visualization`);
+  container.appendChild(canvas);
+  const expandButton = document.createElement("button");
+  expandButton.type = "button";
+  expandButton.className = "ghost tiny track-visualizer-expand";
+  expandButton.textContent = "Fullscreen";
+  expandButton.addEventListener("click", () => openTrackVisualizerModal(track, context));
+  container.appendChild(expandButton);
+  const canvasSize = track.isMartigli
+    ? { width: 260, height: 90 }
+    : { width: TRACK_VISUALIZER_DEFAULT.width, height: TRACK_VISUALIZER_DEFAULT.height };
+  registerTrackVisualizer(track, canvas, canvasSize);
+  return container;
 };
 
 const updateAuthVisibility = (user) => {
@@ -1056,7 +1372,7 @@ const applyMartigliFromRecord = (record) => {
 const collectSessionDraft = (record) => {
   const reference = martigliState.getReference ? martigliState.getReference() : null;
   const martigliPayload = reference?.toJSON?.() ?? martigliState.snapshot?.().oscillations?.[0] ?? null;
-  const tracks = getRecordTracks(record);
+  const tracks = getRecordTracks(record, { useLiveMartigli: true });
   return {
     id: record?.id ?? null,
     label: record?.label ?? "Draft Session",
@@ -1187,9 +1503,40 @@ const buildTrackCard = (track, record, kind, index) => {
     card.classList.add("track-card--martigli");
   }
 
+  const sessionId = getSessionTrackBucket(record);
+  const trackId = track.id ?? `${sessionId}-track-${index}`;
+  const expanded = getTrackExpansionState(sessionId, trackId);
+  const normalizedId = trackId.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const bodyId = `track-body-${normalizedId}`;
+
+  const head = document.createElement("div");
+  head.className = "track-card-head";
+  const headline = document.createElement("div");
+  headline.className = "track-card-headline";
   const title = document.createElement("h5");
   title.textContent = track.label ?? `Track ${index + 1}`;
-  card.appendChild(title);
+  headline.appendChild(title);
+  const subtitle = document.createElement("p");
+  subtitle.className = "muted-text small";
+  subtitle.textContent = track.isMartigli ? "Martigli modulator" : formatPanelLabel(track.modality ?? track.type);
+  headline.appendChild(subtitle);
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "track-card-toggle";
+  toggle.dataset.state = expanded ? "expanded" : "collapsed";
+  toggle.setAttribute("aria-expanded", String(expanded));
+  toggle.setAttribute("aria-controls", bodyId);
+  toggle.setAttribute("aria-label", expanded ? "Collapse track" : "Expand track");
+  toggle.textContent = ">";
+  head.appendChild(headline);
+  head.appendChild(toggle);
+  card.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "track-card-body";
+  body.id = bodyId;
+  body.hidden = !expanded;
+  body.setAttribute("aria-hidden", String(!expanded));
 
   const meta = document.createElement("div");
   meta.className = "track-meta";
@@ -1208,19 +1555,19 @@ const buildTrackCard = (track, record, kind, index) => {
       meta.appendChild(gainChip);
     }
   }
-  card.appendChild(meta);
+  body.appendChild(meta);
 
   const summary = document.createElement("p");
   summary.className = "muted-text";
   if (track.isMartigli) {
     const metrics = martigliState.getRuntimeMetrics?.(track.martigli?.oscillatorId ?? track.id);
     summary.textContent = metrics
-      ? `Wave ${metrics.waveform} • ${metrics.period.toFixed(1)}s period • value ${metrics.value.toFixed(2)}`
+      ? `Wave ${metrics.waveform} • ${metrics.period.toFixed(1)}s period · value ${metrics.value.toFixed(2)}`
       : describeMartigliLiveSummary(track.martigli ?? track.params ?? {});
   } else {
     summary.textContent = summariseTrackParams(track.params ?? {});
   }
-  card.appendChild(summary);
+  body.appendChild(summary);
 
   const actions = document.createElement("div");
   actions.className = "track-actions";
@@ -1240,21 +1587,43 @@ const buildTrackCard = (track, record, kind, index) => {
       actions.appendChild(hint);
     }
   }
-  card.appendChild(actions);
+  body.appendChild(actions);
+
+  const visualizer = createTrackVisualizer(track, { record, kind, index });
+  if (visualizer) {
+    body.appendChild(visualizer);
+  }
 
   if (!track.isMartigli) {
     const bindingControls = createTrackBindingControls(track);
     if (bindingControls) {
-      card.appendChild(bindingControls);
+      body.appendChild(bindingControls);
     }
   }
 
+  if (!expanded) {
+    card.classList.add("is-collapsed");
+  }
+
+  toggle.addEventListener("click", () => {
+    const nextExpanded = card.classList.contains("is-collapsed");
+    setTrackExpansionState(sessionId, trackId, nextExpanded);
+    card.classList.toggle("is-collapsed", !nextExpanded);
+    body.hidden = !nextExpanded;
+    body.setAttribute("aria-hidden", String(!nextExpanded));
+    toggle.dataset.state = nextExpanded ? "expanded" : "collapsed";
+    toggle.setAttribute("aria-expanded", String(nextExpanded));
+    toggle.setAttribute("aria-label", nextExpanded ? "Collapse track" : "Expand track");
+  });
+
+  card.appendChild(body);
   return card;
 };
 
 const createSensoryListItem = (track, record, kind, index, panelLabel) => {
   const item = document.createElement("li");
   item.className = "sensory-item";
+  const isMartigli = Boolean(track.isMartigli);
   const head = document.createElement("div");
   head.className = "sensory-item-head";
   const title = document.createElement("span");
@@ -1262,26 +1631,32 @@ const createSensoryListItem = (track, record, kind, index, panelLabel) => {
   title.textContent = track.label ?? `Track ${index + 1}`;
   const hint = document.createElement("span");
   hint.className = "muted-text small";
-  hint.textContent = track.presetId
-    ? `Preset · ${track.presetId}`
-    : formatPanelLabel(panelLabel);
+  hint.textContent = isMartigli
+    ? "Martigli modulator"
+    : track.presetId
+        ? `Preset · ${track.presetId}`
+        : formatPanelLabel(panelLabel);
   head.appendChild(title);
   head.appendChild(hint);
   item.appendChild(head);
 
   const summary = document.createElement("p");
   summary.className = "muted-text small";
-  summary.textContent = summariseTrackParams(track.params ?? {});
+  summary.textContent = isMartigli
+    ? describeMartigliLiveSummary(track.martigli ?? track.params ?? {})
+    : summariseTrackParams(track.params ?? {});
   item.appendChild(summary);
 
-  const previewButton = createTrackPreviewButton(track, { record, kind, index });
-  if (previewButton) {
-    previewButton.classList.add("tiny");
-    previewButton.classList.remove("small");
-    const actions = document.createElement("div");
-    actions.className = "sensory-item-actions";
-    actions.appendChild(previewButton);
-    item.appendChild(actions);
+  if (!isMartigli) {
+    const previewButton = createTrackPreviewButton(track, { record, kind, index });
+    if (previewButton) {
+      previewButton.classList.add("tiny");
+      previewButton.classList.remove("small");
+      const actions = document.createElement("div");
+      actions.className = "sensory-item-actions";
+      actions.appendChild(previewButton);
+      item.appendChild(actions);
+    }
   }
 
   return item;
@@ -1307,14 +1682,14 @@ const renderSensoryPanelsForRecord = (record, kind) => {
     resetSensoryPanels();
     return;
   }
-  const tracks = getRecordTracks(record).filter((track) => !track.isMartigli);
+  const tracks = getRecordTracks(record, { useLiveMartigli: true });
   const buckets = {
     audio: [],
     visual: [],
     haptic: [],
   };
   tracks.forEach((track, index) => {
-    const modality = detectTrackModality(track);
+    const modality = track.isMartigli ? "audio" : detectTrackModality(track);
     if (modality === "video") {
       buckets.visual.push({ track, index });
     } else if (modality === "haptics") {
@@ -1326,6 +1701,22 @@ const renderSensoryPanelsForRecord = (record, kind) => {
   updateSensoryPanel("audio", buckets.audio, record, kind);
   updateSensoryPanel("visual", buckets.visual, record, kind);
   updateSensoryPanel("haptic", buckets.haptic, record, kind);
+};
+
+const rerenderActiveTrackViews = () => {
+  const activeSession = getActiveSessionRecord();
+  if (activeSession) {
+    renderSensoryPanelsForRecord(activeSession, "session");
+  }
+  if (
+    ui.modal &&
+    !ui.modal.classList.contains("hidden") &&
+    activeModalRecord &&
+    activeModalData &&
+    (activeModalRecord.kind === "session" || activeModalRecord.kind === "lab")
+  ) {
+    renderModalTrackSections(activeModalData, activeModalRecord.kind);
+  }
 };
 
 const getActiveSessionRecord = () => {
@@ -2087,7 +2478,10 @@ const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
 
 const renderModalTrackSections = (record, kind) => {
   audioEngine.stop();
-  const tracks = getRecordTracks(record);
+  closeTrackVisualizerModal({ reason: "tracks-rerender" });
+  trackVisualizerRegistry.clear();
+  const useLiveMartigli = kind === "session" || kind === "lab";
+  const tracks = getRecordTracks(record, { useLiveMartigli });
   const buckets = {
     audio: [],
     video: [],
@@ -2158,10 +2552,12 @@ const renderMartigliParams = (record) => {
 
 function closeDetailModal() {
   if (!ui.modal) return;
+  closeTrackVisualizerModal({ reason: "parent-modal-close" });
   audioEngine.stop();
   trackBindingRegistry.forEach((entry) => {
     entry.elements = {};
   });
+  trackVisualizerRegistry.clear();
   ui.modal.classList.add("hidden");
   ui.modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
@@ -2474,6 +2870,7 @@ martigliState.subscribe((snapshot) => {
   renderMartigliDashboardList(snapshot);
   refreshTrackBindingOptions(snapshot);
   refreshAllTrackBindings();
+  rerenderActiveTrackViews();
 });
 updateMartigliPreview(martigliState.snapshot());
 updateMartigliOscillationStatus(martigliState.snapshot());
@@ -2486,8 +2883,21 @@ if (ui.modalClose) {
   ui.modalClose.addEventListener("click", closeDetailModal);
 }
 
+if (ui.visualizerOverlay) {
+  ui.visualizerOverlay.addEventListener("click", () => closeTrackVisualizerModal({ reason: "overlay" }));
+}
+
+if (ui.visualizerClose) {
+  ui.visualizerClose.addEventListener("click", () => closeTrackVisualizerModal({ reason: "button" }));
+}
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && ui.modal && !ui.modal.classList.contains("hidden")) {
+  if (event.key !== "Escape") return;
+  if (ui.visualizerModal && !ui.visualizerModal.classList.contains("hidden")) {
+    closeTrackVisualizerModal({ reason: "escape" });
+    return;
+  }
+  if (ui.modal && !ui.modal.classList.contains("hidden")) {
     closeDetailModal();
   }
 });
