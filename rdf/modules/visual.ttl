@@ -5,13 +5,21 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
-<> a owl:Ontology ;
-  dct:title "BSCLab Visual Techniques Module" ;
+<https://biosyncarelab.github.io/ont/modules/visual/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/modules/visual/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  dct:title "NSO Visual Techniques Module" ;
+  dct:alternative "NSO Visual"@en ;
   dct:creator "BioSynCare Lab" ;
-  dct:description "Visual-based neurosensory stimulation techniques including flicker, color therapy, and visual entrainment with comprehensive safety metadata." ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Visual-based neurosensory stimulation techniques: flicker stimulation, color therapy, visual entrainment, stroboscopic stimulation, soft light pulsing, ganzfeld stimulation. Includes evidence ratings, SERIOUS photosensitive epilepsy warnings, and safety metadata." ;
   dct:created "2025-11-17"^^xsd:date ;
-  owl:imports <../core/bsc-owl.ttl> ;
-  owl:versionInfo "1.0.0" .
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. 7 visual technique classes with comprehensive safety warnings. Status: CURRENT (authoritative)." ;
+  owl:imports <https://biosyncarelab.github.io/ont/1.0.0> .
 
 # ============================================================================
 # BASE CLASS (replaces plural sso:VisualTechniques)
@@ -38,7 +46,8 @@ bsc:FlickerStimulation a owl:Class ;
   bsc:evidenceCorpus "PubMed search: 'photic stimulation brainwave entrainment' (2018-2024), 22 peer-reviewed studies including EEG validation, clinical trials for ADHD and cognitive enhancement" ;
   bsc:evidenceReasoning "Strong evidence from controlled studies showing measurable EEG entrainment effects. Clinical applications in neurological assessment well-established. Cognitive enhancement claims have moderate support." ;
   bsc:contraindications "SERIOUS: Photosensitive epilepsy (3-5% of epilepsy patients; flicker frequencies 5-30Hz especially risky). Migraine triggers, visual discomfort, dizziness. Avoid if history of seizures, even without diagnosed epilepsy." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Photic_driving> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Photic_driving> ,
+               <http://purl.bioontology.org/ontology/MESH/D019050> .  # MeSH: Photic Stimulation
 
 # ============================================================================
 # VISUAL ENTRAINMENT (GENERAL)
@@ -53,7 +62,8 @@ bsc:VisualEntrainment a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "18 studies on visual-auditory entrainment combined modalities (2015-2024); overlaps with audiovisual techniques" ;
   bsc:evidenceReasoning "Moderate-high evidence when combined with audio. Standalone visual entrainment less studied than flicker stimulation. User reports suggest effectiveness for meditation and focus." ;
-  bsc:contraindications "SERIOUS: Photosensitive epilepsy risk (especially with rhythmic patterns or flicker components). Motion sickness, eye strain, migraine triggers." .
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy risk (especially with rhythmic patterns or flicker components). Motion sickness, eye strain, migraine triggers." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D019050> .  # MeSH: Photic Stimulation
 
 # ============================================================================
 # COLOR THERAPY (CHROMOTHERAPY)
@@ -84,7 +94,8 @@ bsc:StroboscopicStimulation a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Clinical neurology literature on photic stimulation in EEG protocols; 30+ years of established medical use for seizure detection" ;
   bsc:evidenceReasoning "Well-established in clinical neurology for EEG activation and seizure provocation testing. Not typically used for wellness applications due to high seizure risk." ;
-  bsc:contraindications "SERIOUS: Photosensitive epilepsy (intentionally used to provoke seizures in diagnostic contexts). Should only be used under medical supervision. Extreme migraine trigger, nausea, disorientation." .
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy (intentionally used to provoke seizures in diagnostic contexts). Should only be used under medical supervision. Extreme migraine trigger, nausea, disorientation." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D019050> .  # MeSH: Photic Stimulation
 
 # ============================================================================
 # LIGHT PULSING (SOFT)
@@ -99,7 +110,8 @@ bsc:SoftLightPulsing a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Limited peer-reviewed research; 4 small studies on meditation enhancement; user experience data from wellness apps" ;
   bsc:evidenceReasoning "Minimal research but generally considered safe. Effects likely mediated through relaxation and attention focusing rather than direct brainwave entrainment." ;
-  bsc:contraindications "Generally safe. Very low seizure risk due to slow frequency (<5Hz typically outside photosensitive epilepsy trigger range). Possible eye strain with prolonged use." .
+  bsc:contraindications "Generally safe. Very low seizure risk due to slow frequency (<5Hz typically outside photosensitive epilepsy trigger range). Possible eye strain with prolonged use." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D008027> .  # MeSH: Light
 
 # ============================================================================
 # GANZFELD STIMULATION
@@ -115,7 +127,8 @@ bsc:GanzfeldStimulation a owl:Class ;
   bsc:evidenceCorpus "Parapsychology and consciousness research literature (1970s-present); 12 peer-reviewed studies on perceptual effects and altered states" ;
   bsc:evidenceReasoning "Well-documented perceptual and psychological effects (visual hallucinations, altered time perception). Research primarily in experimental psychology and consciousness studies. No brainwave entrainment claims." ;
   bsc:contraindications "Generally safe. May induce anxiety or discomfort in individuals sensitive to sensory deprivation. Temporary visual distortions expected. Not recommended for individuals with psychotic disorders." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Ganzfeld_effect> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Ganzfeld_effect> ,
+               <http://purl.bioontology.org/ontology/MESH/D012676> .  # MeSH: Sensory Deprivation
 
 # ============================================================================
 # DEPRECATION MAPPINGS (for backward compatibility)

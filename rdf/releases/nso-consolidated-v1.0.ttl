@@ -14,30 +14,42 @@
 # NEUROSENSORY STIMULATION ONTOLOGY - CONSOLIDATED RELEASE v1.0.0
 # ============================================================================
 #
-# Release Date: 2025-11-17
+# Release Date: 2025-11-18
 # Version: 1.0.0
-# Contributors: BioSynCare Lab, Claude Sonnet 4.5
+# Contributors: BioSynCare Lab, Claude Sonnet 4.5 (AI Assistant)
 #
-# This consolidated ontology merges:
-# - Core ontology (bsc-owl.ttl) - Base classes and safety/evidence properties
+# This consolidated ontology merges all NSO modules:
+# - Core ontology (bsc-owl.ttl) - 7 base classes, evidence/safety properties
 # - Audio module (audio.ttl) - 6 audio technique classes
 # - Visual module (visual.ttl) - 7 visual technique classes
 # - Mixed module (mixed.ttl) - 9 multimodal technique classes
 # - Outcomes module (outcomes.ttl) - 30+ outcome classes
 #
-# Total: 60+ classes with comprehensive evidence metadata
+# Total: 59+ classes, 15+ properties, comprehensive evidence metadata
+# External Links: 55+ MeSH ontology links (69.5% coverage) for semantic interoperability
+# License: CC BY 4.0 (Creative Commons Attribution 4.0 International)
+#
+# Supersedes: SSO (Sensory Stimulation Ontology), ONC (Old NSO Core)
+# Status: CURRENT (authoritative)
 # ============================================================================
 
-<> a owl:Ontology ;
-  dct:title "Neurosensory Stimulation Ontology (Consolidated)" ;
-  dct:creator "BioSynCare Lab" ;
-  dct:contributor "Claude Sonnet 4.5 (AI-assisted evidence curation)" ;
-  dct:description "Comprehensive ontology of neurosensory stimulation techniques and outcomes with evidence-based metadata, safety contraindications, and measurement standards. Consolidates audio, visual, multimodal techniques, and outcome taxonomies." ;
-  dct:created "2025-11-17"^^xsd:date ;
-  dct:issued "2025-11-17"^^xsd:date ;
-  owl:versionInfo "1.0.0" ;
+<https://biosyncarelab.github.io/ont/releases/1.0.0> a owl:Ontology ;
   owl:versionIRI <https://biosyncarelab.github.io/ont/releases/1.0.0> ;
-  rdfs:comment "Initial consolidated release combining core ontology with four domain modules (audio, visual, mixed, outcomes). All techniques include evidence levels (0-5 scale), curator documentation, literature corpus, reasoning, and safety contraindications." .
+  owl:versionInfo "1.0.0" ;
+  owl:priorVersion <https://biosyncare.github.io/ont#> ;
+  dct:title "Neurosensory Stimulation Ontology (NSO) - Consolidated Release" ;
+  dct:alternative "NSO v1.0.0"@en ;
+  dct:creator "BioSynCare Lab" ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Comprehensive ontology of neurosensory stimulation techniques and outcomes with evidence-based metadata (0-5 scale ratings), safety contraindications (SERIOUS: prefix for life-threatening risks), and measurement standards. Consolidates audio, visual, multimodal techniques, and outcome taxonomies into single authoritative resource. Links to external ontologies (MeSH, Gene Ontology) for semantic interoperability. Supersedes SSO and ONC ontologies." ;
+  dct:created "2025-11-17"^^xsd:date ;
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. Consolidates 5 ontology modules (core, audio, visual, mixed, outcomes) into single authoritative resource. All 22 technique classes include evidenceLevel (0-5), evidenceCurator, evidenceCorpus, evidenceReasoning, and contraindications. 55+ MeSH external links (69.5% coverage) enable federated SPARQL queries, PubMed literature searches, and clinical database integration. SKOS vocabulary properties (exactMatch, closeMatch, related) provide precise semantic alignment. Status: CURRENT (authoritative). Supersedes SSO (https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl) and ONC (https://biosyncare.github.io/ont#)." ;
+  owl:imports <http://purl.org/dc/terms/> ,
+              <http://www.w3.org/2004/02/skos/core> .
 
 # ============================================================================
 # CORE CLASSES

@@ -107,13 +107,14 @@ const ui = {
   email: document.getElementById("user-email"),
   userId: document.getElementById("user-id"),
   googleSignIn: document.getElementById("google-sign-in"),
-  googleSignOut: document.getElementById("google-sign-out"),
   statusSignOut: document.getElementById("status-sign-out"),
   emailForm: document.getElementById("email-form"),
   emailInput: document.getElementById("email"),
   passwordInput: document.getElementById("password"),
   emailSignUp: document.getElementById("email-sign-up"),
   messages: document.getElementById("messages"),
+  authForms: document.getElementById("auth-forms"),
+  authChip: document.getElementById("auth-chip"),
   dashboard: document.getElementById("dashboard"),
   sessionList: document.getElementById("session-list"),
   sessionStatus: document.getElementById("session-status"),
@@ -249,6 +250,349 @@ const videoCanvasController =
     ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
     : null;
 
+const trackBindingRegistry = new Map();
+const MARTIGLI_BINDING_LIMITS = {
+  baseMin: 40,
+  baseMax: 1200,
+  depthMin: 0,
+  depthMax: 150,
+};
+
+const normalizeMartigliSnapshot = (source) => {
+  if (!source) return null;
+  if (Array.isArray(source.oscillations) && source.oscillations.length) {
+    return { oscillations: source.oscillations, referenceId: source.referenceId ?? null };
+  }
+  if (Array.isArray(source)) {
+    return { oscillations: source };
+  }
+  return { oscillations: [source] };
+};
+
+const extractMartigliParams = (record) => {
+  if (record?.martigli) return record.martigli;
+  return record?.voices?.find((voice) => voice?.martigli)?.martigli;
+};
+
+const normalizeTrackBindings = (bindings = []) => {
+  if (!Array.isArray(bindings)) return [];
+  return bindings
+    .map((binding) => {
+      if (!binding || typeof binding !== "object") return null;
+      const type = (binding.type ?? binding.kind ?? binding.source ?? "").toString().toLowerCase();
+      if (type === "martigli") {
+        return {
+          type: "martigli",
+          oscillatorId:
+            binding.oscillatorId ?? binding.referenceId ?? binding.sourceId ?? binding.id ?? null,
+          target: binding.target ?? binding.param ?? "frequency",
+          depth: Number(binding.depth ?? binding.amount ?? 0),
+        };
+      }
+      return { ...binding };
+    })
+    .filter(Boolean);
+};
+
+const createMartigliTrackModel = (record, osc, index) => {
+  if (!osc) return null;
+  const recordId = record?.id ?? "record";
+  const trackId = osc.id ?? `${recordId}-martigli-${index}`;
+  return {
+    id: trackId,
+    label: osc.label ?? `Martigli ${index + 1}`,
+    type: "martigli",
+    modality: "martigli",
+    params: {
+      startPeriodSec: osc.startPeriodSec ?? osc.startPeriod,
+      endPeriodSec: osc.endPeriodSec ?? osc.endPeriod,
+      transitionSec: osc.transitionSec ?? osc.transition ?? 0,
+      waveform: osc.waveform ?? "sine",
+      amplitude: osc.amplitude ?? 1,
+    },
+    martigli: {
+      oscillatorId: osc.id ?? null,
+    },
+    bindings: [],
+    isMartigli: true,
+    sourceIndex: -(index + 1),
+    sourceRecordId: record?.id ?? null,
+  };
+};
+
+const normalizeTrackModel = (track = {}, context = {}) => {
+  const recordId = context.recordId ?? track.sourceRecordId ?? null;
+  const index = context.index ?? track.sourceIndex ?? 0;
+  const fallbackId = `${recordId ?? "record"}-track-${index}`;
+  return {
+    ...track,
+    id: track.id ?? fallbackId,
+    label: track.label ?? track.name ?? `Track ${index + 1}`,
+    type: track.type ?? track.kind ?? track.modality ?? "audio",
+    modality: track.modality ?? track.kind ?? "audio",
+    params: { ...(track.params ?? {}) },
+    bindings: normalizeTrackBindings(track.bindings),
+    sourceIndex: index,
+    sourceRecordId: recordId,
+    isMartigli: Boolean(track.isMartigli),
+  };
+};
+
+const getRecordTracks = (record) => {
+  if (!record) return [];
+  const recordId = record.id ?? record.uid ?? "record";
+  const rawTracks = Array.isArray(record.tracks)
+    ? record.tracks
+    : Array.isArray(record.voices)
+      ? record.voices
+      : [];
+  const normalized = rawTracks.map((track, index) => normalizeTrackModel(track, { recordId, index }));
+  const hasMartigliTrack = normalized.some((track) => track.type === "martigli" || track.isMartigli);
+  if (hasMartigliTrack) {
+    return normalized;
+  }
+  const snapshot = normalizeMartigliSnapshot(extractMartigliParams(record));
+  const martigliTracks = snapshot?.oscillations
+    ? snapshot.oscillations.map((osc, index) => createMartigliTrackModel(record, osc, index)).filter(Boolean)
+    : [];
+  return [...martigliTracks, ...normalized];
+};
+
+const ensureTrackBindingState = (track) => {
+  if (!track?.id) return null;
+  let entry = trackBindingRegistry.get(track.id);
+  if (!entry) {
+    const params = track.params ?? {};
+    const baseCandidate = Number(params.frequency ?? params.base ?? 432);
+    const depthCandidate = Number(params.martigliDepth ?? params.depth ?? 8);
+    const snapshot = martigliState.snapshot?.() ?? { oscillations: [] };
+    const defaultOscillator =
+      track.bindings?.find((binding) => binding.type === "martigli")?.oscillatorId ??
+      snapshot.referenceId ??
+      snapshot.oscillations?.[0]?.id ??
+      null;
+    entry = {
+      trackId: track.id,
+      trackLabel: track.label ?? track.id,
+      state: {
+        base: Number.isFinite(baseCandidate) ? baseCandidate : 432,
+        depth: Number.isFinite(depthCandidate) ? depthCandidate : 8,
+        oscillatorId: defaultOscillator,
+      },
+      elements: {},
+    };
+    trackBindingRegistry.set(track.id, entry);
+  } else {
+    entry.trackLabel = track.label ?? entry.trackLabel;
+    entry.state.base = Number.isFinite(entry.state.base) ? entry.state.base : 432;
+    entry.state.depth = Number.isFinite(entry.state.depth) ? entry.state.depth : 8;
+  }
+  return entry;
+};
+
+const hasActiveBindingTargets = () => {
+  for (const entry of trackBindingRegistry.values()) {
+    if (entry.elements?.preview) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const updateTrackBindingPreview = (trackId) => {
+  const entry = trackBindingRegistry.get(trackId);
+  if (!entry || !entry.elements?.preview) return;
+  const { base, depth, oscillatorId } = entry.state;
+  const baseValue = Number.isFinite(base) ? base : 0;
+  const depthValue = Number.isFinite(depth) ? depth : 0;
+  if (!oscillatorId) {
+    entry.elements.preview.textContent = `Output ${baseValue.toFixed(1)} Hz · no Martigli binding`;
+    return;
+  }
+  const metrics = martigliState.getRuntimeMetrics?.(oscillatorId);
+  if (!metrics) {
+    entry.elements.preview.textContent = `Output ${baseValue.toFixed(1)} Hz · awaiting Martigli runtime`;
+    return;
+  }
+  const applied = baseValue + depthValue * (metrics.value ?? 0);
+  entry.elements.preview.textContent = `Output ${applied.toFixed(1)} Hz · value ${(metrics.value ?? 0).toFixed(2)} · base ${baseValue.toFixed(1)} ± ${depthValue.toFixed(1)}`;
+};
+
+const refreshTrackBindingOptions = (snapshot = martigliState.snapshot?.()) => {
+  const oscillations = snapshot?.oscillations ?? [];
+  trackBindingRegistry.forEach((entry) => {
+    const select = entry.elements?.bindingSelect;
+    if (!select) return;
+    const previousValue = entry.state.oscillatorId ?? "";
+    select.innerHTML = "";
+    if (!oscillations.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "Add a Martigli oscillation";
+      select.appendChild(option);
+      select.disabled = true;
+      entry.state.oscillatorId = null;
+      if (entry.elements.preview) {
+        entry.elements.preview.textContent = "Awaiting Martigli oscillator to drive modulation.";
+      }
+      return;
+    }
+    oscillations.forEach((osc, optionIndex) => {
+      const option = document.createElement("option");
+      option.value = osc.id ?? `osc-${optionIndex}`;
+      option.textContent = osc.label ?? `Oscillation ${optionIndex + 1}`;
+      select.appendChild(option);
+    });
+    select.disabled = false;
+    const fallback = snapshot.referenceId ?? oscillations[0]?.id ?? "";
+    const nextValue = oscillations.some((osc) => osc.id === previousValue) ? previousValue : fallback;
+    entry.state.oscillatorId = nextValue || null;
+    select.value = nextValue ?? "";
+    updateTrackBindingPreview(entry.trackId);
+  });
+};
+
+const refreshAllTrackBindings = () => {
+  trackBindingRegistry.forEach((entry) => updateTrackBindingPreview(entry.trackId));
+};
+
+const createTrackBindingControls = (track) => {
+  if (!track || track.isMartigli) return null;
+  const modalityLabel = (track.modality ?? track.type ?? "").toLowerCase();
+  if (/(video|visual|haptic|tactile)/.test(modalityLabel)) {
+    return null;
+  }
+  const entry = ensureTrackBindingState(track);
+  if (!entry) return null;
+  const container = document.createElement("div");
+  container.className = "track-binding";
+
+  const label = document.createElement("p");
+  label.className = "muted-text small";
+  label.textContent = "Martigli modulation";
+  container.appendChild(label);
+
+  const grid = document.createElement("div");
+  grid.className = "track-binding-grid";
+
+  const createRangeField = (fieldLabel, valueFormatter, attrs, onChange) => {
+    const field = document.createElement("label");
+    field.className = "track-binding-field";
+    const title = document.createElement("span");
+    title.textContent = fieldLabel;
+    const value = document.createElement("span");
+    value.className = "track-binding-value";
+    value.textContent = valueFormatter(entry.state[attrs.key]);
+    const input = document.createElement("input");
+    input.type = "range";
+    input.min = String(attrs.min);
+    input.max = String(attrs.max);
+    input.step = String(attrs.step ?? 1);
+    input.value = String(entry.state[attrs.key]);
+    input.addEventListener("input", (event) => {
+      const nextValue = Number(event.target.value);
+      if (!Number.isFinite(nextValue)) return;
+      entry.state[attrs.key] = nextValue;
+      value.textContent = valueFormatter(nextValue);
+      onChange(nextValue);
+    });
+    field.appendChild(title);
+    field.appendChild(value);
+    field.appendChild(input);
+    return { field, value, input };
+  };
+
+  const baseRange = createRangeField(
+    "Base (Hz)",
+    (val) => `${Number(val ?? 0).toFixed(0)} Hz`,
+    { key: "base", min: MARTIGLI_BINDING_LIMITS.baseMin, max: MARTIGLI_BINDING_LIMITS.baseMax, step: 1 },
+    () => updateTrackBindingPreview(track.id),
+  );
+  const depthRange = createRangeField(
+    "Depth", 
+    (val) => `${Number(val ?? 0).toFixed(1)} Hz`,
+    { key: "depth", min: MARTIGLI_BINDING_LIMITS.depthMin, max: MARTIGLI_BINDING_LIMITS.depthMax, step: 0.5 },
+    () => updateTrackBindingPreview(track.id),
+  );
+
+  grid.appendChild(baseRange.field);
+  grid.appendChild(depthRange.field);
+
+  const bindingField = document.createElement("label");
+  bindingField.className = "track-binding-field";
+  const bindingTitle = document.createElement("span");
+  bindingTitle.textContent = "Binding";
+  const select = document.createElement("select");
+  select.addEventListener("change", (event) => {
+    entry.state.oscillatorId = event.target.value || null;
+    updateTrackBindingPreview(track.id);
+  });
+  bindingField.appendChild(bindingTitle);
+  bindingField.appendChild(select);
+  grid.appendChild(bindingField);
+
+  const preview = document.createElement("p");
+  preview.className = "track-binding-preview";
+  preview.textContent = "Awaiting Martigli oscillator to drive modulation.";
+
+  container.appendChild(grid);
+  container.appendChild(preview);
+
+  entry.elements = {
+    preview,
+    bindingSelect: select,
+    baseValue: baseRange.value,
+    depthValue: depthRange.value,
+  };
+
+  refreshTrackBindingOptions();
+  updateTrackBindingPreview(track.id);
+  return container;
+};
+
+const serializeTrackState = (track) => {
+  const entry = trackBindingRegistry.get(track.id);
+  const params = { ...(track.params ?? {}) };
+  let bindings = [...(track.bindings ?? [])];
+  if (entry?.state?.oscillatorId) {
+    bindings = bindings.filter((binding) => binding.type !== "martigli");
+    bindings.unshift({
+      type: "martigli",
+      oscillatorId: entry.state.oscillatorId,
+      target: "frequency",
+      depth: entry.state.depth,
+      base: entry.state.base,
+    });
+    params.frequency = entry.state.base;
+    params.martigliDepth = entry.state.depth;
+  }
+  return {
+    id: track.id,
+    label: track.label,
+    type: track.type,
+    modality: track.modality,
+    params,
+    bindings,
+    isMartigli: Boolean(track.isMartigli),
+    martigli: track.martigli ?? null,
+  };
+};
+
+const describeMartigliLiveSummary = (reference) => {
+  if (!reference) {
+    return "Awaiting Martigli data.";
+  }
+  const config = reference.config ?? reference ?? {};
+  const label = reference.label ?? config.label ?? "Active oscillation";
+  const transition = Number(config.transitionSec ?? 0);
+  const transitionText = transition > 0 ? `${Math.round(transition)}s window` : "Instant window";
+  const inhaleRatio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
+  const inhaleText = `Inhale ${Math.round(inhaleRatio * 100)}%`;
+  const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
+  const amplitudeText = `${amplitude.toFixed(2)}× amp`;
+  return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
+};
+
 const MARTIGLI_TELEMETRY_INTERVAL_MS = 140;
 let martigliTelemetryFrame = null;
 let martigliTelemetryLastTick = 0;
@@ -289,24 +633,25 @@ const createTrackPreviewButton = (track, context = {}) => {
   return button;
 };
 
+const updateAuthVisibility = (user) => {
+  if (ui.authForms) {
+    ui.authForms.classList.toggle("hidden", Boolean(user));
+  }
+  if (ui.authChip) {
+    ui.authChip.classList.toggle("hidden", !user);
+  }
+};
+
 const refreshControls = () => {
   const user = auth.currentUser;
   const emailSubmit = ui.emailForm.querySelector("button[type='submit']");
-  if (user) {
-    document.body.classList.add("auth-hidden");
-  } else {
-    document.body.classList.remove("auth-hidden");
-  }
+  updateAuthVisibility(user);
   if (ui.googleSignIn) {
     const emulatorBlocksFederated = useAuthEmulator;
     ui.googleSignIn.disabled = isBusy || !!user || emulatorBlocksFederated;
     ui.googleSignIn.title = emulatorBlocksFederated
       ? "Google sign-in is disabled when the Auth emulator is active."
       : "";
-  }
-  if (ui.googleSignOut) {
-    ui.googleSignOut.disabled = isBusy || !user;
-    ui.googleSignOut.classList.toggle("hidden", !!user);
   }
   if (ui.statusSignOut) {
     ui.statusSignOut.disabled = isBusy || !user;
@@ -401,8 +746,13 @@ const updateSessionNavigatorLink = (record = null) => {
 
 updateSessionNavigatorLink();
 
-const getTrackCount = (entry) =>
-  entry.trackCount ?? entry.voices?.length ?? entry.tracks?.length ?? 0;
+const getTrackCount = (entry) => {
+  if (!entry) return 0;
+  if (Number.isFinite(entry.trackCount)) {
+    return entry.trackCount;
+  }
+  return getRecordTracks(entry).length;
+};
 
 const formatMetaValue = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -688,17 +1038,6 @@ const ensureSessionTarget = () => {
   return null;
 };
 
-const normalizeMartigliSnapshot = (source) => {
-  if (!source) return null;
-  if (Array.isArray(source.oscillations) && source.oscillations.length) {
-    return { oscillations: source.oscillations, referenceId: source.referenceId ?? null };
-  }
-  if (Array.isArray(source)) {
-    return { oscillations: source };
-  }
-  return { oscillations: [source] };
-};
-
 const applyMartigliFromRecord = (record) => {
   const martigliParams = extractMartigliParams(record);
   const snapshot = normalizeMartigliSnapshot(martigliParams);
@@ -717,11 +1056,13 @@ const applyMartigliFromRecord = (record) => {
 const collectSessionDraft = (record) => {
   const reference = martigliState.getReference ? martigliState.getReference() : null;
   const martigliPayload = reference?.toJSON?.() ?? martigliState.snapshot?.().oscillations?.[0] ?? null;
+  const tracks = getRecordTracks(record);
   return {
     id: record?.id ?? null,
     label: record?.label ?? "Draft Session",
     savedAt: new Date().toISOString(),
     martigli: martigliPayload,
+    tracks: tracks.map((track) => serializeTrackState(track)),
     voices: record?.voices ?? record?.tracks ?? [],
   };
 };
@@ -842,37 +1183,72 @@ const detectTrackModality = (track = {}) => {
 const buildTrackCard = (track, record, kind, index) => {
   const card = document.createElement("li");
   card.className = "track-card";
+  if (track.isMartigli) {
+    card.classList.add("track-card--martigli");
+  }
+
   const title = document.createElement("h5");
   title.textContent = track.label ?? `Track ${index + 1}`;
+  card.appendChild(title);
+
   const meta = document.createElement("div");
   meta.className = "track-meta";
-  const presetChip = document.createElement("span");
-  presetChip.textContent = track.presetId ? `Preset · ${track.presetId}` : "Custom";
-  const gainChip = document.createElement("span");
-  const gainValue = track.gain ?? track.params?.gain;
-  if (gainValue !== undefined) {
-    gainChip.textContent = `Gain ${gainValue}`;
-    meta.appendChild(gainChip);
+  const typeChip = document.createElement("span");
+  typeChip.textContent = track.isMartigli
+    ? "Martigli modulator"
+    : track.presetId
+      ? `Preset · ${track.presetId}`
+      : "Custom";
+  meta.appendChild(typeChip);
+  if (!track.isMartigli) {
+    const gainValue = track.gain ?? track.params?.gain;
+    if (gainValue !== undefined) {
+      const gainChip = document.createElement("span");
+      gainChip.textContent = `Gain ${gainValue}`;
+      meta.appendChild(gainChip);
+    }
   }
-  meta.appendChild(presetChip);
+  card.appendChild(meta);
+
   const summary = document.createElement("p");
   summary.className = "muted-text";
-  summary.textContent = summariseTrackParams(track.params ?? {});
-  card.appendChild(title);
-  card.appendChild(meta);
+  if (track.isMartigli) {
+    const metrics = martigliState.getRuntimeMetrics?.(track.martigli?.oscillatorId ?? track.id);
+    summary.textContent = metrics
+      ? `Wave ${metrics.waveform} • ${metrics.period.toFixed(1)}s period • value ${metrics.value.toFixed(2)}`
+      : describeMartigliLiveSummary(track.martigli ?? track.params ?? {});
+  } else {
+    summary.textContent = summariseTrackParams(track.params ?? {});
+  }
   card.appendChild(summary);
+
   const actions = document.createElement("div");
   actions.className = "track-actions";
-  const previewButton = createTrackPreviewButton(track, { record, kind, index });
-  if (previewButton) {
-    actions.appendChild(previewButton);
-  } else {
+  if (track.isMartigli) {
     const hint = document.createElement("span");
-    hint.className = "muted-text";
-    hint.textContent = "Preview unavailable for this track.";
+    hint.className = "muted-text small";
+    hint.textContent = "Feeds Martigli modulation bindings.";
     actions.appendChild(hint);
+  } else {
+    const previewButton = createTrackPreviewButton(track, { record, kind, index });
+    if (previewButton) {
+      actions.appendChild(previewButton);
+    } else {
+      const hint = document.createElement("span");
+      hint.className = "muted-text";
+      hint.textContent = "Preview unavailable for this track.";
+      actions.appendChild(hint);
+    }
   }
   card.appendChild(actions);
+
+  if (!track.isMartigli) {
+    const bindingControls = createTrackBindingControls(track);
+    if (bindingControls) {
+      card.appendChild(bindingControls);
+    }
+  }
+
   return card;
 };
 
@@ -931,7 +1307,7 @@ const renderSensoryPanelsForRecord = (record, kind) => {
     resetSensoryPanels();
     return;
   }
-  const tracks = record.voices ?? record.tracks ?? [];
+  const tracks = getRecordTracks(record).filter((track) => !track.isMartigli);
   const buckets = {
     audio: [],
     visual: [],
@@ -983,21 +1359,6 @@ const ensureSessionModalVisible = () => {
     openDetailModal(record, "session");
   }
   return true;
-};
-
-const describeMartigliLiveSummary = (reference) => {
-  if (!reference) {
-    return "Awaiting Martigli data.";
-  }
-  const config = reference.config ?? reference ?? {};
-  const label = reference.label ?? config.label ?? "Active oscillation";
-  const transition = Number(config.transitionSec ?? 0);
-  const transitionText = transition > 0 ? `${Math.round(transition)}s window` : "Instant window";
-  const inhaleRatio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
-  const inhaleText = `Inhale ${Math.round(inhaleRatio * 100)}%`;
-  const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
-  const amplitudeText = `${amplitude.toFixed(2)}× amp`;
-  return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
 };
 
 const formatMartigliDecimal = (value, digits = 2) =>
@@ -1570,9 +1931,16 @@ const ensureMartigliTelemetryLoop = () => {
     return;
   }
   const loop = (timestamp) => {
-    if (!document.hidden && martigliDashboard.widgets.size) {
+    const needsWidgets = martigliDashboard.widgets.size > 0;
+    const needsBindings = hasActiveBindingTargets();
+    if (!document.hidden && (needsWidgets || needsBindings)) {
       if (!martigliTelemetryLastTick || timestamp - martigliTelemetryLastTick >= MARTIGLI_TELEMETRY_INTERVAL_MS) {
-        updateMartigliTelemetryForAll();
+        if (needsWidgets) {
+          updateMartigliTelemetryForAll();
+        }
+        if (needsBindings) {
+          refreshAllTrackBindings();
+        }
         martigliTelemetryLastTick = timestamp;
       }
     }
@@ -1719,25 +2087,32 @@ const renderTrackSection = (entries, listEl, hintEl, record, kind, label) => {
 
 const renderModalTrackSections = (record, kind) => {
   audioEngine.stop();
-  const tracks = record.voices ?? record.tracks ?? [];
+  const tracks = getRecordTracks(record);
   const buckets = {
     audio: [],
     video: [],
     haptics: [],
   };
   tracks.forEach((track, index) => {
+    const payload = { track, index };
+    if (track.isMartigli) {
+      buckets.audio.unshift(payload);
+      return;
+    }
     const modality = detectTrackModality(track);
     if (modality === "video") {
-      buckets.video.push({ track, index });
+      buckets.video.push(payload);
     } else if (modality === "haptics") {
-      buckets.haptics.push({ track, index });
+      buckets.haptics.push(payload);
     } else {
-      buckets.audio.push({ track, index });
+      buckets.audio.push(payload);
     }
   });
   renderTrackSection(buckets.audio, ui.audioTrackList, ui.audioTrackHint, record, kind, "audio");
   renderTrackSection(buckets.video, ui.videoTrackList, ui.videoTrackHint, record, kind, "visual");
   renderTrackSection(buckets.haptics, ui.hapticTrackList, ui.hapticTrackHint, record, kind, "haptic");
+  refreshTrackBindingOptions();
+  refreshAllTrackBindings();
 };
 
 const formatMartigliValue = (value) => {
@@ -1755,11 +2130,6 @@ const formatMartigliValue = (value) => {
     return parts.join(" · ") || JSON.stringify(value);
   }
   return formatMetaValue(value);
-};
-
-const extractMartigliParams = (record) => {
-  if (record?.martigli) return record.martigli;
-  return record?.voices?.find((voice) => voice?.martigli)?.martigli;
 };
 
 const renderMartigliParams = (record) => {
@@ -1789,6 +2159,9 @@ const renderMartigliParams = (record) => {
 function closeDetailModal() {
   if (!ui.modal) return;
   audioEngine.stop();
+  trackBindingRegistry.forEach((entry) => {
+    entry.elements = {};
+  });
   ui.modal.classList.add("hidden");
   ui.modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
@@ -2099,6 +2472,8 @@ martigliState.subscribe((snapshot) => {
   renderMartigliOscillationSelect(snapshot);
   updateMartigliOscillationStatus(snapshot);
   renderMartigliDashboardList(snapshot);
+  refreshTrackBindingOptions(snapshot);
+  refreshAllTrackBindings();
 });
 updateMartigliPreview(martigliState.snapshot());
 updateMartigliOscillationStatus(martigliState.snapshot());

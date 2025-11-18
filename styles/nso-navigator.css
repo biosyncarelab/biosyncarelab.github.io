@@ -90,6 +90,57 @@
   display: none;
 }
 
+/* Semantic Filters Panel */
+.semantic-filters {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.98);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.3);
+}
+
+.semantic-filters.hidden {
+  display: none;
+}
+
+.filters-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.filters-content {
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.filter-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.filter-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
 .inspector-header {
   padding: 1.25rem;
   border-bottom: 1px solid var(--border);

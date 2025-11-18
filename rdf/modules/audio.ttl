@@ -5,13 +5,21 @@
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 
-<> a owl:Ontology ;
-  dct:title "BSCLab Audio Techniques Module" ;
+<https://biosyncarelab.github.io/ont/modules/audio/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/modules/audio/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  dct:title "NSO Audio Techniques Module" ;
+  dct:alternative "NSO Audio"@en ;
   dct:creator "BioSynCare Lab" ;
-  dct:description "Audio-based neurosensory stimulation techniques consolidated from SSO/ONC sources with naming fixes and safety metadata." ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Audio-based neurosensory stimulation techniques: binaural beats, monaural beats, isochronic tones, solfeggio frequencies. Includes evidence ratings (0-5 scale), safety metadata, contraindications, and MeSH ontology links. Supersedes SSO AudioTechniques with singular naming convention." ;
   dct:created "2025-11-17"^^xsd:date ;
-  owl:imports <../core/bsc-owl.ttl> ;
-  owl:versionInfo "1.0.0" .
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. 6 audio technique classes with full evidence metadata. Status: CURRENT (authoritative)." ;
+  owl:imports <https://biosyncarelab.github.io/ont/1.0.0> .
 
 # ============================================================================
 # BASE CLASS (replaces plural sso:AudioTechniques)

@@ -3,14 +3,23 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 
-<> a owl:Ontology ;
-  dct:title "BSCLab Mixed-Modality Techniques Module" ;
+<https://biosyncarelab.github.io/ont/modules/mixed/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/modules/mixed/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  dct:title "NSO Mixed-Modality Techniques Module" ;
+  dct:alternative "NSO Mixed"@en ;
   dct:creator "BioSynCare Lab" ;
-  dct:description "Multimodal neurosensory stimulation techniques combining audio, visual, haptic, and other modalities for enhanced entrainment effects." ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Multimodal neurosensory stimulation techniques combining audio, visual, haptic, and other modalities for enhanced entrainment effects: audiovisual entrainment, mind machines, breathing cues, synesthetic stimulation, vibroacoustic therapy, haptic entrainment, immersive VR. Includes evidence ratings, MeSH links, and comprehensive safety metadata. Supersedes fragmented modality definitions." ;
   dct:created "2025-11-17"^^xsd:date ;
-  owl:imports <../core/bsc-owl.ttl>, <audio.ttl>, <visual.ttl> ;
-  owl:versionInfo "1.0.0" .
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. 9 mixed-modality technique classes with full evidence metadata and contraindications. Status: CURRENT (authoritative)." ;
+  owl:imports <https://biosyncarelab.github.io/ont/1.0.0> .
 
 # ============================================================================
 # BASE CLASSES FOR MIXED MODALITIES
@@ -57,7 +66,9 @@ bsc:MindMachine a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Clinical studies on commercial AVE devices (Laxman, Proteus, Kasina); 15 peer-reviewed studies on efficacy for stress reduction and cognitive enhancement" ;
   bsc:evidenceReasoning "Moderate-high evidence from device-specific studies. Commercial devices offer standardized protocols studied in clinical contexts. User reports highly positive for meditation and relaxation." ;
-  bsc:contraindications "SERIOUS: Photosensitive epilepsy. Same as general AVE contraindications. Device-specific warnings in manufacturer documentation." .
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy. Same as general AVE contraindications. Device-specific warnings in manufacturer documentation." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D000161> ;  # MeSH: Audiovisual Aids
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D019050> .  # MeSH: Photic Stimulation
 
 # ============================================================================
 # MARTIGLI BREATHING CUE TECHNIQUE
@@ -88,7 +99,10 @@ bsc:SynestheticStimulation a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Limited peer-reviewed research; 5 studies on cross-modal perception and immersive experiences; user experience data from VR meditation apps" ;
   bsc:evidenceReasoning "Minimal controlled research. Effects likely mediated through aesthetic engagement and attention focusing rather than direct neurological synesthesia. Popular in VR/AR wellness applications." ;
-  bsc:contraindications "SERIOUS: Photosensitive epilepsy if visual component includes flicker. Possible sensory overload, disorientation, or nausea in sensitive individuals." .
+  bsc:contraindications "SERIOUS: Photosensitive epilepsy if visual component includes flicker. Possible sensory overload, disorientation, or nausea in sensitive individuals." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D013545> ,  # MeSH: Synesthesia
+               <http://purl.bioontology.org/ontology/MESH/D010465> ;  # MeSH: Perception
+  skos:related <http://purl.bioontology.org/ontology/MESH/D000161> .  # MeSH: Audiovisual Aids
 
 # ============================================================================
 # VIBROACOUSTIC THERAPY
@@ -104,7 +118,10 @@ bsc:VibroacousticTherapy a owl:Class ;
   bsc:evidenceCorpus "PubMed search: 'vibroacoustic therapy pain' (2010-2024), 18 clinical studies on pain management, Parkinson's disease, and anxiety reduction" ;
   bsc:evidenceReasoning "Moderate evidence from clinical trials for pain reduction and muscle relaxation. Well-established in Nordic countries (Finland, Norway) as complementary therapy. Meta-analyses show modest but significant effects." ;
   bsc:contraindications "Pregnancy (vibration may affect fetus), deep vein thrombosis (risk of dislodging clots), acute inflammation, recent surgery, pacemakers (low risk but manufacturer precaution). Generally safe for most individuals." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Vibroacoustic_therapy> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Vibroacoustic_therapy> ,
+               <http://purl.bioontology.org/ontology/MESH/D014732> ,  # MeSH: Vibration
+               <http://purl.bioontology.org/ontology/MESH/D013016> ;  # MeSH: Sound
+  skos:related <http://purl.bioontology.org/ontology/MESH/D059408> .  # MeSH: Music Therapy
 
 # ============================================================================
 # HAPTIC ENTRAINMENT
@@ -119,7 +136,10 @@ bsc:HapticEntrainment a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Emerging research area; 6 studies on tactile rhythm perception and cortical entrainment (2019-2024)" ;
   bsc:evidenceReasoning "Early-stage research. Some evidence for tactile rhythm perception and cortical activation. Less studied than audio or visual entrainment. Potential for accessibility applications (hearing/vision impaired individuals)." ;
-  bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." .
+  bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D014110> ,  # MeSH: Touch
+               <http://purl.bioontology.org/ontology/MESH/D014732> ;  # MeSH: Vibration
+  skos:related <http://purl.bioontology.org/ontology/MESH/D055698> .  # MeSH: Touch Perception
 
 # ============================================================================
 # IMMERSIVE VR NEUROSTIMULATION
@@ -135,4 +155,7 @@ bsc:ImmersiveVRNeurostimulation a owl:Class ;
   bsc:evidenceCorpus "VR meditation and therapy research (2018-2024); 11 pilot studies on anxiety, PTSD, and pain management in VR environments" ;
   bsc:evidenceReasoning "Emerging field with promising pilot data. VR immersion enhances engagement and presence compared to 2D audiovisual stimulation. Limited long-term efficacy studies. Rapid growth in commercial VR wellness apps." ;
   bsc:contraindications "SERIOUS: Photosensitive epilepsy (VR flicker and motion). Motion sickness, disorientation, eye strain (common VR side effects). Not recommended for individuals with severe balance disorders or vestibular issues. Avoid prolonged sessions (>30 minutes without breaks)." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Virtual_reality_therapy> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Virtual_reality_therapy> ,
+               <http://purl.bioontology.org/ontology/MESH/D000077562> ;  # MeSH: Virtual Reality
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D000067586> ;  # MeSH: Virtual Reality Exposure Therapy
+  skos:related <http://purl.bioontology.org/ontology/MESH/D019464> .  # MeSH: Computer-Assisted Therapy

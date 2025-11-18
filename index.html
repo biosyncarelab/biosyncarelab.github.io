@@ -3,130 +3,142 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BSCLab · Sign In</title>
+    <title>BioSynCare Lab</title>
     <link rel="stylesheet" href="styles/main.css" />
   </head>
-  <body>
-    <main class="auth-card">
-      <header>
-        <h1>BioSynCare Lab</h1>
-        <p>Sign in to sync presets, sessions, and telemetry.</p>
+  <body class="lab-surface">
+    <div class="app-shell">
+      <header class="lab-header">
+        <div class="lab-brand">
+          <p class="brand-eyebrow">BioSynCare</p>
+          <h1>BioSynCare Lab</h1>
+          <p class="brand-tagline">Sync presets, sessions, tracks, and Martigli telemetry across devices.</p>
+        </div>
+        <div class="lab-auth" id="lab-auth">
+          <div id="auth-chip" class="auth-chip hidden" aria-live="polite">
+            <div class="auth-chip-details">
+              <p class="auth-chip-label">Signed in</p>
+              <p id="auth-state" class="auth-chip-state">Checking…</p>
+              <p id="user-email" class="auth-chip-email"></p>
+              <p id="user-id" class="auth-chip-id"></p>
+            </div>
+            <button id="status-sign-out" class="ghost small" type="button">Sign out</button>
+          </div>
+          <div id="auth-forms" class="auth-forms" aria-live="polite">
+            <section class="auth-section auth-section--google">
+              <div class="auth-section-head">
+                <h2>Sign in</h2>
+                <p class="muted-text small">Use Google for quickest access.</p>
+              </div>
+              <div class="auth-actions-row">
+                <button id="google-sign-in" class="primary" type="button">Continue with Google</button>
+              </div>
+              <div class="auth-mode-hint">
+                <p id="auth-mode-text" class="muted-text">Checking auth mode…</p>
+                <button type="button" id="toggle-auth-mode" class="ghost small hidden">Use production auth</button>
+              </div>
+            </section>
+            <section class="auth-section auth-section--email">
+              <div class="auth-section-head">
+                <h3>Email access</h3>
+                <p class="muted-text small">Use your lab credentials.</p>
+              </div>
+              <form id="email-form">
+                <label>
+                  Email
+                  <input type="email" id="email" required autocomplete="email" />
+                </label>
+                <label>
+                  Password
+                  <input type="password" id="password" required minlength="6" autocomplete="current-password" />
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="primary">Sign in</button>
+                  <button type="button" id="email-sign-up" class="ghost">Create account</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
       </header>
 
-      <section id="auth-status" aria-live="polite" class="auth-status">
-        <p>
-          Status: <span id="auth-state">Checking…</span>
-          <button id="status-sign-out" class="ghost small auth-signout-pill" type="button">Sign out</button>
-        </p>
-        <p id="user-email"></p>
-        <p id="user-id"></p>
-      </section>
+      <div id="messages" class="lab-messages" aria-live="polite"></div>
 
-      <section class="auth-section auth-card-google">
-        <h2>Google Sign-in</h2>
-        <button id="google-sign-in" class="primary">Continue with Google</button>
-        <button id="google-sign-out" class="ghost" disabled>Sign out</button>
-        <div class="auth-mode-hint">
-          <p id="auth-mode-text" class="muted-text">Checking auth mode…</p>
-          <button type="button" id="toggle-auth-mode" class="ghost small hidden">Use production auth</button>
-        </div>
-      </section>
-
-      <section class="auth-section auth-card-email">
-        <h2>Email Sign-in</h2>
-        <form id="email-form">
-          <label>
-            Email
-            <input type="email" id="email" required autocomplete="email" />
-          </label>
-          <label>
-            Password
-            <input type="password" id="password" required minlength="6" autocomplete="current-password" />
-          </label>
-          <div class="form-actions">
-            <button type="submit" class="primary">Sign in</button>
-            <button type="button" id="email-sign-up" class="ghost">Create account</button>
+      <main id="dashboard" class="lab-main hidden" aria-live="polite">
+        <section class="lab-panel sessions-panel" id="dashboard-session-card">
+          <div class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Sessions</p>
+              <h2>Session library</h2>
+              <p id="session-status" class="muted-text">Sign in to load sessions.</p>
+            </div>
+            <div class="panel-actions">
+              <button type="button" id="session-apply" class="ghost tiny">Apply session</button>
+              <button type="button" id="session-save" class="ghost tiny">Save current state</button>
+            </div>
           </div>
-        </form>
-      </section>
-
-      <section id="messages" aria-live="polite"></section>
-
-      <section id="dashboard" class="auth-section dashboard hidden" aria-live="polite">
-        <div class="neuro-grid">
-          <article class="neuro-card" id="dashboard-session-card">
-            <div class="card-headline">
-              <div>
-                <h2>Sessions</h2>
-                <p id="session-status" class="muted-text">Sign in to load sessions.</p>
-              </div>
-              <div class="session-actions">
-                <button type="button" id="session-apply" class="ghost tiny">Apply Session</button>
-                <button type="button" id="session-save" class="ghost tiny">Save Current State</button>
-              </div>
-            </div>
-            <p id="session-card-hint" class="muted-text small">
-              Pick a record to hydrate Martigli and sensory controls.
-            </p>
-            <ul id="session-list" class="stack-list"></ul>
+          <p id="session-card-hint" class="muted-text small">
+            Select a record to hydrate Martigli and sensory controls.
+          </p>
+          <ul id="session-list" class="stack-list"></ul>
+          <footer class="panel-footer">
             <button type="button" id="session-navigator" class="ghost small" disabled>
-              Session Class (NSO)
+              Open Session Class Navigator
             </button>
-          </article>
+          </footer>
+        </section>
 
-          <article class="neuro-card" id="dashboard-martigli-card">
-            <div class="card-headline">
-              <div>
-                <h2>Martigli / Breathing Oscillations</h2>
-                <p id="martigli-dashboard-preview" class="muted-text">
-                  Live Martigli widget syncs with your current dashboard session.
-                </p>
-              </div>
-            </div>
-            <p class="muted-text small">
-              Adjustments happen in the detail modal; this snapshot mirrors the live oscillation window.
-            </p>
-            <div class="martigli-dashboard-actions">
-              <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add Oscillation</button>
-            </div>
-            <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
-            <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
-          </article>
-
-          <article class="neuro-card" id="dashboard-sensory-card">
-            <div class="card-headline">
-              <h2>Sensory Controls</h2>
-              <p class="muted-text small">
-                Audio, visual, and haptic tracks sourced from the selected session.
+        <section class="lab-panel martigli-panel" id="dashboard-martigli-card">
+          <div class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Martigli / Breathing</p>
+              <h2>Martigli oscillations</h2>
+              <p id="martigli-dashboard-preview" class="muted-text small">
+                Live Martigli widget syncs with your current dashboard session.
               </p>
             </div>
-            <div class="sensory-grid">
-              <section class="sensory-panel">
-                <div class="section-headline">
-                  <h3>Audio Tracks</h3>
-                  <p id="audio-sensory-status" class="muted-text">Select a session to preview audio layers.</p>
-                </div>
-                <ul id="audio-sensory-list" class="sensory-list"></ul>
-              </section>
-              <section class="sensory-panel">
-                <div class="section-headline">
-                  <h3>Visual Tracks</h3>
-                  <p id="visual-sensory-status" class="muted-text">Waiting for a session with video cues.</p>
-                </div>
-                <ul id="visual-sensory-list" class="sensory-list"></ul>
-              </section>
-              <section class="sensory-panel">
-                <div class="section-headline">
-                  <h3>Haptic Tracks</h3>
-                  <p id="haptic-sensory-status" class="muted-text">Waiting for a session with haptic cues.</p>
-                </div>
-                <ul id="haptic-sensory-list" class="sensory-list"></ul>
-              </section>
+            <div class="panel-actions">
+              <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add oscillation</button>
             </div>
-          </article>
-        </div>
-      </section>
-    </main>
+          </div>
+          <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
+          <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
+        </section>
+
+        <section class="lab-panel sensory-panel" id="dashboard-sensory-card">
+          <div class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Tracks</p>
+              <h2>Session tracks</h2>
+              <p class="muted-text small">Audio, visual, haptic, and Martigli tracks sourced from the session.</p>
+            </div>
+          </div>
+          <div class="track-grid">
+            <section class="track-panel">
+              <div class="section-headline">
+                <h3>Audio tracks</h3>
+                <p id="audio-sensory-status" class="muted-text">Select a session to preview audio layers.</p>
+              </div>
+              <ul id="audio-sensory-list" class="sensory-list"></ul>
+            </section>
+            <section class="track-panel">
+              <div class="section-headline">
+                <h3>Visual tracks</h3>
+                <p id="visual-sensory-status" class="muted-text">Waiting for a session with video cues.</p>
+              </div>
+              <ul id="visual-sensory-list" class="sensory-list"></ul>
+            </section>
+            <section class="track-panel">
+              <div class="section-headline">
+                <h3>Haptic tracks</h3>
+                <p id="haptic-sensory-status" class="muted-text">Waiting for a session with haptic cues.</p>
+              </div>
+              <ul id="haptic-sensory-list" class="sensory-list"></ul>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <section id="detail-modal" class="modal hidden" aria-hidden="true">
       <div id="modal-overlay" class="modal-overlay" role="presentation"></div>
@@ -152,7 +164,7 @@
             </div>
           </div>
           <div class="martigli-oscillation-toolbar">
-            <label for="martigli-oscillation-select">Active Oscillation</label>
+            <label for="martigli-oscillation-select">Active oscillation</label>
             <div class="martigli-oscillation-actions">
               <select id="martigli-oscillation-select"></select>
               <div class="martigli-oscillation-buttons">
@@ -165,11 +177,11 @@
           </div>
           <div class="martigli-card-grid">
             <div>
-              <h5>Stored Parameters</h5>
+              <h5>Stored parameters</h5>
               <div id="modal-martigli" class="martigli-params"></div>
             </div>
             <div class="martigli-visual">
-              <h5>Visual Preview</h5>
+              <h5>Visual preview</h5>
               <canvas id="martigli-canvas" width="360" height="160" aria-label="Martigli waveform preview"></canvas>
               <p class="muted-text">Canvas pulses with the current Martigli snapshot; video engines will hook here.</p>
             </div>
@@ -182,7 +194,7 @@
         <section class="modal-card" id="audio-card" aria-labelledby="audio-card-label">
           <div class="section-head">
             <div>
-              <h4 id="audio-card-label">Audio Tracks</h4>
+              <h4 id="audio-card-label">Audio tracks</h4>
               <p id="audio-track-hint" class="muted-text"></p>
             </div>
           </div>
@@ -192,7 +204,7 @@
         <section class="modal-card" id="video-card" aria-labelledby="video-card-label">
           <div class="section-head">
             <div>
-              <h4 id="video-card-label">Visual Controls</h4>
+              <h4 id="video-card-label">Visual controls</h4>
               <p id="video-track-hint" class="muted-text">No video tracks stored yet.</p>
             </div>
           </div>
@@ -202,7 +214,7 @@
         <section class="modal-card" id="haptics-card" aria-labelledby="haptics-card-label">
           <div class="section-head">
             <div>
-              <h4 id="haptics-card-label">Haptic Controls</h4>
+              <h4 id="haptics-card-label">Haptic controls</h4>
               <p id="haptic-track-hint" class="muted-text">No haptic tracks stored yet.</p>
             </div>
           </div>

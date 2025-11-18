@@ -5,13 +5,21 @@
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 
-<> a owl:Ontology ;
-  dct:title "BSCLab Outcomes Taxonomy Module" ;
+<https://biosyncarelab.github.io/ont/modules/outcomes/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/modules/outcomes/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  dct:title "NSO Outcomes Taxonomy Module" ;
+  dct:alternative "NSO Outcomes"@en ;
   dct:creator "BioSynCare Lab" ;
-  dct:description "Comprehensive taxonomy of neurosensory stimulation outcomes across cognitive, emotional, physiological, and behavioral dimensions with measurement standards." ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Comprehensive taxonomy of neurosensory stimulation outcomes across cognitive, emotional, physiological, and behavioral dimensions with measurement standards. Includes 30+ outcome classes organized hierarchically with MeSH links, measurement metadata (type, tool, validated scales), and typical latency properties. Supersedes fragmented outcome vocabularies." ;
   dct:created "2025-11-17"^^xsd:date ;
-  owl:imports <../core/bsc-owl.ttl> ;
-  owl:versionInfo "1.0.0" .
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. 30+ outcome classes with measurement properties and MeSH ontology links. Status: CURRENT (authoritative)." ;
+  owl:imports <https://biosyncarelab.github.io/ont/1.0.0> .
 
 # ============================================================================
 # OUTCOME TAXONOMY STRUCTURE
@@ -57,38 +65,49 @@ bsc:AttentionEnhancement a owl:Class ;
   rdfs:subClassOf bsc:CognitiveOutcome ;
   rdfs:label "Attention Enhancement" ;
   rdfs:comment "Improved ability to focus, sustain attention, and resist distraction. Measured via continuous performance tests (CPT), attention span assessments, or subjective self-reports." ;
-  skos:altLabel "Focus Improvement", "Concentration Enhancement" .
+  skos:altLabel "Focus Improvement", "Concentration Enhancement" ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D001288> ;  # MeSH: Attention
+  skos:related <http://purl.bioontology.org/ontology/MESH/D001289> .  # MeSH: Attention Deficit Disorder with Hyperactivity
 
 bsc:MemoryEnhancement a owl:Class ;
   rdfs:subClassOf bsc:CognitiveOutcome ;
   rdfs:label "Memory Enhancement" ;
   rdfs:comment "Improved working memory, short-term memory, or long-term memory consolidation. Measured via recall tests, recognition tasks, or memory span assessments." ;
-  skos:narrower bsc:WorkingMemoryEnhancement, bsc:LongTermMemoryEnhancement .
+  skos:narrower bsc:WorkingMemoryEnhancement, bsc:LongTermMemoryEnhancement ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D008568> ;  # MeSH: Memory
+  skos:related <http://purl.bioontology.org/ontology/MESH/D008569> .  # MeSH: Memory Disorders
 
 bsc:WorkingMemoryEnhancement a owl:Class ;
   rdfs:subClassOf bsc:MemoryEnhancement ;
   rdfs:label "Working Memory Enhancement" ;
-  rdfs:comment "Improved capacity to hold and manipulate information in short-term memory. Measured via N-back tasks, digit span tests, or operation span tasks." .
+  rdfs:comment "Improved capacity to hold and manipulate information in short-term memory. Measured via N-back tasks, digit span tests, or operation span tasks." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D057567> .  # MeSH: Memory, Short-Term
 
 bsc:LongTermMemoryEnhancement a owl:Class ;
   rdfs:subClassOf bsc:MemoryEnhancement ;
   rdfs:label "Long-Term Memory Enhancement" ;
-  rdfs:comment "Improved consolidation and retrieval of long-term memories. Measured via delayed recall tests, recognition memory tasks, or autobiographical memory assessments." .
+  rdfs:comment "Improved consolidation and retrieval of long-term memories. Measured via delayed recall tests, recognition memory tasks, or autobiographical memory assessments." ;
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D008570> .  # MeSH: Memory Consolidation
 
 bsc:ExecutiveFunctionEnhancement a owl:Class ;
   rdfs:subClassOf bsc:CognitiveOutcome ;
   rdfs:label "Executive Function Enhancement" ;
-  rdfs:comment "Improved planning, decision-making, cognitive flexibility, and inhibitory control. Measured via Stroop test, Wisconsin Card Sorting Test, or Trail Making Test." .
+  rdfs:comment "Improved planning, decision-making, cognitive flexibility, and inhibitory control. Measured via Stroop test, Wisconsin Card Sorting Test, or Trail Making Test." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D056344> .  # MeSH: Executive Function
 
 bsc:ProcessingSpeedEnhancement a owl:Class ;
   rdfs:subClassOf bsc:CognitiveOutcome ;
   rdfs:label "Processing Speed Enhancement" ;
-  rdfs:comment "Faster information processing and reaction times. Measured via reaction time tasks, symbol coding tests, or processing speed indices." .
+  rdfs:comment "Faster information processing and reaction times. Measured via reaction time tasks, symbol coding tests, or processing speed indices." ;
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D011930> ;  # MeSH: Reaction Time
+  skos:related <http://purl.bioontology.org/ontology/MESH/D011599> .  # MeSH: Psychomotor Performance
 
 bsc:CognitiveFlexibilityEnhancement a owl:Class ;
   rdfs:subClassOf bsc:CognitiveOutcome ;
   rdfs:label "Cognitive Flexibility Enhancement" ;
-  rdfs:comment "Improved ability to switch between tasks, adapt to changing rules, and think creatively. Measured via task-switching paradigms or set-shifting tests." .
+  rdfs:comment "Improved ability to switch between tasks, adapt to changing rules, and think creatively. Measured via task-switching paradigms or set-shifting tests." ;
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D056344> ;  # MeSH: Executive Function
+  skos:related <http://purl.bioontology.org/ontology/MESH/D003071> .  # MeSH: Cognition
 
 # ============================================================================
 # EMOTIONAL OUTCOMES
@@ -98,29 +117,40 @@ bsc:AnxietyReduction a owl:Class ;
   rdfs:subClassOf bsc:EmotionalOutcome ;
   rdfs:label "Anxiety Reduction" ;
   rdfs:comment "Decreased anxiety symptoms, worry, or nervousness. Measured via State-Trait Anxiety Inventory (STAI), Generalized Anxiety Disorder (GAD-7) scale, or heart rate variability (HRV) as physiological proxy." ;
-  skos:altLabel "Stress Reduction", "Worry Reduction" .
+  skos:altLabel "Stress Reduction", "Worry Reduction" ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D001007> ;  # MeSH: Anxiety
+  skos:related <http://purl.bioontology.org/ontology/MESH/D013315> ,  # MeSH: Stress, Psychological
+               <http://purl.bioontology.org/ontology/MESH/D001008> .  # MeSH: Anxiety Disorders
 
 bsc:MoodEnhancement a owl:Class ;
   rdfs:subClassOf bsc:EmotionalOutcome ;
   rdfs:label "Mood Enhancement" ;
-  rdfs:comment "Improved overall mood, positive affect, or subjective well-being. Measured via Positive and Negative Affect Schedule (PANAS), Profile of Mood States (POMS), or visual analog mood scales." .
+  rdfs:comment "Improved overall mood, positive affect, or subjective well-being. Measured via Positive and Negative Affect Schedule (PANAS), Profile of Mood States (POMS), or visual analog mood scales." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D000339> ;  # MeSH: Affect
+  skos:related <http://purl.bioontology.org/ontology/MESH/D019964> .  # MeSH: Mood Disorders
 
 bsc:DepressionReduction a owl:Class ;
   rdfs:subClassOf bsc:EmotionalOutcome ;
   rdfs:label "Depression Reduction" ;
   rdfs:comment "Decreased depressive symptoms, anhedonia, or negative affect. Measured via Beck Depression Inventory (BDI), Patient Health Questionnaire (PHQ-9), or clinical assessment." ;
-  skos:related bsc:MoodEnhancement .
+  skos:related bsc:MoodEnhancement ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D003863> ;  # MeSH: Depression
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D003866> .  # MeSH: Depressive Disorder
 
 bsc:EmotionalRegulationImprovement a owl:Class ;
   rdfs:subClassOf bsc:EmotionalOutcome ;
   rdfs:label "Emotional Regulation Improvement" ;
-  rdfs:comment "Enhanced ability to manage, modulate, and respond to emotional experiences adaptively. Measured via Difficulties in Emotion Regulation Scale (DERS) or physiological measures (HRV coherence)." .
+  rdfs:comment "Enhanced ability to manage, modulate, and respond to emotional experiences adaptively. Measured via Difficulties in Emotion Regulation Scale (DERS) or physiological measures (HRV coherence)." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D000079885> ;  # MeSH: Emotional Regulation
+  skos:related <http://purl.bioontology.org/ontology/MESH/D004644> .  # MeSH: Emotions
 
 bsc:RelaxationResponse a owl:Class ;
   rdfs:subClassOf bsc:EmotionalOutcome ;
   rdfs:label "Relaxation Response" ;
   rdfs:comment "Immediate relaxation state characterized by decreased arousal and subjective calm. Measured via subjective relaxation scales, heart rate, or muscle tension (EMG)." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Relaxation_response> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Relaxation_response> ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D012064> ;  # MeSH: Relaxation
+  skos:related <http://purl.bioontology.org/ontology/MESH/D064866> .  # MeSH: Mindfulness
 
 # ============================================================================
 # PHYSIOLOGICAL OUTCOMES
@@ -130,53 +160,68 @@ bsc:BrainwaveEntrainment a owl:Class ;
   rdfs:subClassOf bsc:PhysiologicalOutcome ;
   rdfs:label "Brainwave Entrainment" ;
   rdfs:comment "Synchronization of brainwave activity to external stimulus frequency. Measured via EEG spectral analysis showing increased power in target frequency bands (delta, theta, alpha, beta, gamma)." ;
-  skos:narrower bsc:AlphaEnhancement, bsc:ThetaEnhancement, bsc:BetaEnhancement, bsc:GammaEnhancement, bsc:DeltaEnhancement .
+  skos:narrower bsc:AlphaEnhancement, bsc:ThetaEnhancement, bsc:BetaEnhancement, bsc:GammaEnhancement, bsc:DeltaEnhancement ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D001931> ;  # MeSH: Brain Waves
+  skos:related <http://purl.bioontology.org/ontology/MESH/D004569> .  # MeSH: Electroencephalography
 
 bsc:AlphaEnhancement a owl:Class ;
   rdfs:subClassOf bsc:BrainwaveEntrainment ;
   rdfs:label "Alpha Enhancement" ;
-  rdfs:comment "Increased alpha wave activity (8-12Hz) associated with relaxed alertness and meditative states. Measured via EEG alpha power or alpha/theta ratio." .
+  rdfs:comment "Increased alpha wave activity (8-12Hz) associated with relaxed alertness and meditative states. Measured via EEG alpha power or alpha/theta ratio." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D000513> .  # MeSH: Alpha Rhythm
 
 bsc:ThetaEnhancement a owl:Class ;
   rdfs:subClassOf bsc:BrainwaveEntrainment ;
   rdfs:label "Theta Enhancement" ;
-  rdfs:comment "Increased theta wave activity (4-8Hz) associated with deep meditation, creativity, and light sleep states. Measured via EEG theta power." .
+  rdfs:comment "Increased theta wave activity (4-8Hz) associated with deep meditation, creativity, and light sleep states. Measured via EEG theta power." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D013826> .  # MeSH: Theta Rhythm
 
 bsc:BetaEnhancement a owl:Class ;
   rdfs:subClassOf bsc:BrainwaveEntrainment ;
   rdfs:label "Beta Enhancement" ;
-  rdfs:comment "Increased beta wave activity (12-30Hz) associated with active thinking, focus, and alertness. Measured via EEG beta power." .
+  rdfs:comment "Increased beta wave activity (12-30Hz) associated with active thinking, focus, and alertness. Measured via EEG beta power." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D001611> .  # MeSH: Beta Rhythm
 
 bsc:GammaEnhancement a owl:Class ;
   rdfs:subClassOf bsc:BrainwaveEntrainment ;
   rdfs:label "Gamma Enhancement" ;
-  rdfs:comment "Increased gamma wave activity (30-100Hz) associated with high-level cognitive processing, perception, and consciousness. Measured via EEG gamma power." .
+  rdfs:comment "Increased gamma wave activity (30-100Hz) associated with high-level cognitive processing, perception, and consciousness. Measured via EEG gamma power." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D065818> .  # MeSH: Gamma Rhythm
 
 bsc:DeltaEnhancement a owl:Class ;
   rdfs:subClassOf bsc:BrainwaveEntrainment ;
   rdfs:label "Delta Enhancement" ;
-  rdfs:comment "Increased delta wave activity (0.5-4Hz) associated with deep sleep and restorative processes. Measured via EEG delta power." .
+  rdfs:comment "Increased delta wave activity (0.5-4Hz) associated with deep sleep and restorative processes. Measured via EEG delta power." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D003712> .  # MeSH: Delta Rhythm
 
 bsc:HeartRateVariabilityImprovement a owl:Class ;
   rdfs:subClassOf bsc:PhysiologicalOutcome ;
   rdfs:label "Heart Rate Variability (HRV) Improvement" ;
   rdfs:comment "Increased HRV indicating enhanced autonomic nervous system flexibility and resilience. Measured via RMSSD, SDNN, or coherence ratio from heart rate monitors or ECG." ;
-  rdfs:seeAlso <https://en.wikipedia.org/wiki/Heart_rate_variability> .
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Heart_rate_variability> ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D059289> ;  # MeSH: Heart Rate Variability
+  skos:related <http://purl.bioontology.org/ontology/MESH/D001341> .  # MeSH: Autonomic Nervous System
 
 bsc:CortisolReduction a owl:Class ;
   rdfs:subClassOf bsc:PhysiologicalOutcome ;
   rdfs:label "Cortisol Reduction" ;
-  rdfs:comment "Decreased cortisol levels indicating reduced physiological stress response. Measured via salivary cortisol assays." .
+  rdfs:comment "Decreased cortisol levels indicating reduced physiological stress response. Measured via salivary cortisol assays." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D006854> ;  # MeSH: Hydrocortisone (Cortisol)
+  skos:related <http://purl.bioontology.org/ontology/MESH/D013312> .  # MeSH: Stress, Physiological
 
 bsc:BloodPressureReduction a owl:Class ;
   rdfs:subClassOf bsc:PhysiologicalOutcome ;
   rdfs:label "Blood Pressure Reduction" ;
-  rdfs:comment "Decreased systolic and/or diastolic blood pressure. Measured via sphygmomanometer or automated blood pressure monitors." .
+  rdfs:comment "Decreased systolic and/or diastolic blood pressure. Measured via sphygmomanometer or automated blood pressure monitors." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D001794> ;  # MeSH: Blood Pressure
+  skos:related <http://purl.bioontology.org/ontology/MESH/D006973> .  # MeSH: Hypertension
 
 bsc:RespiratoryRateReduction a owl:Class ;
   rdfs:subClassOf bsc:PhysiologicalOutcome ;
   rdfs:label "Respiratory Rate Reduction" ;
-  rdfs:comment "Slower, deeper breathing patterns associated with relaxation and parasympathetic activation. Measured via respiratory rate monitors or breath counting." .
+  rdfs:comment "Slower, deeper breathing patterns associated with relaxation and parasympathetic activation. Measured via respiratory rate monitors or breath counting." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D056152> ;  # MeSH: Respiratory Rate
+  skos:related <http://purl.bioontology.org/ontology/MESH/D001945> .  # MeSH: Breathing Exercises
 
 # ============================================================================
 # BEHAVIORAL OUTCOMES
@@ -186,22 +231,28 @@ bsc:SleepQualityImprovement a owl:Class ;
   rdfs:subClassOf bsc:BehavioralOutcome ;
   rdfs:label "Sleep Quality Improvement" ;
   rdfs:comment "Enhanced subjective sleep quality, reduced sleep latency, or increased sleep duration. Measured via Pittsburgh Sleep Quality Index (PSQI), sleep diaries, or actigraphy." ;
-  skos:narrower bsc:SleepLatencyReduction, bsc:SleepDurationIncrease .
+  skos:narrower bsc:SleepLatencyReduction, bsc:SleepDurationIncrease ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D012890> ;  # MeSH: Sleep
+  skos:related <http://purl.bioontology.org/ontology/MESH/D007319> .  # MeSH: Sleep Initiation and Maintenance Disorders
 
 bsc:SleepLatencyReduction a owl:Class ;
   rdfs:subClassOf bsc:SleepQualityImprovement ;
   rdfs:label "Sleep Latency Reduction" ;
-  rdfs:comment "Faster transition from wakefulness to sleep. Measured via sleep diaries, actigraphy, or polysomnography." .
+  rdfs:comment "Faster transition from wakefulness to sleep. Measured via sleep diaries, actigraphy, or polysomnography." ;
+  skos:closeMatch <http://purl.bioontology.org/ontology/MESH/D007319> .  # MeSH: Sleep Initiation and Maintenance Disorders
 
 bsc:SleepDurationIncrease a owl:Class ;
   rdfs:subClassOf bsc:SleepQualityImprovement ;
   rdfs:label "Sleep Duration Increase" ;
-  rdfs:comment "Longer total sleep time. Measured via sleep diaries, actigraphy, or polysomnography." .
+  rdfs:comment "Longer total sleep time. Measured via sleep diaries, actigraphy, or polysomnography." ;
+  skos:related <http://purl.bioontology.org/ontology/MESH/D012890> .  # MeSH: Sleep
 
 bsc:PhysicalActivityIncrease a owl:Class ;
   rdfs:subClassOf bsc:BehavioralOutcome ;
   rdfs:label "Physical Activity Increase" ;
-  rdfs:comment "Increased physical activity levels, movement, or exercise frequency. Measured via activity trackers, pedometers, or self-report questionnaires." .
+  rdfs:comment "Increased physical activity levels, movement, or exercise frequency. Measured via activity trackers, pedometers, or self-report questionnaires." ;
+  skos:exactMatch <http://purl.bioontology.org/ontology/MESH/D015444> ;  # MeSH: Exercise
+  skos:related <http://purl.bioontology.org/ontology/MESH/D009043> .  # MeSH: Motor Activity
 
 bsc:PainReduction a owl:Class ;
   rdfs:subClassOf bsc:BehavioralOutcome ;

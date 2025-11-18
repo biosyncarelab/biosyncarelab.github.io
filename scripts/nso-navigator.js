@@ -146,6 +146,23 @@ const ui = {
   propertiesToggleText: document.getElementById("properties-toggle-text"),
   toggleFilters: document.getElementById("toggle-filters"),
   edgeFilters: document.getElementById("edge-filters"),
+  semanticFilters: document.getElementById("semantic-filters"),
+  closeFilters: document.getElementById("close-filters"),
+  evidenceLevelSlider: document.getElementById("evidence-level-slider"),
+  evidenceLevelValue: document.getElementById("evidence-level-value"),
+  filterSeriousWarnings: document.getElementById("filter-serious-warnings"),
+  filterSafeOnly: document.getElementById("filter-safe-only"),
+  filterAudio: document.getElementById("filter-audio"),
+  filterVisual: document.getElementById("filter-visual"),
+  filterMixed: document.getElementById("filter-mixed"),
+  filterCognitive: document.getElementById("filter-cognitive"),
+  filterEmotional: document.getElementById("filter-emotional"),
+  filterPhysiological: document.getElementById("filter-physiological"),
+  filterBehavioral: document.getElementById("filter-behavioral"),
+  applyFilters: document.getElementById("apply-filters"),
+  resetFilters: document.getElementById("reset-filters"),
+  filterResults: document.getElementById("filter-results"),
+  filterCount: document.getElementById("filter-count"),
   filterSubclass: document.getElementById("filter-subclass"),
   filterDomain: document.getElementById("filter-domain"),
   filterRange: document.getElementById("filter-range"),
@@ -1184,6 +1201,282 @@ async function showURIInspector(resource) {
     return container;
   };
 
+  // Helper function to fetch PubMed article count via NCBI E-utilities API
+  const fetchPubMedCount = async (meshTerms, additionalQuery = "") => {
+    if (!meshTerms || meshTerms.length === 0) return null;
+
+    try {
+      // Build MeSH query: Extract MeSH IDs from URIs
+      const meshIDs = meshTerms
+        .map(uri => uri.includes("MESH/") ? uri.split("/").pop() : null)
+        .filter(id => id !== null);
+
+      if (meshIDs.length === 0) return null;
+
+      // Construct PubMed search query
+      const meshQuery = meshIDs.map(id => `${id}[MeSH Terms]`).join(" OR ");
+      const fullQuery = additionalQuery
+        ? `(${meshQuery}) AND ${additionalQuery}`
+        : meshQuery;
+
+  // NCBI E-utilities API endpoint
+  const apiURL = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(fullQuery)}&retmode=json&retmax=0`;
+
+  const response = await fetch(apiURL);
+      if (!response.ok) throw new Error("PubMed API request failed");
+
+      const data = await response.json();
+      const count = parseInt(data.esearchresult?.count || 0);
+
+      return {
+        count,
+        searchURL: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(fullQuery)}`,
+        query: fullQuery
+      };
+    } catch (error) {
+      console.warn("PubMed API error:", error);
+      return null;
+    }
+  };
+
+  // Helper function to create evidence strength badge
+  const createEvidenceBadge = (evidenceLevel) => {
+    const level = parseFloat(evidenceLevel);
+    const container = document.createElement("span");
+
+    let color, bgColor, label, emoji;
+
+    if (level >= 3.5) {
+      color = "#065f46";
+      bgColor = "#d1fae5";
+      label = "High Evidence";
+      emoji = "🟢";
+    } else if (level >= 2.5) {
+      color = "#ea580c";
+      bgColor = "#fed7aa";
+      label = "Moderate-High Evidence";
+      emoji = "🟡";
+    } else if (level >= 1.5) {
+      color = "#b45309";
+      bgColor = "#fef3c7";
+      label = "Moderate Evidence";
+      emoji = "🟠";
+    } else if (level >= 0.8) {
+      color = "#dc2626";
+      bgColor = "#fecaca";
+      label = "Low Evidence";
+      emoji = "🔴";
+    } else {
+      color = "#7c2d12";
+      bgColor = "#fed7aa";
+      label = "Anecdotal";
+      emoji = "⚪";
+    }
+
+    container.style.cssText = `display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: ${bgColor}; color: ${color}; border-radius: 4px; font-weight: 600; font-size: 0.85em; margin-left: 0.5rem;`;
+
+    const emojiSpan = document.createElement("span");
+    emojiSpan.textContent = emoji;
+    container.appendChild(emojiSpan);
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = `${label} (${level}/5)`;
+    container.appendChild(textSpan);
+
+    return container;
+  };
+
+  // Helper function to create Evidence Explorer component
+  const createEvidenceExplorer = async (resource) => {
+    const evidenceSection = document.createElement("div");
+    evidenceSection.style.cssText = "margin: 1rem 0; padding: 1rem; background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-radius: 8px; border-left: 4px solid #3b82f6;";
+
+    const header = document.createElement("div");
+    header.style.cssText = "display: flex; align-items: center; margin-bottom: 0.75rem;";
+
+    const icon = document.createElement("span");
+    icon.textContent = "📊";
+    icon.style.cssText = "font-size: 1.5em; margin-right: 0.5rem;";
+    header.appendChild(icon);
+
+    const title = document.createElement("strong");
+    title.textContent = "Evidence Explorer";
+    title.style.cssText = "color: #1e40af; font-size: 1.1em;";
+    header.appendChild(title);
+
+    evidenceSection.appendChild(header);
+
+    // Extract evidence properties
+    const evidenceLevel = resource.properties["https://biosyncarelab.github.io/ont#evidenceLevel"]?.[0]?.value;
+    const evidenceCurator = resource.properties["https://biosyncarelab.github.io/ont#evidenceCurator"]?.[0]?.value;
+    const evidenceCorpus = resource.properties["https://biosyncarelab.github.io/ont#evidenceCorpus"]?.[0]?.value;
+    const evidenceReasoning = resource.properties["https://biosyncarelab.github.io/ont#evidenceReasoning"]?.[0]?.value;
+    const contraindications = resource.properties["https://biosyncarelab.github.io/ont#contraindications"]?.[0]?.value;
+
+    // If no evidence data, return null
+    if (!evidenceLevel && !evidenceCurator && !evidenceCorpus && !evidenceReasoning && !contraindications) {
+      return null;
+    }
+
+    // Evidence Level
+    if (evidenceLevel) {
+      const levelRow = document.createElement("div");
+      levelRow.style.cssText = "margin-bottom: 0.75rem;";
+
+      const levelLabel = document.createElement("span");
+      levelLabel.textContent = "Evidence Strength: ";
+      levelLabel.style.cssText = "font-weight: 600; color: #374151;";
+      levelRow.appendChild(levelLabel);
+
+      const badge = createEvidenceBadge(evidenceLevel);
+      levelRow.appendChild(badge);
+
+      evidenceSection.appendChild(levelRow);
+    }
+
+    // Evidence Curator
+    if (evidenceCurator) {
+      const curatorRow = document.createElement("div");
+      curatorRow.style.cssText = "margin-bottom: 0.5rem; font-size: 0.9em; color: #6b7280;";
+      curatorRow.innerHTML = `<strong>Curated by:</strong> ${evidenceCurator}`;
+      evidenceSection.appendChild(curatorRow);
+    }
+
+    // Evidence Corpus (Literature base)
+    if (evidenceCorpus) {
+      const corpusRow = document.createElement("div");
+      corpusRow.style.cssText = "margin-bottom: 0.75rem; padding: 0.5rem; background: white; border-radius: 4px; font-size: 0.9em;";
+
+      const corpusLabel = document.createElement("div");
+      corpusLabel.innerHTML = "<strong>📚 Literature Base:</strong>";
+      corpusLabel.style.cssText = "margin-bottom: 0.25rem; color: #374151;";
+      corpusRow.appendChild(corpusLabel);
+
+      const corpusText = document.createElement("div");
+      corpusText.textContent = evidenceCorpus;
+      corpusText.style.cssText = "color: #6b7280; line-height: 1.4;";
+      corpusRow.appendChild(corpusText);
+
+      evidenceSection.appendChild(corpusRow);
+    }
+
+    // Evidence Reasoning
+    if (evidenceReasoning) {
+      const reasoningRow = document.createElement("div");
+      reasoningRow.style.cssText = "margin-bottom: 0.75rem; padding: 0.5rem; background: white; border-radius: 4px; font-size: 0.9em;";
+
+      const reasoningLabel = document.createElement("div");
+      reasoningLabel.innerHTML = "<strong>🔬 Analysis:</strong>";
+      reasoningLabel.style.cssText = "margin-bottom: 0.25rem; color: #374151;";
+      reasoningRow.appendChild(reasoningLabel);
+
+      const reasoningText = document.createElement("div");
+      reasoningText.textContent = evidenceReasoning;
+      reasoningText.style.cssText = "color: #6b7280; line-height: 1.4;";
+      reasoningRow.appendChild(reasoningText);
+
+      evidenceSection.appendChild(reasoningRow);
+    }
+
+    // Contraindications (Safety)
+    if (contraindications) {
+      const safetyRow = document.createElement("div");
+      const hasSerious = contraindications.includes("SERIOUS:");
+
+      safetyRow.style.cssText = `margin-bottom: 0.75rem; padding: 0.5rem; background: ${hasSerious ? "#fef2f2" : "#fffbeb"}; border-radius: 4px; border-left: 3px solid ${hasSerious ? "#dc2626" : "#f59e0b"}; font-size: 0.9em;`;
+
+      const safetyLabel = document.createElement("div");
+      safetyLabel.innerHTML = hasSerious ? "<strong>⚠️ SERIOUS Safety Warnings:</strong>" : "<strong>⚡ Safety Considerations:</strong>";
+      safetyLabel.style.cssText = `margin-bottom: 0.25rem; color: ${hasSerious ? "#991b1b" : "#92400e"};`;
+      safetyRow.appendChild(safetyLabel);
+
+      const safetyText = document.createElement("div");
+      safetyText.textContent = contraindications;
+      safetyText.style.cssText = `color: ${hasSerious ? "#7f1d1d" : "#78350f"}; line-height: 1.4; font-weight: ${hasSerious ? "600" : "400"};`;
+      safetyRow.appendChild(safetyText);
+
+      evidenceSection.appendChild(safetyRow);
+    }
+
+    // PubMed Integration - fetch article count from MeSH links
+    const meshLinks = [];
+    for (const [predicate, values] of Object.entries(resource.properties)) {
+      if (predicate === "http://www.w3.org/2004/02/skos/core#exactMatch" ||
+          predicate === "http://www.w3.org/2004/02/skos/core#closeMatch" ||
+          predicate === "http://www.w3.org/2004/02/skos/core#related" ||
+          predicate === "http://www.w3.org/2000/01/rdf-schema#seeAlso") {
+        for (const val of values) {
+          if (val.type === "uri" && val.value.includes("MESH")) {
+            meshLinks.push(val.value);
+          }
+        }
+      }
+    }
+
+    if (meshLinks.length > 0) {
+      const pubmedRow = document.createElement("div");
+      pubmedRow.style.cssText = "margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-radius: 4px; border: 1px solid #bae6fd;";
+
+      const pubmedHeader = document.createElement("div");
+      pubmedHeader.innerHTML = "<strong>🏥 PubMed Literature</strong>";
+      pubmedHeader.style.cssText = "margin-bottom: 0.5rem; color: #0c4a6e;";
+      pubmedRow.appendChild(pubmedHeader);
+
+      const loadingMsg = document.createElement("div");
+      loadingMsg.textContent = "Loading article count...";
+      loadingMsg.style.cssText = "color: #64748b; font-size: 0.85em; font-style: italic;";
+      pubmedRow.appendChild(loadingMsg);
+
+      evidenceSection.appendChild(pubmedRow);
+
+      // Fetch PubMed count asynchronously
+      fetchPubMedCount(meshLinks).then(result => {
+        if (result && result.count > 0) {
+          pubmedRow.removeChild(loadingMsg);
+
+          const countDiv = document.createElement("div");
+          countDiv.style.cssText = "margin-bottom: 0.5rem;";
+
+          const countBadge = document.createElement("span");
+          countBadge.style.cssText = "display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; background: #0ea5e9; color: white; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;";
+          countBadge.textContent = `${result.count.toLocaleString()} articles`;
+          countDiv.appendChild(countBadge);
+
+          const countText = document.createElement("span");
+          countText.textContent = "found in PubMed";
+          countText.style.cssText = "color: #475569; font-size: 0.9em;";
+          countDiv.appendChild(countText);
+
+          pubmedRow.appendChild(countDiv);
+
+          const searchLink = document.createElement("a");
+          searchLink.href = result.searchURL;
+          searchLink.target = "_blank";
+          searchLink.rel = "noopener noreferrer";
+          searchLink.textContent = "🔍 Search PubMed →";
+          searchLink.style.cssText = "display: inline-block; margin-top: 0.25rem; color: #0ea5e9; text-decoration: none; font-weight: 500; font-size: 0.9em;";
+          searchLink.onmouseover = () => searchLink.style.textDecoration = "underline";
+          searchLink.onmouseout = () => searchLink.style.textDecoration = "none";
+          pubmedRow.appendChild(searchLink);
+
+          const queryInfo = document.createElement("div");
+          queryInfo.style.cssText = "margin-top: 0.5rem; padding: 0.25rem 0.5rem; background: white; border-radius: 3px; font-size: 0.75em; color: #64748b; font-family: monospace; word-break: break-all;";
+          queryInfo.textContent = `Query: ${result.query}`;
+          pubmedRow.appendChild(queryInfo);
+        } else {
+          loadingMsg.textContent = "No PubMed articles found for linked MeSH terms";
+          loadingMsg.style.color = "#94a3b8";
+        }
+      }).catch(err => {
+        loadingMsg.textContent = "Could not fetch PubMed data";
+        loadingMsg.style.color = "#ef4444";
+        console.warn("PubMed fetch error:", err);
+      });
+    }
+
+    return evidenceSection;
+  };
+
   // If this resource has merged concept data, show it first
   if (resource.conceptData) {
     const conceptSection = document.createElement("div");
@@ -1314,8 +1607,14 @@ async function showURIInspector(resource) {
     ui.inspectorProperties.appendChild(deprecationNote);
   }
 
+  // Evidence Explorer - Show evidence metadata prominently
+  const evidenceExplorer = await createEvidenceExplorer(resource);
+  if (evidenceExplorer) {
+    ui.inspectorProperties.appendChild(evidenceExplorer);
+  }
+
   // Main class/resource header
-  if (resource.conceptData || resource.deprecatedEntities) {
+  if (resource.conceptData || resource.deprecatedEntities || evidenceExplorer) {
     const classHeader = document.createElement("strong");
     classHeader.textContent = "Current Class Information";
     classHeader.style.cssText = "display: block; margin-top: 1rem; margin-bottom: 0.5rem; color: #38bdf8;";
@@ -1323,6 +1622,15 @@ async function showURIInspector(resource) {
   }
 
   for (const [predicate, values] of Object.entries(resource.properties)) {
+    // Skip evidence properties since they're shown in Evidence Explorer
+    if (predicate === "https://biosyncarelab.github.io/ont#evidenceLevel" ||
+        predicate === "https://biosyncarelab.github.io/ont#evidenceCurator" ||
+        predicate === "https://biosyncarelab.github.io/ont#evidenceCorpus" ||
+        predicate === "https://biosyncarelab.github.io/ont#evidenceReasoning" ||
+        predicate === "https://biosyncarelab.github.io/ont#contraindications") {
+      continue;
+    }
+
     const predicateLabel = getLocalName(predicate);
     const dt = document.createElement("dt");
     dt.textContent = predicateLabel;
@@ -1823,6 +2131,174 @@ function showError(message) {
   ui.error.classList.remove("hidden");
 }
 
+// Semantic Filter Helpers
+const ontologyBase = "https://biosyncarelab.github.io/ont#";
+const rdfsSubclass = "http://www.w3.org/2000/01/rdf-schema#subClassOf";
+
+const getPropertyValues = (resource, predicate) => {
+  if (!resource) return [];
+  const mainValues = resource.properties?.[predicate] || [];
+  const conceptValues = resource.conceptData?.properties?.[predicate] || [];
+  return [...mainValues, ...conceptValues]
+    .map((entry) => entry?.value)
+    .filter(Boolean);
+};
+
+const getEvidenceLevelFromResource = (resource) => {
+  const values = getPropertyValues(resource, `${ontologyBase}evidenceLevel`);
+  if (!values.length) return null;
+  const numeric = parseFloat(values[0]);
+  return Number.isNaN(numeric) ? null : numeric;
+};
+
+const getContraindicationsFromResource = (resource) => {
+  const values = getPropertyValues(resource, `${ontologyBase}contraindications`);
+  return values[0] || "";
+};
+
+const getModalityFromResource = (resource, nodeId = "") => {
+  const subclasses = getPropertyValues(resource, rdfsSubclass);
+  const candidates = [...subclasses, nodeId];
+
+  if (candidates.some((uri) => uri.includes("AudioTechnique"))) {
+    return "audio";
+  }
+  if (candidates.some((uri) => uri.includes("VisualTechnique") || uri.includes("VisualEntrainment") || uri.includes("FlickerStimulation"))) {
+    return "visual";
+  }
+  if (candidates.some((uri) =>
+    uri.includes("AudiovisualTechnique") ||
+    uri.includes("MultimodalTechnique") ||
+    uri.includes("MixedModalityTechnique") ||
+    uri.includes("HybridTechnique")
+  )) {
+    return "mixed";
+  }
+
+  return null;
+};
+
+const getOutcomeCategoriesFromResource = (resource, nodeId = "") => {
+  const subclasses = getPropertyValues(resource, rdfsSubclass);
+  const candidates = [...subclasses, nodeId];
+  const categories = [];
+
+  if (candidates.some((uri) => uri.includes("CognitiveOutcome"))) categories.push("cognitive");
+  if (candidates.some((uri) => uri.includes("EmotionalOutcome"))) categories.push("emotional");
+  if (candidates.some((uri) => uri.includes("PhysiologicalOutcome"))) categories.push("physiological");
+  if (candidates.some((uri) => uri.includes("BehavioralOutcome"))) categories.push("behavioral");
+
+  return categories;
+};
+
+const updateEvidenceSliderLabel = () => {
+  if (!ui.evidenceLevelSlider || !ui.evidenceLevelValue) return;
+  const value = parseFloat(ui.evidenceLevelSlider.value || "0");
+  ui.evidenceLevelValue.textContent = `${value.toFixed(1)}+`;
+};
+
+function applySemanticFilters() {
+  if (!cy) return;
+
+  const evidenceThreshold = parseFloat(ui.evidenceLevelSlider?.value || "0") || 0;
+  const hideSeriousWarnings = !!ui.filterSeriousWarnings?.checked;
+  const safeOnly = !!ui.filterSafeOnly?.checked;
+
+  const modalitySelection = {
+    audio: !!ui.filterAudio?.checked,
+    visual: !!ui.filterVisual?.checked,
+    mixed: !!ui.filterMixed?.checked,
+  };
+  const restrictModality = Object.values(modalitySelection).some((checked) => !checked);
+
+  const outcomeSelection = {
+    cognitive: !!ui.filterCognitive?.checked,
+    emotional: !!ui.filterEmotional?.checked,
+    physiological: !!ui.filterPhysiological?.checked,
+    behavioral: !!ui.filterBehavioral?.checked,
+  };
+  const restrictOutcome = Object.values(outcomeSelection).some((checked) => !checked);
+
+  let visibleCount = 0;
+
+  cy.nodes().forEach((node) => {
+    const resource = node.data("resource") || {};
+    const nodeId = node.id();
+    let isVisible = true;
+
+    // Evidence filter: hide nodes without evidence if threshold > 0
+    if (evidenceThreshold > 0) {
+      const evidenceLevel = getEvidenceLevelFromResource(resource);
+      if (evidenceLevel === null || evidenceLevel < evidenceThreshold) {
+        isVisible = false;
+      }
+    }
+
+    // Safety filters
+    if (isVisible && (hideSeriousWarnings || safeOnly)) {
+      const contraindications = getContraindicationsFromResource(resource);
+      const hasWarnings = contraindications.trim().length > 0;
+      const hasSerious = /serious/i.test(contraindications);
+
+      if (safeOnly && hasWarnings) {
+        isVisible = false;
+      } else if (!safeOnly && hideSeriousWarnings && hasSerious) {
+        isVisible = false;
+      }
+    }
+
+    // Modality filters apply only when user restricts selection
+    if (isVisible && restrictModality) {
+      const modality = getModalityFromResource(resource, nodeId);
+      if (modality && modalitySelection[modality] === false) {
+        isVisible = false;
+      }
+    }
+
+    // Outcome category filters apply only when user restricts selection
+    if (isVisible && restrictOutcome) {
+      const categories = getOutcomeCategoriesFromResource(resource, nodeId);
+      if (categories.length > 0 && !categories.some((cat) => outcomeSelection[cat])) {
+        isVisible = false;
+      }
+    }
+
+    node.style("display", isVisible ? "element" : "none");
+    if (isVisible) visibleCount++;
+  });
+
+  // Hide edges connected to filtered nodes and reapply edge visibility rules
+  updateEdgeVisibility();
+
+  if (ui.filterResults && ui.filterCount) {
+    ui.filterCount.textContent = visibleCount;
+    ui.filterResults.style.display = "block";
+  }
+}
+
+function resetSemanticFilters() {
+  if (!cy) return;
+
+  if (ui.evidenceLevelSlider) {
+    ui.evidenceLevelSlider.value = 0;
+    updateEvidenceSliderLabel();
+  }
+
+  if (ui.filterSeriousWarnings) ui.filterSeriousWarnings.checked = false;
+  if (ui.filterSafeOnly) ui.filterSafeOnly.checked = false;
+
+  ["filterAudio", "filterVisual", "filterMixed", "filterCognitive", "filterEmotional", "filterPhysiological", "filterBehavioral"].forEach((key) => {
+    if (ui[key]) ui[key].checked = true;
+  });
+
+  cy.nodes().forEach((node) => node.style("display", "element"));
+  updateEdgeVisibility();
+
+  if (ui.filterResults) {
+    ui.filterResults.style.display = "none";
+  }
+}
+
 // Event listeners
 ui.closeInspector.addEventListener("click", hideURIInspector);
 
@@ -1881,10 +2357,35 @@ ui.layoutSelector.addEventListener("change", (e) => {
   }
 });
 
-// Toggle edge filters panel
+// Toggle semantic filters panel
 ui.toggleFilters.addEventListener("click", () => {
-  ui.edgeFilters.classList.toggle("hidden");
+  ui.semanticFilters.classList.toggle("hidden");
+  if (ui.edgeFilters) {
+    ui.edgeFilters.classList.toggle("hidden");
+  }
 });
+
+if (ui.closeFilters) {
+  ui.closeFilters.addEventListener("click", () => {
+    ui.semanticFilters.classList.add("hidden");
+    if (ui.edgeFilters) {
+      ui.edgeFilters.classList.add("hidden");
+    }
+  });
+}
+
+if (ui.evidenceLevelSlider) {
+  ui.evidenceLevelSlider.addEventListener("input", updateEvidenceSliderLabel);
+  updateEvidenceSliderLabel();
+}
+
+if (ui.applyFilters) {
+  ui.applyFilters.addEventListener("click", applySemanticFilters);
+}
+
+if (ui.resetFilters) {
+  ui.resetFilters.addEventListener("click", resetSemanticFilters);
+}
 
 // Toggle property nodes visibility
 ui.toggleProperties.addEventListener("click", () => {
@@ -1915,7 +2416,7 @@ function updatePropertyVisualization() {
   } else {
     // Hide property nodes
     propertyNodes.style("display", "none");
-    console.log(`[Property Toggle] Hiding ${propertyNodes.length} property nodes`);
+  console.log(`[Property Toggle] Hiding ${propertyNodes.length} property nodes`);
   }
 
   // Update edge visibility
@@ -1947,6 +2448,16 @@ function updateEdgeVisibility() {
 
     // Check if source/target nodes exist
     if (!source || !target || source.empty() || target.empty()) {
+      return;
+    }
+
+    const sourceHidden = source.style("display") === "none";
+    const targetHidden = target.style("display") === "none";
+
+    // Hide edges connected to filtered nodes regardless of edge filter settings
+    if (sourceHidden || targetHidden) {
+      edge.style("display", "none");
+      hiddenByFilter++;
       return;
     }
 

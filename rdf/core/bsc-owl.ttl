@@ -8,12 +8,23 @@
 @prefix time:  <http://www.w3.org/2006/time#> .
 @prefix schema:<http://schema.org/> .
 
-<> a owl:Ontology ;
-  dct:title "BioSynCare Core Ontology (minimal)" ;
+<https://biosyncarelab.github.io/ont/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  owl:priorVersion <https://biosyncare.github.io/ont#> ;
+  dct:title "BioSynCare Neurosensory Stimulation Ontology (NSO) - Core Module" ;
+  dct:alternative "NSO Core"@en ;
   dct:creator "BioSynCare Lab" ;
-  dct:description "Minimal OWL classes and properties for BioSynCare sessions, protocols, techniques, outcomes and reports." ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Core OWL classes and properties for neurosensory stimulation: sessions, protocols, techniques, outcomes, safety metadata, and evidence ratings. This is the authoritative source of truth for BSCLab semantic data, superseding SSO and ONC ontologies." ;
   dct:created "2025-11-05"^^xsd:date ;
-  owl:versionInfo "0.1.0" .
+  dct:issued "2025-11-18"^^xsd:date ;
+  dct:modified "2025-11-18"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  rdfs:comment "Version 1.0.0: First stable release. Establishes semantic versioning, evidence metadata properties, and safety classification. Status: CURRENT (authoritative)." ;
+  owl:imports <http://purl.org/dc/terms/> ,
+              <http://www.w3.org/2004/02/skos/core> .
 
 # Core classes
 bsc:Project           a owl:Class ; rdfs:label "Project" .
