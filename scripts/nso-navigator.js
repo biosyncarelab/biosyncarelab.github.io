@@ -198,16 +198,6 @@ const ui = {
   errorText: document.getElementById("error-text"),
 };
 
-if (ui.ontologySelector) {
-  ui.ontologySelector.value = currentOntology;
-}
-
-// Hydrate filters/layout from URL
-hydrateFiltersFromURL();
-if (ui.layoutSelector && currentLayout) {
-  ui.layoutSelector.value = currentLayout;
-}
-
 // Auth state listener
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
@@ -2377,6 +2367,15 @@ const hydrateFiltersFromURL = () => {
     if (ui.filterData) ui.filterData.checked = showPropertiesAsNodes;
   }
 };
+
+// Initialize UI from URL parameters
+if (ui.ontologySelector) {
+  ui.ontologySelector.value = currentOntology;
+}
+hydrateFiltersFromURL();
+if (ui.layoutSelector && currentLayout) {
+  ui.layoutSelector.value = currentLayout;
+}
 
 const getMetaCategoryFromResource = (resource, nodeId = "") => {
   const label = (resource.label || getLocalName(nodeId) || "").toLowerCase();

@@ -346,34 +346,6 @@ body {
   gap: 0.1rem;
 }
 
-.martigli-mini-stat-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.9);
-}
-
-.martigli-mini-stat-value {
-  font-size: 0.85rem;
-  color: rgba(248, 250, 252, 0.95);
-}
-
-.track-visualizer-expand {
-  align-self: flex-end;
-}
-
-.visualizer-panel {
-  max-width: 860px;
-  width: min(92vw, 860px);
-}
-
-.visualizer-panel canvas {
-  width: 100%;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: #020617;
-}
-
 @media (min-width: 768px) {
   .track-grid {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
