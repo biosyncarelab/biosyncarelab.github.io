@@ -20,6 +20,7 @@ class MartigliProcessor extends AudioWorkletProcessor {
       fadeOutSec: 0,
       sessionStart: null,
       sessionEnd: null,
+      paused: true,
     };
     this.phase = 0;
     this.lastPeriod = this.state.startPeriodSec;
@@ -48,6 +49,9 @@ class MartigliProcessor extends AudioWorkletProcessor {
     this.state.fadeOutSec = Math.max(0, payload.fadeOutSec ?? this.state.fadeOutSec);
     this.state.sessionStart = payload.sessionStart ?? null;
     this.state.sessionEnd = payload.sessionEnd ?? null;
+    if (payload.paused !== undefined) {
+      this.state.paused = Boolean(payload.paused);
+    }
   }
 
   _periodAt(elapsed) {
@@ -108,6 +112,12 @@ class MartigliProcessor extends AudioWorkletProcessor {
       return true;
     }
     const channel = output[0];
+    if (this.state.paused) {
+      for (let i = 0; i < channel.length; i += 1) {
+        channel[i] = 0;
+      }
+      return true;
+    }
     for (let i = 0; i < channel.length; i += 1) {
       const absoluteTime = currentTime + i / sampleRate;
       const startTime = (this.state.sessionStart ?? this.anchor) + this.state.startOffsetSec;

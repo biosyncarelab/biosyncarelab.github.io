@@ -1000,12 +1000,6 @@ const describeMartigliLiveSummary = (reference) => {
   return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
 };
 
-const formatMartigliTrendText = (trend) => {
-  if (trend === "slows") return "Slowing";
-  if (trend === "quickens") return "Quickening";
-  return "Steady";
-};
-
 const formatMartigliDecimal = (value, digits = 2) =>
   Number.isFinite(value) ? value.toFixed(digits) : "—";
 
@@ -1022,16 +1016,20 @@ const MARTIGLI_TELEMETRY_FIELDS = [
     format: (metrics) => (Number.isFinite(metrics.period) ? `${metrics.period.toFixed(1)}s` : "—"),
   },
   {
-    key: "bpm",
-    label: "Breaths / min",
-    format: (metrics) => formatMartigliDecimal(metrics.breathsPerMinute, 1),
+    key: "startPeriodSec",
+    label: "Initial",
+    format: (metrics) => (Number.isFinite(metrics.startPeriodSec) ? `${metrics.startPeriodSec.toFixed(1)}s` : "—"),
+  },
+  {
+    key: "endPeriodSec",
+    label: "Final",
+    format: (metrics) => (Number.isFinite(metrics.endPeriodSec) ? `${metrics.endPeriodSec.toFixed(1)}s` : "—"),
   },
   {
     key: "waveform",
     label: "Wave",
     format: (metrics) => (metrics.waveform ?? "—").toString().substring(0, 4).toUpperCase(),
   },
-  { key: "trend", label: "Trend", format: (metrics) => formatMartigliTrendText(metrics.trend) },
 ];
 
 const MARTIGLI_TRAJECTORY_LIMIT = 16;
@@ -1077,42 +1075,85 @@ const createMartigliDashboardWidget = (osc) => {
   root.className = "martigli-widget";
   root.dataset.oscillationId = osc.id ?? "";
 
-  const header = document.createElement("div");
-  header.className = "martigli-live-header";
-  const indicator = document.createElement("div");
-  indicator.className = "martigli-live-indicator";
-  indicator.setAttribute("aria-hidden", "true");
-  const headerText = document.createElement("div");
+  const header = document.createElement("header");
+  header.className = "martigli-widget-header";
+
+  const heading = document.createElement("div");
+  heading.className = "martigli-widget-heading";
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "martigli-widget-eyebrow";
+  eyebrow.textContent = "Martigli / Breathing";
+  heading.appendChild(eyebrow);
+
+  const titleRow = document.createElement("div");
+  titleRow.className = "martigli-widget-title-row";
   const title = document.createElement("h5");
   title.textContent = osc.label ?? "Martigli Oscillation";
+  titleRow.appendChild(title);
+
+  const status = document.createElement("div");
+  status.className = "martigli-widget-status";
+  const indicator = document.createElement("span");
+  indicator.className = "martigli-live-indicator";
+  indicator.setAttribute("aria-hidden", "true");
+  const statusText = document.createElement("span");
+  statusText.className = "martigli-status-text";
+  statusText.textContent = "Idle";
+  status.appendChild(indicator);
+  status.appendChild(statusText);
+  titleRow.appendChild(status);
+  heading.appendChild(titleRow);
+
   const summary = document.createElement("p");
-  summary.className = "muted-text small";
+  summary.className = "martigli-widget-summary muted-text small";
   summary.textContent = describeMartigliLiveSummary(osc);
-  headerText.appendChild(title);
-  headerText.appendChild(summary);
+  heading.appendChild(summary);
+
   const buttonGroup = document.createElement("div");
-  buttonGroup.className = "martigli-live-buttons";
+  buttonGroup.className = "martigli-widget-actions";
   const startButton = document.createElement("button");
   startButton.type = "button";
-  startButton.className = "ghost tiny";
+  startButton.className = "martigli-pill martigli-pill--start";
   startButton.textContent = "Start";
   const stopButton = document.createElement("button");
   stopButton.type = "button";
-  stopButton.className = "ghost tiny";
+  stopButton.className = "martigli-pill martigli-pill--stop";
   stopButton.textContent = "Stop";
   stopButton.disabled = true;
   buttonGroup.appendChild(startButton);
   buttonGroup.appendChild(stopButton);
-  header.appendChild(indicator);
-  header.appendChild(headerText);
+
+  header.appendChild(heading);
   header.appendChild(buttonGroup);
   root.appendChild(header);
 
+  const body = document.createElement("div");
+  body.className = "martigli-widget-body";
+
+  const visualColumn = document.createElement("div");
+  visualColumn.className = "martigli-widget-column martigli-widget-column--visual";
+  const visualizer = document.createElement("div");
+  visualizer.className = "martigli-visualizer";
+  const visualizerLabel = document.createElement("p");
+  visualizerLabel.className = "martigli-visualizer-label";
+  visualizerLabel.textContent = "Live envelope";
+  const visualSurface = document.createElement("div");
+  visualSurface.className = "martigli-visualizer-surface";
+  visualizer.appendChild(visualizerLabel);
+  visualizer.appendChild(visualSurface);
+  visualColumn.appendChild(visualizer);
+
   const telemetry = createTelemetrySection();
-  root.appendChild(telemetry.container);
+  const telemetryShell = document.createElement("div");
+  telemetryShell.className = "martigli-widget-telemetry";
+  telemetryShell.appendChild(telemetry.container);
+  visualColumn.appendChild(telemetryShell);
+
+  const controlsColumn = document.createElement("div");
+  controlsColumn.className = "martigli-widget-column martigli-widget-column--controls";
 
   const controlGrid = document.createElement("div");
-  controlGrid.className = "widget-grid";
+  controlGrid.className = "martigli-control-grid";
 
   const startInput = document.createElement("input");
   startInput.type = "range";
@@ -1190,7 +1231,7 @@ const createMartigliDashboardWidget = (osc) => {
   controlGrid.appendChild(waveformLabel);
   controlGrid.appendChild(inhaleLabel);
   controlGrid.appendChild(amplitudeLabel);
-  root.appendChild(controlGrid);
+  controlsColumn.appendChild(controlGrid);
 
   const trajectorySection = document.createElement("div");
   trajectorySection.className = "martigli-trajectory";
@@ -1206,7 +1247,7 @@ const createMartigliDashboardWidget = (osc) => {
   trajectoryText.appendChild(trajectoryHint);
   const addTrajectoryButton = document.createElement("button");
   addTrajectoryButton.type = "button";
-  addTrajectoryButton.className = "ghost tiny";
+  addTrajectoryButton.className = "martigli-pill martigli-pill--ghost";
   addTrajectoryButton.textContent = "+ Add point";
   trajectoryHead.appendChild(trajectoryText);
   trajectoryHead.appendChild(addTrajectoryButton);
@@ -1215,12 +1256,17 @@ const createMartigliDashboardWidget = (osc) => {
   trajectoryList.setAttribute("aria-live", "polite");
   trajectorySection.appendChild(trajectoryHead);
   trajectorySection.appendChild(trajectoryList);
-  root.appendChild(trajectorySection);
+  controlsColumn.appendChild(trajectorySection);
+
+  body.appendChild(visualColumn);
+  body.appendChild(controlsColumn);
+  root.appendChild(body);
 
   widget.root = root;
   widget.indicator = indicator;
   widget.title = title;
   widget.summary = summary;
+  widget.statusText = statusText;
   widget.buttons = { start: startButton, stop: stopButton };
   widget.telemetryRefs = telemetry.refs;
   widget.controls = {
@@ -1412,7 +1458,10 @@ const syncMartigliWidgetControls = (widget, osc) => {
 };
 
 const setMartigliWidgetRunningState = (widget, osc) => {
-  const running = osc.sessionEnd === undefined || osc.sessionEnd === null;
+  const running = Boolean(!osc.sessionPaused && osc.sessionStart && !osc.sessionEnd);
+  const hasHistory = Boolean(osc.sessionStart || osc.sessionEnd);
+  const state = running ? "running" : hasHistory ? "stopped" : "idle";
+  const label = running ? "Live" : hasHistory ? "Stopped" : "Idle";
   widget.isRunning = running;
   if (widget.buttons?.start) {
     widget.buttons.start.disabled = running;
@@ -1421,11 +1470,15 @@ const setMartigliWidgetRunningState = (widget, osc) => {
     widget.buttons.stop.disabled = !running;
   }
   if (widget.root) {
-    widget.root.dataset.state = running ? "running" : "stopped";
+    widget.root.dataset.state = state;
+  }
+  if (widget.statusText) {
+    widget.statusText.textContent = label;
   }
   if (widget.indicator) {
-    widget.indicator.classList.toggle("active", false);
+    widget.indicator.classList.toggle("active", running);
   }
+  return { running, state, label };
 };
 
 const updateMartigliWidget = (widget, osc, isReference = false) => {
@@ -1437,13 +1490,13 @@ const updateMartigliWidget = (widget, osc, isReference = false) => {
   if (widget.title) {
     widget.title.textContent = osc.label ?? "Martigli Oscillation";
   }
+  const stateInfo = setMartigliWidgetRunningState(widget, osc);
   if (widget.summary) {
-    const status = osc.sessionEnd === undefined || osc.sessionEnd === null ? "Live" : "Stopped";
-    widget.summary.textContent = `${describeMartigliLiveSummary(osc)} - ${status}`;
+    const status = stateInfo?.label ?? "Idle";
+    widget.summary.textContent = `${describeMartigliLiveSummary(osc)} • ${status}`;
   }
   syncMartigliWidgetControls(widget, osc);
   renderMartigliTrajectoryList(widget, osc);
-  setMartigliWidgetRunningState(widget, osc);
 };
 
 const updateMartigliWidgetTelemetry = (widget) => {
@@ -1476,6 +1529,7 @@ const updateMartigliTelemetryForAll = () => {
 
 const renderMartigliDashboardList = (snapshot = martigliState.snapshot()) => {
   if (!martigliDashboard.list) return;
+  clearList(martigliDashboard.list);
   const seen = new Set();
   const oscillations = snapshot.oscillations ?? [];
   oscillations.forEach((osc) => {
@@ -1563,7 +1617,14 @@ const addMartigliOscillation = ({ requireSession = false, autoShowModal = false 
   const oscillations = snapshot.oscillations ?? [];
   const reference = martigliState.getReference();
   const baseConfig = reference?.toJSON?.() ?? null;
-  const { id: _ignoredId, label: baseLabel, ...rest } = baseConfig ?? {};
+  const {
+    id: _ignoredId,
+    label: baseLabel,
+    sessionStart: _ignoredStart,
+    sessionEnd: _ignoredEnd,
+    sessionPaused: _ignoredPaused,
+    ...rest
+  } = baseConfig ?? {};
   const label = baseLabel
     ? `${baseLabel} Copy`
     : `Oscillation ${oscillations.length + 1}`;

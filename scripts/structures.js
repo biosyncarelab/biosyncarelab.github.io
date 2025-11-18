@@ -24,6 +24,7 @@ const DEFAULT_MARTIGLI_CONFIG = {
   prestartValue: 0,
   conceptUri: null,
   trajectory: null,
+  sessionPaused: false,
 };
 
 const nowSeconds = () => {
@@ -67,9 +68,16 @@ export class MartigliOscillator {
     if (this.config.startPeriodSec > this.config.endPeriodSec) {
       this.config.endPeriodSec = this.config.startPeriodSec;
     }
+    const startTime = merged.sessionStart ?? null;
+    const endTime = merged.sessionEnd ?? null;
+    let paused = Boolean(merged.sessionPaused ?? false);
+    if (merged.sessionPaused === undefined && (!startTime || endTime !== null)) {
+      paused = true;
+    }
     this.session = {
-      startTime: merged.sessionStart ?? null,
-      endTime: merged.sessionEnd ?? null,
+      startTime,
+      endTime,
+      paused,
     };
     this._phase = 0;
     this._lastTime = null;
@@ -97,6 +105,7 @@ export class MartigliOscillator {
       fadeOutSec: this.config.fadeOutSec,
       sessionStart: this.session.startTime,
       sessionEnd: this.session.endTime,
+      sessionPaused: this.session.paused,
       trajectory: this.getTrajectory(),
     };
   }
@@ -110,8 +119,10 @@ export class MartigliOscillator {
       this.session.startTime = null;
     } else if (typeof startTime === "number") {
       this.session.startTime = startTime;
+      this.session.paused = false;
     } else if (startTime instanceof Date) {
       this.session.startTime = startTime.getTime() / 1000;
+      this.session.paused = false;
     }
     if (endTime === null) {
       this.session.endTime = null;
@@ -123,6 +134,23 @@ export class MartigliOscillator {
     if (fadeOutSec !== null && fadeOutSec !== undefined) {
       this.config.fadeOutSec = Math.max(0, fadeOutSec);
     }
+  }
+
+  startSession(now = nowSeconds()) {
+    this.session.paused = false;
+    this.session.startTime = now;
+    this.session.endTime = null;
+    this._anchor = now;
+    this._phase = 0;
+    this._lastTime = null;
+  }
+
+  stopSession(now = nowSeconds()) {
+    this.session.paused = true;
+    this.session.endTime = now;
+    this.session.startTime = null;
+    this._phase = 0;
+    this._lastTime = null;
   }
 
   setStartPeriod(value) {
@@ -166,6 +194,9 @@ export class MartigliOscillator {
   }
 
   valueAt(timeSec = nowSeconds()) {
+    if (this.session.paused) {
+      return this.config.prestartValue;
+    }
     const startTime = (this.session.startTime ?? this._anchor) + this.config.startOffsetSec;
     const elapsed = timeSec - startTime;
     if (elapsed < 0) {
@@ -209,6 +240,7 @@ export class MartigliOscillator {
       frequencyHz,
       breathsPerMinute,
       trend: this._trendLabel(),
+      running: !this.session.paused,
     };
   }
 
@@ -691,17 +723,24 @@ export class MartigliState {
     const osc = id ? this._oscillations.get(id) : null;
     if (!osc) return;
     osc.bindSessionWindow(windowConfig);
+    if (typeof windowConfig.paused === "boolean") {
+      osc.session.paused = windowConfig.paused;
+    }
     this._emit();
   }
 
   startOscillation(id = this.referenceId) {
-    const timestamp = nowSeconds();
-    this.setSessionWindow({ startTime: timestamp, endTime: null }, id);
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.startSession();
+    this._emit();
   }
 
   stopOscillation(id = this.referenceId) {
-    const timestamp = nowSeconds();
-    this.setSessionWindow({ endTime: timestamp }, id);
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.stopSession();
+    this._emit();
   }
 
   setTrajectory(points = [], id = this.referenceId) {
@@ -918,6 +957,7 @@ export class AudioEngine {
       fadeOutSec: base.fadeOutSec,
       conceptUri: base.conceptUri ?? null,
       oscillatorId: base.id ?? null,
+      paused: Boolean(base.sessionPaused),
     };
     const sessionStart = this._contextTimeFromAbsolute(base.sessionStart);
     const sessionEnd = this._contextTimeFromAbsolute(base.sessionEnd);

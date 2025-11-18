@@ -1106,6 +1106,84 @@ async function showURIInspector(resource) {
     return link;
   };
 
+  // Helper function to create external ontology links with smart URL resolution
+  const createExternalOntologyLink = (uri) => {
+    const container = document.createElement("span");
+
+    // Detect ontology type and create appropriate link
+    let externalURL = uri; // default to URI itself
+    let ontologyName = "External";
+    let iconSymbol = "🔗";
+
+    if (uri.includes("purl.bioontology.org/ontology/MESH")) {
+      // MeSH (Medical Subject Headings)
+      const meshID = uri.split("/").pop();
+      externalURL = `https://bioportal.bioontology.org/ontologies/MESH?p=classes&conceptid=${encodeURIComponent(uri)}`;
+      ontologyName = "MeSH";
+      iconSymbol = "🏥";
+    } else if (uri.includes("purl.obolibrary.org/obo/GO_")) {
+      // Gene Ontology
+      const goID = uri.split("/").pop();
+      externalURL = `http://amigo.geneontology.org/amigo/term/${goID}`;
+      ontologyName = "GO";
+      iconSymbol = "🧬";
+    } else if (uri.includes("purl.obolibrary.org/obo/")) {
+      // OBO Foundry ontologies
+      externalURL = `https://www.ebi.ac.uk/ols/search?q=${encodeURIComponent(uri)}`;
+      ontologyName = "OBO";
+      iconSymbol = "🔬";
+    } else if (uri.includes("snomed.info")) {
+      // SNOMED CT
+      ontologyName = "SNOMED";
+      iconSymbol = "⚕️";
+    } else if (uri.includes("purl.org/dc/terms")) {
+      // Dublin Core
+      externalURL = uri;
+      ontologyName = "Dublin Core";
+      iconSymbol = "📚";
+    }
+
+    // Create the link with icon
+    const link = document.createElement("a");
+    link.href = externalURL;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.style.cssText = "color: #059669; text-decoration: none; border-bottom: 1px dashed #059669;";
+    link.title = `Open in ${ontologyName} (${uri})`;
+
+    const icon = document.createElement("span");
+    icon.textContent = iconSymbol + " ";
+    icon.style.marginRight = "0.25rem";
+
+    const label = document.createElement("span");
+    label.textContent = getLocalName(uri);
+
+    const badge = document.createElement("span");
+    badge.style.cssText = "margin-left: 0.25rem; font-size: 0.75em; padding: 0.1rem 0.3rem; background: #d1fae5; color: #065f46; border-radius: 3px; font-weight: 500;";
+    badge.textContent = ontologyName;
+
+    link.appendChild(icon);
+    link.appendChild(label);
+    link.appendChild(badge);
+
+    // Add copy URI button
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📋";
+    copyBtn.title = "Copy full URI";
+    copyBtn.style.cssText = "margin-left: 0.5rem; font-size: 0.8em; padding: 0.1rem 0.3rem; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 3px; cursor: pointer;";
+    copyBtn.onclick = (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(uri);
+      copyBtn.textContent = "✓";
+      setTimeout(() => copyBtn.textContent = "📋", 1500);
+    };
+
+    container.appendChild(link);
+    container.appendChild(copyBtn);
+
+    return container;
+  };
+
   // If this resource has merged concept data, show it first
   if (resource.conceptData) {
     const conceptSection = document.createElement("div");
@@ -1143,10 +1221,104 @@ async function showURIInspector(resource) {
     relationNote.style.cssText = "font-size: 0.85em; color: #666; font-style: italic; margin-bottom: 1rem; padding: 0.5rem; background: #f9fafb; border-radius: 4px;";
     relationNote.textContent = `This class has an associated SKOS concept (merged view). The concept provides additional semantic metadata via skos:definition and skos:prefLabel.`;
     ui.inspectorProperties.appendChild(relationNote);
+  }
 
+  // If this resource has deprecated entities that replace to it, show them
+  if (resource.deprecatedEntities && resource.deprecatedEntities.length > 0) {
+    for (const deprecated of resource.deprecatedEntities) {
+      const deprecatedSection = document.createElement("div");
+      deprecatedSection.style.cssText = "margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;";
+
+      const deprecatedHeader = document.createElement("strong");
+      deprecatedHeader.textContent = "Deprecated Entity (Replaced)";
+      deprecatedHeader.style.cssText = "display: block; margin-bottom: 0.5rem; color: #f59e0b;";
+      deprecatedSection.appendChild(deprecatedHeader);
+
+      const deprecatedURIDiv = document.createElement("div");
+      deprecatedURIDiv.style.cssText = "font-size: 0.85em; color: #666; margin-bottom: 0.5rem;";
+      deprecatedURIDiv.textContent = `Deprecated URI: ${deprecated.uri}`;
+      deprecatedSection.appendChild(deprecatedURIDiv);
+
+      const deprecatedLabel = document.createElement("div");
+      deprecatedLabel.style.cssText = "font-size: 0.9em; margin-bottom: 0.5rem;";
+      deprecatedLabel.textContent = `Former label: ${deprecated.data.label || getLocalName(deprecated.uri)}`;
+      deprecatedSection.appendChild(deprecatedLabel);
+
+      // Add deprecated entity properties
+      for (const [predicate, values] of Object.entries(deprecated.data.properties)) {
+        // Skip deprecated and isReplacedBy since we already know those
+        if (predicate === "http://www.w3.org/2002/07/owl#deprecated" ||
+            predicate === "http://purl.org/dc/terms/isReplacedBy") {
+          continue;
+        }
+
+        const predicateLabel = getLocalName(predicate);
+        const dt = document.createElement("dt");
+        dt.textContent = predicateLabel + " (deprecated)";
+        dt.style.color = "#f59e0b";
+        deprecatedSection.appendChild(dt);
+
+        for (const val of values) {
+          const dd = document.createElement("dd");
+          dd.textContent = val.type === "uri" ? getLocalName(val.value) : val.value;
+          deprecatedSection.appendChild(dd);
+        }
+      }
+
+      ui.inspectorProperties.appendChild(deprecatedSection);
+    }
+
+    // Add detailed note about deprecation
+    const deprecationNote = document.createElement("div");
+    deprecationNote.style.cssText = "font-size: 0.85em; color: #92400e; margin-bottom: 1rem; padding: 0.75rem; background: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;";
+
+    const noteTitle = document.createElement("div");
+    noteTitle.style.cssText = "font-weight: bold; margin-bottom: 0.5rem; color: #78350f;";
+    noteTitle.textContent = `⚠️ Deprecation Notice`;
+    deprecationNote.appendChild(noteTitle);
+
+    const noteText = document.createElement("div");
+    noteText.style.cssText = "margin-bottom: 0.5rem;";
+    noteText.textContent = `This class replaces ${resource.deprecatedEntities.length} deprecated ${resource.deprecatedEntities.length === 1 ? 'entity' : 'entities'}:`;
+    deprecationNote.appendChild(noteText);
+
+    const noteList = document.createElement("ul");
+    noteList.style.cssText = "margin: 0.5rem 0 0.5rem 1.5rem; padding: 0;";
+
+    for (const deprecated of resource.deprecatedEntities) {
+      const listItem = document.createElement("li");
+      listItem.style.cssText = "margin-bottom: 0.25rem;";
+
+      const itemText = document.createElement("div");
+      const deprecatedLabel = deprecated.data.label || getLocalName(deprecated.uri);
+      const sourceProp = deprecated.data.properties["http://purl.org/dc/terms/source"];
+      const sourceInfo = sourceProp && sourceProp[0]?.value ? ` (from ${getLocalName(sourceProp[0].value)})` : "";
+
+      itemText.innerHTML = `<strong>${deprecatedLabel}</strong>${sourceInfo}`;
+      listItem.appendChild(itemText);
+
+      const uriText = document.createElement("div");
+      uriText.style.cssText = "font-size: 0.85em; color: #78350f; font-family: monospace; margin-top: 0.15rem;";
+      uriText.textContent = deprecated.uri;
+      listItem.appendChild(uriText);
+
+      noteList.appendChild(listItem);
+    }
+    deprecationNote.appendChild(noteList);
+
+    const redirectNote = document.createElement("div");
+    redirectNote.style.cssText = "margin-top: 0.5rem; font-style: italic;";
+    redirectNote.textContent = `URLs and references to the deprecated ${resource.deprecatedEntities.length === 1 ? 'URI' : 'URIs'} automatically redirect to this current class.`;
+    deprecationNote.appendChild(redirectNote);
+
+    ui.inspectorProperties.appendChild(deprecationNote);
+  }
+
+  // Main class/resource header
+  if (resource.conceptData || resource.deprecatedEntities) {
     const classHeader = document.createElement("strong");
-    classHeader.textContent = "Class Information";
-    classHeader.style.cssText = "display: block; margin-bottom: 0.5rem; color: #38bdf8;";
+    classHeader.textContent = "Current Class Information";
+    classHeader.style.cssText = "display: block; margin-top: 1rem; margin-bottom: 0.5rem; color: #38bdf8;";
     ui.inspectorProperties.appendChild(classHeader);
   }
 
@@ -1170,19 +1342,25 @@ async function showURIInspector(resource) {
     for (const val of values) {
       const dd = document.createElement("dd");
 
-      // For URI values, show full URI as link if it's a replacement or source
+      // For URI values, create appropriate links
       if (val.type === "uri") {
+        // Check if it's an external ontology link (rdfs:seeAlso, owl:equivalentClass, skos:closeMatch, etc.)
+        const isExternalLink = predicate === "http://www.w3.org/2000/01/rdf-schema#seeAlso" ||
+                               predicate === "http://www.w3.org/2002/07/owl#equivalentClass" ||
+                               predicate === "http://www.w3.org/2004/02/skos/core#closeMatch" ||
+                               predicate === "http://www.w3.org/2004/02/skos/core#exactMatch" ||
+                               predicate === "http://www.w3.org/2004/02/skos/core#relatedMatch";
+
         if (predicate === "http://purl.org/dc/terms/isReplacedBy" ||
             predicate === "http://purl.org/dc/terms/source") {
-          // Show full URI for important metadata
+          // Internal navigation links
           const link = document.createElement("a");
           link.href = "#";
           link.textContent = getLocalName(val.value);
-          link.title = val.value; // Show full URI on hover
+          link.title = val.value;
           link.style.color = "#3b82f6";
           link.onclick = (e) => {
             e.preventDefault();
-            // Try to find and focus the target node
             const targetNode = cy.getElementById(val.value);
             if (targetNode && !targetNode.empty()) {
               cy.center(targetNode);
@@ -1191,8 +1369,27 @@ async function showURIInspector(resource) {
             }
           };
           dd.appendChild(link);
+        } else if (isExternalLink) {
+          // External ontology links
+          const externalLink = createExternalOntologyLink(val.value);
+          dd.appendChild(externalLink);
         } else {
-          dd.textContent = getLocalName(val.value);
+          // Try internal navigation first, fallback to text
+          const internalLink = document.createElement("a");
+          internalLink.href = "#";
+          internalLink.textContent = getLocalName(val.value);
+          internalLink.title = val.value;
+          internalLink.style.color = "#64748b";
+          internalLink.onclick = (e) => {
+            e.preventDefault();
+            const targetNode = cy.getElementById(val.value);
+            if (targetNode && !targetNode.empty()) {
+              cy.center(targetNode);
+              targetNode.select();
+              showURIInspector(targetNode.data("resource"));
+            }
+          };
+          dd.appendChild(internalLink);
         }
       } else {
         dd.textContent = val.value;
