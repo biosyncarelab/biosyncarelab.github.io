@@ -6,12 +6,13 @@
   "scripts": {
     "test": "firebase emulators:exec --only auth,firestore --project bsc-lab \"npm run test:run-seeded\"",
     "test:headed": "firebase emulators:exec --only auth,firestore --project bsc-lab \"npm run test:run-seeded:headed\"",
-    "test:run": "npm run test:structures && npm run test:rdf && playwright test",
-    "test:run:headed": "npm run test:structures && npm run test:rdf && playwright test --headed",
+    "test:run": "npm run test:structures && npm run test:rdf && npm run test:state && playwright test",
+    "test:run:headed": "npm run test:structures && npm run test:rdf && npm run test:state && playwright test --headed",
     "test:run-seeded": "npm run seed:firestore && npm run test:run",
     "test:run-seeded:headed": "npm run seed:firestore && npm run test:run:headed",
     "test:rdf": "node tests/rdf.test.mjs",
     "test:structures": "node tests/structures.test.mjs",
+    "test:state": "node tests/state-management.test.mjs",
     "seed:firestore": "node scripts/firestore-seed.mjs",
     "seed:firestore:prod": "node scripts/firestore-seed-prod.mjs",
     "deploy:firestore-rules": "firebase deploy --only firestore:rules --project bsc-lab"
