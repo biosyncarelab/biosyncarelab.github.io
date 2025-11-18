@@ -159,6 +159,9 @@ const ui = {
   filterEmotional: document.getElementById("filter-emotional"),
   filterPhysiological: document.getElementById("filter-physiological"),
   filterBehavioral: document.getElementById("filter-behavioral"),
+  filterProtocol: document.getElementById("filter-protocol"),
+  filterGroup: document.getElementById("filter-group"),
+  filterOtherMeta: document.getElementById("filter-other-meta"),
   resetFilters: document.getElementById("reset-filters"),
   filterResults: document.getElementById("filter-results"),
   filterCount: document.getElementById("filter-count"),
@@ -2176,6 +2179,20 @@ const updateEvidenceSliderLabel = () => {
   ui.evidenceLevelValue.textContent = `${value.toFixed(1)}+`;
 };
 
+const getMetaCategoryFromResource = (resource, nodeId = "") => {
+  const label = (resource.label || getLocalName(nodeId) || "").toLowerCase();
+  const subclasses = getPropertyValues(resource, rdfsSubclass).map((s) => s.toLowerCase());
+  const candidates = [label, ...subclasses];
+
+  const hasAny = (keywords) => candidates.some((entry) => keywords.some((kw) => entry.includes(kw)));
+
+  if (hasAny(["protocol", "session", "report"])) return "protocol";
+  if (hasAny(["participant", "group"])) return "group";
+  if (hasAny(["project", "study", "workflow", "admin", "meta", "plan"])) return "other";
+
+  return null;
+};
+
 const updateFilterSummary = () => {
   if (!ui.filterStatus) return;
 
@@ -2194,11 +2211,19 @@ const updateFilterSummary = () => {
     Physiological: !!ui.filterPhysiological?.checked,
     Behavioral: !!ui.filterBehavioral?.checked,
   };
+  const metaSelection = {
+    Protocols: !!ui.filterProtocol?.checked,
+    Groups: !!ui.filterGroup?.checked,
+    Meta: !!ui.filterOtherMeta?.checked,
+  };
 
   const activeModalities = Object.entries(modalitySelection)
     .filter(([, v]) => v)
     .map(([k]) => k);
   const activeOutcomes = Object.entries(outcomeSelection)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+  const activeMeta = Object.entries(metaSelection)
     .filter(([, v]) => v)
     .map(([k]) => k);
 
@@ -2209,14 +2234,18 @@ const updateFilterSummary = () => {
       : "Safety: all";
 
   const modalityText = activeModalities.length === 0
-    ? "Modality: none selected"
+    ? "Modality: none selected (hidden)"
     : `Modality: ${activeModalities.join(", ")}`;
 
   const outcomeText = activeOutcomes.length === 0
-    ? "Outcomes: none selected"
+    ? "Outcomes: none selected (hidden)"
     : `Outcomes: ${activeOutcomes.join(", ")}`;
 
-  ui.filterStatus.innerHTML = `<strong>Filters</strong> Evidence ≥ ${evidenceThreshold.toFixed(1)} | ${safetyText} | ${modalityText} | ${outcomeText}`;
+  const metaText = activeMeta.length === 0
+    ? "Other: none selected (hidden)"
+    : `Other: ${activeMeta.join(", ")}`;
+
+  ui.filterStatus.innerHTML = `<strong>Filters</strong> Evidence ≥ ${evidenceThreshold.toFixed(1)} | ${safetyText} | ${modalityText} | ${outcomeText} | ${metaText}`;
 };
 
 function applySemanticFilters() {
@@ -2240,6 +2269,13 @@ function applySemanticFilters() {
     behavioral: !!ui.filterBehavioral?.checked,
   };
   const restrictOutcome = Object.values(outcomeSelection).some((checked) => !checked);
+
+  const metaSelection = {
+    protocol: !!ui.filterProtocol?.checked,
+    group: !!ui.filterGroup?.checked,
+    other: !!ui.filterOtherMeta?.checked,
+  };
+  const restrictMeta = Object.values(metaSelection).some((checked) => !checked);
 
   let visibleCount = 0;
 
@@ -2272,7 +2308,7 @@ function applySemanticFilters() {
     // Modality filters apply only when user restricts selection
     if (isVisible && restrictModality) {
       const modality = getModalityFromResource(resource, nodeId);
-      if (modality && modalitySelection[modality] === false) {
+      if (!modality || modalitySelection[modality] === false) {
         isVisible = false;
       }
     }
@@ -2280,7 +2316,15 @@ function applySemanticFilters() {
     // Outcome category filters apply only when user restricts selection
     if (isVisible && restrictOutcome) {
       const categories = getOutcomeCategoriesFromResource(resource, nodeId);
-      if (categories.length > 0 && !categories.some((cat) => outcomeSelection[cat])) {
+      if (categories.length === 0 || !categories.some((cat) => outcomeSelection[cat])) {
+        isVisible = false;
+      }
+    }
+
+    // Meta entity filters
+    if (isVisible && restrictMeta) {
+      const metaCategory = getMetaCategoryFromResource(resource, nodeId);
+      if (!metaCategory || metaSelection[metaCategory] === false) {
         isVisible = false;
       }
     }
@@ -2402,6 +2446,9 @@ const autoApplyCheckboxes = [
   "filterEmotional",
   "filterPhysiological",
   "filterBehavioral",
+  "filterProtocol",
+  "filterGroup",
+  "filterOtherMeta",
 ];
 
 autoApplyCheckboxes.forEach((key) => {

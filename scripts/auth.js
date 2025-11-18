@@ -1819,6 +1819,508 @@ const createRangeLabel = (text) => {
   return label;
 };
 
+const clampNumber = (value, min, max) => {
+  if (!Number.isFinite(value)) return min;
+  if (min !== undefined && value < min) return min;
+  if (max !== undefined && value > max) return max;
+  return value;
+};
+
+const getDevicePixelRatio = () => {
+  if (typeof window === "undefined") return 1;
+  return window.devicePixelRatio && Number.isFinite(window.devicePixelRatio)
+    ? window.devicePixelRatio
+    : 1;
+};
+
+const createChartCanvas = (width = 360, height = 150) => {
+  const ratio = getDevicePixelRatio();
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.className = "martigli-chart-canvas";
+  canvas.style.touchAction = "none";
+  const ctx = canvas.getContext("2d");
+  if (ctx && ratio !== 1) {
+    ctx.scale(ratio, ratio);
+  }
+  return { canvas, ctx, width, height };
+};
+
+const MARTIGLI_WAVEFORM_PADDING = { top: 12, right: 16, bottom: 22, left: 36 };
+
+const martigliWaveValue = (phase, osc = {}) => {
+  const waveform = (osc.waveform ?? "sine").toLowerCase();
+  const inhaleRatio = clampNumber(osc.inhaleRatio ?? 0.5, 0.05, 0.95);
+  const phaseOffset = ((osc.phaseOffset ?? 0) % 1 + 1) % 1;
+  const normalized = ((phase + phaseOffset) % 1 + 1) % 1;
+  switch (waveform) {
+    case "triangle":
+      return normalized < 0.5 ? -1 + normalized * 4 : 3 - normalized * 4;
+    case "square":
+      return normalized < inhaleRatio ? 1 : -1;
+    case "saw":
+    case "sawtooth":
+      return normalized * 2 - 1;
+    case "breath":
+    case "martigli": {
+      if (normalized < inhaleRatio) {
+        return -1 + (normalized / inhaleRatio) * 2;
+      }
+      const exPhase = (normalized - inhaleRatio) / (1 - inhaleRatio || 1);
+      return 1 - exPhase * 2;
+    }
+    default:
+      return Math.sin(normalized * Math.PI * 2);
+  }
+};
+
+const describeWaveformValue = (value) => {
+  if (!Number.isFinite(value)) return "0.00";
+  return value.toFixed(2);
+};
+
+const drawMartigliWaveform = (chart, osc = {}, metrics = null) => {
+  if (!chart?.ctx) return;
+  const ctx = chart.ctx;
+  const width = chart.width;
+  const height = chart.height;
+  ctx.clearRect(0, 0, width, height);
+  const padding = chart.padding ?? MARTIGLI_WAVEFORM_PADDING;
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+  const midY = padding.top + innerHeight / 2;
+  const amplitude = clampNumber(osc.amplitude ?? 1, 0, 1.5);
+  const inhaleRatio = clampNumber(osc.inhaleRatio ?? 0.5, 0.05, 0.95);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(15, 23, 42, 0.65)";
+  ctx.fillRect(padding.left, padding.top, innerWidth, innerHeight);
+
+  ctx.fillStyle = "rgba(56, 189, 248, 0.14)";
+  ctx.fillRect(padding.left, padding.top, innerWidth * inhaleRatio, innerHeight);
+  ctx.fillStyle = "rgba(248, 113, 113, 0.09)";
+  ctx.fillRect(padding.left + innerWidth * inhaleRatio, padding.top, innerWidth * (1 - inhaleRatio), innerHeight);
+
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padding.left, midY);
+  ctx.lineTo(padding.left + innerWidth, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const sampleCount = 180;
+  ctx.strokeStyle = "#5eead4";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= sampleCount; i += 1) {
+    const phase = i / sampleCount;
+    const rawValue = martigliWaveValue(phase, osc) * amplitude;
+    const x = padding.left + innerWidth * phase;
+    const y = midY - rawValue * (innerHeight / 2);
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  const currentPhase = metrics?.phase ?? 0;
+  const currentValue = Number.isFinite(metrics?.value)
+    ? metrics.value
+    : martigliWaveValue(currentPhase, osc) * amplitude;
+  const dotX = padding.left + innerWidth * clampNumber(currentPhase, 0, 1);
+  const dotY = midY - currentValue * (innerHeight / 2);
+  ctx.fillStyle = "#ef4444";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  if (chart.caption) {
+    const inhalePct = Math.round(inhaleRatio * 100);
+    const amplitudeText = `${(amplitude ?? 1).toFixed(2)}× amp`;
+    chart.caption.textContent = `Inhale ${inhalePct}% · Value ${describeWaveformValue(currentValue)} · ${amplitudeText}`;
+  }
+};
+
+const createMartigliWaveformChart = () => {
+  const root = document.createElement("div");
+  root.className = "martigli-chart";
+
+  const head = document.createElement("div");
+  head.className = "martigli-chart-head";
+  const title = document.createElement("p");
+  title.className = "martigli-chart-title";
+  title.textContent = "Breathing waveform";
+  const hint = document.createElement("span");
+  hint.className = "martigli-chart-hint";
+  hint.textContent = "Drag to rebalance inhale/exhale";
+  head.appendChild(title);
+  head.appendChild(hint);
+  root.appendChild(head);
+
+  const { canvas, ctx, width, height } = createChartCanvas(360, 150);
+  root.appendChild(canvas);
+  const caption = document.createElement("p");
+  caption.className = "martigli-chart-caption";
+  caption.textContent = "Inhale 50% · Value 0.00 · 1.00× amp";
+  root.appendChild(caption);
+
+  const state = {
+    root,
+    canvas,
+    ctx,
+    caption,
+    width,
+    height,
+    padding: MARTIGLI_WAVEFORM_PADDING,
+    pointer: { active: false, pointerId: null },
+  };
+
+  const updateRatioFromEvent = (event) => {
+    if (!state.onRatioChange) return;
+    const rect = canvas.getBoundingClientRect();
+    const relative = (event.clientX - rect.left) / rect.width;
+    const ratio = clampNumber(relative, 0.05, 0.95);
+    state.onRatioChange(ratio);
+  };
+
+  canvas.addEventListener("pointerdown", (event) => {
+    state.pointer.active = true;
+    state.pointer.pointerId = event.pointerId;
+    canvas.setPointerCapture(event.pointerId);
+    updateRatioFromEvent(event);
+  });
+
+  const handlePointerMove = (event) => {
+    if (!state.pointer.active) return;
+    updateRatioFromEvent(event);
+  };
+
+  const releasePointer = (event) => {
+    if (state.pointer.pointerId !== event.pointerId) return;
+    state.pointer.active = false;
+    state.pointer.pointerId = null;
+    if (canvas.hasPointerCapture?.(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  canvas.addEventListener("pointermove", handlePointerMove);
+  canvas.addEventListener("pointerup", releasePointer);
+  canvas.addEventListener("pointercancel", releasePointer);
+  canvas.addEventListener("pointerleave", (event) => {
+    if (!state.pointer.active) return;
+    handlePointerMove(event);
+  });
+
+  state.render = (osc, metrics) => drawMartigliWaveform(state, osc, metrics);
+  return state;
+};
+
+const MARTIGLI_TIMELINE_PADDING = { top: 18, right: 32, bottom: 36, left: 58 };
+
+const buildTimelineSeries = (osc = {}) => {
+  const fallback = [
+    { period: osc.startPeriodSec ?? 10, duration: 0 },
+    { period: osc.endPeriodSec ?? 20, duration: osc.transitionSec ?? 0 },
+  ];
+  const raw = Array.isArray(osc.trajectory) && osc.trajectory.length ? osc.trajectory : fallback;
+  const series = [];
+  let elapsed = 0;
+  raw.forEach((point, index) => {
+    const period = Number(point.period ?? point.periodSec ?? osc.startPeriodSec ?? 10) || 0;
+    series.push({ t: elapsed, period });
+    const next = raw[index + 1];
+    if (next) {
+      const duration = Math.max(0, Number(next.duration ?? 0));
+      elapsed += duration;
+    }
+  });
+  return { series, totalDuration: elapsed };
+};
+
+const interpolateTimelinePeriod = (series, elapsed) => {
+  if (!Array.isArray(series) || !series.length) return 0;
+  if (series.length === 1) return series[0].period ?? 0;
+  for (let i = 0; i < series.length - 1; i += 1) {
+    const start = series[i];
+    const end = series[i + 1];
+    const duration = Math.max(0.0001, (end.t ?? 0) - (start.t ?? 0));
+    if (elapsed <= end.t) {
+      const progress = (elapsed - start.t) / duration;
+      return start.period + (end.period - start.period) * clampNumber(progress, 0, 1);
+    }
+  }
+  return series[series.length - 1].period ?? 0;
+};
+
+const computeElapsedSeconds = (osc = {}) => {
+  const start = Number(osc.sessionStart ?? null);
+  if (!Number.isFinite(start)) return 0;
+  const end = Number(osc.sessionEnd ?? null);
+  const paused = Boolean(osc.sessionPaused);
+  if (paused && Number.isFinite(end)) {
+    return Math.max(0, end - start);
+  }
+  if (paused && !Number.isFinite(end)) {
+    return 0;
+  }
+  const now = Date.now() / 1000;
+  return Math.max(0, now - start);
+};
+
+const formatSeconds = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0s";
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.round((seconds % 3600) / 60);
+    return `${hours}h ${mins}m`;
+  }
+  if (seconds >= 120) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
+  }
+  if (seconds >= 60) {
+    const mins = (seconds / 60).toFixed(1);
+    return `${mins}m`;
+  }
+  if (seconds >= 1) {
+    return `${Math.round(seconds)}s`;
+  }
+  return `${seconds.toFixed(1)}s`;
+};
+
+const drawMartigliTimeline = (chart, osc = {}, metrics = null) => {
+  if (!chart?.ctx) return;
+  const ctx = chart.ctx;
+  const { width, height } = chart;
+  ctx.clearRect(0, 0, width, height);
+  const padding = chart.padding ?? MARTIGLI_TIMELINE_PADDING;
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+
+  const { series, totalDuration } = buildTimelineSeries(osc);
+  const durationMax = Math.max(totalDuration, 60);
+  const durationDomain = durationMax * 1.05;
+  const periods = series.map((point) => point.period ?? 0);
+  const minPeriodRaw = Math.min(...periods, osc.startPeriodSec ?? 10, osc.endPeriodSec ?? 20);
+  const maxPeriodRaw = Math.max(...periods, osc.startPeriodSec ?? 10, osc.endPeriodSec ?? 20);
+  const rangePad = Math.max(1, (maxPeriodRaw - minPeriodRaw || 1) * 0.2);
+  const minPeriod = Math.max(0.1, minPeriodRaw - rangePad);
+  const maxPeriod = maxPeriodRaw + rangePad;
+  const periodRange = maxPeriod - minPeriod || 1;
+
+  const toX = (seconds) => padding.left + clampNumber(seconds, 0, durationDomain) / durationDomain * innerWidth;
+  const toY = (period) => padding.top + (1 - clampNumber((period - minPeriod) / periodRange, 0, 1)) * innerHeight;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+  ctx.fillRect(padding.left, padding.top, innerWidth, innerHeight);
+
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+  ctx.lineWidth = 1;
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i += 1) {
+    const ratio = i / gridLines;
+    const x = padding.left + ratio * innerWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, padding.top + innerHeight);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= gridLines; i += 1) {
+    const ratio = i / gridLines;
+    const y = padding.top + ratio * innerHeight;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + innerWidth, y);
+    ctx.stroke();
+  }
+
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(94, 234, 212, 0.9)";
+  ctx.beginPath();
+  series.forEach((point, index) => {
+    const x = toX(point.t);
+    const y = toY(point.period);
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  const startHandle = series[0] ?? { t: 0, period: osc.startPeriodSec ?? 10 };
+  const endHandle = series[series.length - 1] ?? { t: totalDuration, period: osc.endPeriodSec ?? 20 };
+  chart.handles = {
+    start: { x: toX(startHandle.t), y: toY(startHandle.period) },
+    end: { x: toX(endHandle.t), y: toY(endHandle.period) },
+  };
+  chart.durationDomain = { max: durationDomain, plan: totalDuration };
+  chart.periodDomain = { min: minPeriod, max: maxPeriod, range: periodRange };
+
+  const drawHandle = (handle, color) => {
+    if (!handle) return;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(handle.x, handle.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+  drawHandle(chart.handles.start, "#38bdf8");
+  drawHandle(chart.handles.end, "#a855f7");
+
+  const elapsed = computeElapsedSeconds(osc);
+  const progressSeconds = clampNumber(elapsed, 0, durationDomain);
+  const currentPeriod = Number.isFinite(metrics?.period)
+    ? metrics.period
+    : interpolateTimelinePeriod(series, progressSeconds);
+  const dotX = toX(progressSeconds);
+  const dotY = toY(currentPeriod);
+  ctx.fillStyle = "#ef4444";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  const startPeriod = startHandle.period ?? osc.startPeriodSec ?? 10;
+  const endPeriod = endHandle.period ?? osc.endPeriodSec ?? 20;
+  if (chart.caption) {
+    chart.caption.textContent = `Start ${startPeriod.toFixed(1)}s · End ${endPeriod.toFixed(1)}s · Transition ${formatSeconds(totalDuration)}`;
+  }
+  if (chart.meta) {
+    chart.meta.textContent = `Elapsed ${formatSeconds(elapsed)} · Target period ${currentPeriod.toFixed(1)}s`;
+  }
+};
+
+const createMartigliTimelineChart = () => {
+  const root = document.createElement("div");
+  root.className = "martigli-chart";
+  const head = document.createElement("div");
+  head.className = "martigli-chart-head";
+  const title = document.createElement("p");
+  title.className = "martigli-chart-title";
+  title.textContent = "Timeline trajectory";
+  const hint = document.createElement("span");
+  hint.className = "martigli-chart-hint";
+  hint.textContent = "Drag handles to retime";
+  head.appendChild(title);
+  head.appendChild(hint);
+  root.appendChild(head);
+  const { canvas, ctx, width, height } = createChartCanvas(360, 160);
+  root.appendChild(canvas);
+  const caption = document.createElement("p");
+  caption.className = "martigli-chart-caption";
+  caption.textContent = "Start 10s · End 20s · Transition 0s";
+  const meta = document.createElement("p");
+  meta.className = "martigli-chart-caption";
+  meta.textContent = "Elapsed 0s · Target period 10s";
+  root.appendChild(caption);
+  root.appendChild(meta);
+
+  const state = {
+    root,
+    canvas,
+    ctx,
+    caption,
+    meta,
+    width,
+    height,
+    padding: MARTIGLI_TIMELINE_PADDING,
+    handles: { start: null, end: null },
+    durationDomain: { max: 60, plan: 0 },
+    periodDomain: { min: 4, max: 20, range: 16 },
+    interaction: { active: false, target: null, pointerId: null },
+  };
+
+  const detectHandle = (x, y) => {
+    const threshold = 18;
+    const check = (handle, target) => {
+      if (!handle) return null;
+      const dx = x - handle.x;
+      const dy = y - handle.y;
+      const dist = Math.hypot(dx, dy);
+      return dist <= threshold ? target : null;
+    };
+    return check(state.handles.start, "start") ?? check(state.handles.end, "end");
+  };
+
+  const updateFromPointer = (event) => {
+    if (!state.interaction.active) return;
+    const rect = canvas.getBoundingClientRect();
+    const relativeX = ((event.clientX - rect.left) / rect.width) * state.width;
+    const relativeY = ((event.clientY - rect.top) / rect.height) * state.height;
+    const padding = state.padding ?? MARTIGLI_TIMELINE_PADDING;
+    const innerWidth = Math.max(1, state.width - padding.left - padding.right);
+    const innerHeight = Math.max(1, state.height - padding.top - padding.bottom);
+    const clampedX = clampNumber(relativeX - padding.left, 0, innerWidth);
+    const clampedY = clampNumber(relativeY - padding.top, 0, innerHeight);
+    const durationMax = state.durationDomain?.max ?? 60;
+    const seconds = clampNumber((clampedX / innerWidth) * durationMax, 0, durationMax);
+    const period = state.periodDomain
+      ? state.periodDomain.min + (1 - clampedY / innerHeight) * state.periodDomain.range
+      : 10;
+    if (state.interaction.target === "start" && typeof state.onStartPeriodChange === "function") {
+      state.onStartPeriodChange(period);
+    } else if (state.interaction.target === "end" && typeof state.onEndPeriodChange === "function") {
+      state.onEndPeriodChange({ period, duration: seconds });
+    }
+  };
+
+  const handlePointerDown = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const relativeX = ((event.clientX - rect.left) / rect.width) * state.width;
+    const relativeY = ((event.clientY - rect.top) / rect.height) * state.height;
+    const target = detectHandle(relativeX, relativeY);
+    if (!target) return;
+    state.interaction = { active: true, target, pointerId: event.pointerId };
+    canvas.setPointerCapture(event.pointerId);
+    updateFromPointer(event);
+  };
+
+  const handlePointerMove = (event) => {
+    if (!state.interaction.active) return;
+    updateFromPointer(event);
+  };
+
+  const handlePointerUp = (event) => {
+    if (state.interaction.pointerId !== event.pointerId) return;
+    state.interaction = { active: false, target: null, pointerId: null };
+    if (canvas.hasPointerCapture?.(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  canvas.addEventListener("pointerdown", handlePointerDown);
+  canvas.addEventListener("pointermove", handlePointerMove);
+  canvas.addEventListener("pointerup", handlePointerUp);
+  canvas.addEventListener("pointercancel", handlePointerUp);
+  canvas.addEventListener("pointerleave", (event) => {
+    if (!state.interaction.active) return;
+    handlePointerMove(event);
+  });
+
+  state.render = (osc, metrics) => drawMartigliTimeline(state, osc, metrics);
+  return state;
+};
+
 const createMartigliDashboardWidget = (osc) => {
   const widget = {
     oscillationId: osc.id,
@@ -1891,6 +2393,10 @@ const createMartigliDashboardWidget = (osc) => {
   visualizerLabel.textContent = "Live envelope";
   const visualSurface = document.createElement("div");
   visualSurface.className = "martigli-visualizer-surface";
+  const waveformChart = createMartigliWaveformChart();
+  const timelineChart = createMartigliTimelineChart();
+  visualSurface.appendChild(waveformChart.root);
+  visualSurface.appendChild(timelineChart.root);
   visualizer.appendChild(visualizerLabel);
   visualizer.appendChild(visualSurface);
   visualColumn.appendChild(visualizer);
@@ -2031,10 +2537,66 @@ const createMartigliDashboardWidget = (osc) => {
     amplitude: amplitudeInput,
     amplitudeValue,
   };
+  widget.charts = {
+    waveform: waveformChart,
+    timeline: timelineChart,
+  };
   widget.trajectory = {
     list: trajectoryList,
     addButton: addTrajectoryButton,
   };
+
+  if (waveformChart) {
+    waveformChart.onRatioChange = (ratio) => {
+      const value = Number(ratio.toFixed(3));
+      if (Number.isFinite(value)) {
+        martigliState.setInhaleRatio(value, widget.oscillationId);
+        if (widget.controls?.inhale && document.activeElement !== widget.controls.inhale) {
+          widget.controls.inhale.value = String(value);
+        }
+        if (widget.controls?.inhaleValue) {
+          widget.controls.inhaleValue.textContent = `${Math.round(value * 100)}%`;
+        }
+        recordMartigliInteraction("martigli.update", {
+          field: "inhaleRatio",
+          value,
+          oscillatorId: widget.oscillationId,
+          source: "waveform-chart",
+        });
+      }
+    };
+  }
+
+  if (timelineChart) {
+    timelineChart.onStartPeriodChange = (value) => {
+      if (!Number.isFinite(value)) return;
+      const period = clampNumber(value, 0.1, 120);
+      martigliState.setStartPeriod(period, widget.oscillationId);
+      recordMartigliInteraction("martigli.update", {
+        field: "startPeriod",
+        value: period,
+        oscillatorId: widget.oscillationId,
+        source: "timeline-chart",
+      });
+    };
+    timelineChart.onEndPeriodChange = ({ period, duration }) => {
+      const updates = {};
+      if (Number.isFinite(period)) {
+        updates.period = clampNumber(period, 0.1, 120);
+        martigliState.setEndPeriod(updates.period, widget.oscillationId);
+      }
+      if (Number.isFinite(duration)) {
+        updates.duration = Math.max(0, duration);
+        martigliState.setTransitionDuration(updates.duration, widget.oscillationId);
+      }
+      recordMartigliInteraction("martigli.update", {
+        field: "timeline",
+        oscillatorId: widget.oscillationId,
+        value: updates,
+        source: "timeline-chart",
+      });
+    };
+  }
 
   startButton.addEventListener("click", () => {
     if (!widget.oscillationId) return;
@@ -2235,6 +2797,7 @@ const setMartigliWidgetRunningState = (widget, osc) => {
 
 const updateMartigliWidget = (widget, osc, isReference = false) => {
   widget.oscillationId = osc.id;
+  widget.snapshot = osc;
   if (widget.root) {
     widget.root.dataset.oscillationId = osc.id ?? "";
     widget.root.dataset.reference = isReference ? "true" : "false";
@@ -2249,20 +2812,34 @@ const updateMartigliWidget = (widget, osc, isReference = false) => {
   }
   syncMartigliWidgetControls(widget, osc);
   renderMartigliTrajectoryList(widget, osc);
+  if (widget.charts?.waveform?.render) {
+    widget.charts.waveform.render(osc, widget.metrics ?? null);
+  }
+  if (widget.charts?.timeline?.render) {
+    widget.charts.timeline.render(osc, widget.metrics ?? null);
+  }
 };
 
 const updateMartigliWidgetTelemetry = (widget) => {
   if (!widget?.telemetryRefs) return;
   const metrics = martigliState.getRuntimeMetrics(widget.oscillationId);
   if (!metrics) {
+    widget.metrics = null;
     Object.values(widget.telemetryRefs).forEach((el) => {
       if (el) el.textContent = "—";
     });
     if (widget.indicator) {
       widget.indicator.classList.remove("active");
     }
+    if (widget.charts?.waveform?.render) {
+      widget.charts.waveform.render(widget.snapshot ?? {}, null);
+    }
+    if (widget.charts?.timeline?.render) {
+      widget.charts.timeline.render(widget.snapshot ?? {}, null);
+    }
     return;
   }
+  widget.metrics = metrics;
   MARTIGLI_TELEMETRY_FIELDS.forEach(({ key, format }) => {
     const target = widget.telemetryRefs[key];
     if (target) {
@@ -2271,6 +2848,12 @@ const updateMartigliWidgetTelemetry = (widget) => {
   });
   if (widget.indicator) {
     widget.indicator.classList.toggle("active", Boolean(widget.isRunning));
+  }
+  if (widget.charts?.waveform?.render) {
+    widget.charts.waveform.render(widget.snapshot ?? {}, metrics);
+  }
+  if (widget.charts?.timeline?.render) {
+    widget.charts.timeline.render(widget.snapshot ?? {}, metrics);
   }
 };
 
