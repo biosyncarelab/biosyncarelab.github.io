@@ -433,7 +433,11 @@ function buildGraph(rdfData) {
 
   console.log('Total concept-to-class mappings:', conceptToClass.size);
 
-  // Create nodes for classes, properties, and concepts
+  // Store properties separately (they will become edges, not nodes)
+  const objectProperties = new Map();
+  const datatypeProperties = new Map();
+
+  // Create nodes for classes and concepts (but NOT properties)
   for (const [uri, resource] of rdfData.resources) {
     // Skip concepts that are mapped to classes (will be merged)
     if (conceptToClass.has(uri)) {
@@ -466,11 +470,15 @@ function buildGraph(rdfData) {
         }
       }
     } else if (resource.types.includes(objectPropertyURI)) {
-      nodeType = "objectProperty";
-      color = "#a78bfa"; // purple
+      // Store object properties separately - they will become edges
+      objectProperties.set(uri, resource);
+      console.log('Storing object property for edge creation:', uri);
+      continue; // Skip creating node
     } else if (resource.types.includes(datatypePropertyURI)) {
-      nodeType = "datatypeProperty";
-      color = "#fb923c"; // orange
+      // Store datatype properties separately - they will become edges
+      datatypeProperties.set(uri, resource);
+      console.log('Storing datatype property for edge creation:', uri);
+      continue; // Skip creating node
     } else if (resource.types.includes(conceptURI)) {
       nodeType = "concept";
       color = "#22d3ee"; // cyan
@@ -498,8 +506,13 @@ function buildGraph(rdfData) {
       continue;
     }
 
-    // Only create edges for URI objects that exist as nodes
-    if (objectType === "uri" && nodeMap.has(object)) {
+    // Skip domain/range edges - we handle these separately when creating property edges
+    if (predicate === domain || predicate === range) {
+      continue;
+    }
+
+    // Only create edges for URI objects where BOTH subject and object exist as nodes
+    if (objectType === "uri" && nodeMap.has(subject) && nodeMap.has(object)) {
       let edgeClass = "relation";
       let edgeColor = "#a78bfa"; // purple
       let edgeStyle = "solid";
@@ -516,20 +529,6 @@ function buildGraph(rdfData) {
       else if (predicate === skosBroader || predicate === skosNarrower) {
         edgeClass = "hierarchy";
         edgeColor = "#38bdf8"; // blue
-        edgeStyle = "dashed";
-        edgeWidth = 2;
-      }
-      // Domain relations
-      else if (predicate === domain) {
-        edgeClass = "domain";
-        edgeColor = "#10b981"; // green
-        edgeStyle = "dashed";
-        edgeWidth = 2;
-      }
-      // Range relations
-      else if (predicate === range) {
-        edgeClass = "range";
-        edgeColor = "#f59e0b"; // amber
         edgeStyle = "dashed";
         edgeWidth = 2;
       }
@@ -554,6 +553,161 @@ function buildGraph(rdfData) {
           predicate: predicate,
         },
       });
+    }
+  }
+
+  // Create edges from object properties using domain/range
+  const thingURI = "http://www.w3.org/2002/07/owl#Thing";
+
+  for (const [propertyURI, propertyResource] of objectProperties) {
+    // Get domain and range from property
+    let domainURIs = [];
+    let rangeURIs = [];
+
+    // Look for domain triples
+    for (const triple of rdfData.triples) {
+      if (triple.subject === propertyURI && triple.predicate === domain && triple.objectType === "uri") {
+        domainURIs.push(triple.object);
+      }
+      if (triple.subject === propertyURI && triple.predicate === range && triple.objectType === "uri") {
+        rangeURIs.push(triple.object);
+      }
+    }
+
+    // If no domain or range, use Thing
+    if (domainURIs.length === 0) {
+      domainURIs.push(thingURI);
+    }
+    if (rangeURIs.length === 0) {
+      rangeURIs.push(thingURI);
+    }
+
+    // Create Thing node if needed
+    if ((domainURIs.includes(thingURI) || rangeURIs.includes(thingURI)) && !nodeMap.has(thingURI)) {
+      elements.push({
+        data: {
+          id: thingURI,
+          label: "Thing",
+          type: "class",
+          color: "#94a3b8", // light gray
+          resource: {
+            uri: thingURI,
+            types: [classURI],
+            properties: {},
+            label: "Thing"
+          },
+        },
+      });
+      nodeMap.add(thingURI);
+    }
+
+    // Create edges for each domain-range combination
+    for (const domainURI of domainURIs) {
+      for (const rangeURI of rangeURIs) {
+        // Only create edge if both domain and range nodes exist
+        if (nodeMap.has(domainURI) && nodeMap.has(rangeURI)) {
+          elements.push({
+            data: {
+              id: `${domainURI}-${propertyURI}-${rangeURI}`,
+              source: domainURI,
+              target: rangeURI,
+              label: propertyResource.label || getLocalName(propertyURI),
+              edgeType: "objectProperty",
+              color: "#a78bfa", // purple
+              style: "solid",
+              width: 2,
+              predicate: propertyURI,
+            },
+          });
+          console.log('Created object property edge:', domainURI, '->', rangeURI, 'via', getLocalName(propertyURI));
+        }
+      }
+    }
+  }
+
+  // Create edges from datatype properties to datatypes
+  for (const [propertyURI, propertyResource] of datatypeProperties) {
+    // Get domain and range from property
+    let domainURIs = [];
+    let rangeURIs = [];
+
+    // Look for domain and range triples
+    for (const triple of rdfData.triples) {
+      if (triple.subject === propertyURI && triple.predicate === domain && triple.objectType === "uri") {
+        domainURIs.push(triple.object);
+      }
+      if (triple.subject === propertyURI && triple.predicate === range && triple.objectType === "uri") {
+        rangeURIs.push(triple.object);
+      }
+    }
+
+    // If no domain or range, use Thing/string
+    if (domainURIs.length === 0) {
+      domainURIs.push(thingURI);
+    }
+    if (rangeURIs.length === 0) {
+      rangeURIs.push("http://www.w3.org/2001/XMLSchema#string"); // default datatype
+    }
+
+    // Create Thing node if needed
+    if (domainURIs.includes(thingURI) && !nodeMap.has(thingURI)) {
+      elements.push({
+        data: {
+          id: thingURI,
+          label: "Thing",
+          type: "class",
+          color: "#94a3b8", // light gray
+          resource: {
+            uri: thingURI,
+            types: [classURI],
+            properties: {},
+            label: "Thing"
+          },
+        },
+      });
+      nodeMap.add(thingURI);
+    }
+
+    // Create datatype nodes and edges
+    for (const domainURI of domainURIs) {
+      for (const rangeURI of rangeURIs) {
+        // Create datatype node if it doesn't exist
+        if (!nodeMap.has(rangeURI)) {
+          elements.push({
+            data: {
+              id: rangeURI,
+              label: getLocalName(rangeURI),
+              type: "datatype",
+              color: "#fb923c", // orange
+              resource: {
+                uri: rangeURI,
+                types: [],
+                properties: {},
+                label: getLocalName(rangeURI)
+              },
+            },
+          });
+          nodeMap.add(rangeURI);
+        }
+
+        // Create edge from domain to datatype
+        if (nodeMap.has(domainURI)) {
+          elements.push({
+            data: {
+              id: `${domainURI}-${propertyURI}-${rangeURI}`,
+              source: domainURI,
+              target: rangeURI,
+              label: propertyResource.label || getLocalName(propertyURI),
+              edgeType: "datatypeProperty",
+              color: "#fb923c", // orange
+              style: "dashed",
+              width: 2,
+              predicate: propertyURI,
+            },
+          });
+          console.log('Created datatype property edge:', domainURI, '->', rangeURI, 'via', getLocalName(propertyURI));
+        }
+      }
     }
   }
 

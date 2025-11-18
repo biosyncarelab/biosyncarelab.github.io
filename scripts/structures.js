@@ -23,6 +23,7 @@ const DEFAULT_MARTIGLI_CONFIG = {
   fadeOutSec: 20,
   prestartValue: 0,
   conceptUri: null,
+  trajectory: null,
 };
 
 const nowSeconds = () => {
@@ -57,6 +58,12 @@ export class MartigliOscillator {
       fadeOutSec: Math.max(0, merged.fadeOutSec ?? 0),
       prestartValue: clamp(merged.prestartValue ?? 0, -1, 1),
     };
+    this.trajectory = this._normalizeTrajectory(merged.trajectory);
+    if (!this.trajectory.length) {
+      this.trajectory = this._defaultTrajectory();
+    } else {
+      this._syncConfigFromTrajectory();
+    }
     if (this.config.startPeriodSec > this.config.endPeriodSec) {
       this.config.endPeriodSec = this.config.startPeriodSec;
     }
@@ -68,6 +75,10 @@ export class MartigliOscillator {
     this._lastTime = null;
     this._lastPeriod = this.config.startPeriodSec;
     this._anchor = merged.anchorTime ?? nowSeconds();
+    this._segments = [];
+    this._finalPeriod = this.config.endPeriodSec;
+    this._totalTrajectoryDuration = this.config.transitionSec;
+    this._rebuildTrajectorySegments();
   }
 
   toJSON() {
@@ -86,6 +97,7 @@ export class MartigliOscillator {
       fadeOutSec: this.config.fadeOutSec,
       sessionStart: this.session.startTime,
       sessionEnd: this.session.endTime,
+      trajectory: this.getTrajectory(),
     };
   }
 
@@ -115,14 +127,20 @@ export class MartigliOscillator {
 
   setStartPeriod(value) {
     this.config.startPeriodSec = clamp(value, 0.1, 120);
+    this._syncSimpleTrajectory();
+    this._rebuildTrajectorySegments();
   }
 
   setEndPeriod(value) {
     this.config.endPeriodSec = clamp(value, 0.1, 120);
+    this._syncSimpleTrajectory();
+    this._rebuildTrajectorySegments();
   }
 
   setTransitionDuration(value) {
     this.config.transitionSec = Math.max(0, value ?? 0);
+    this._syncSimpleTrajectory();
+    this._rebuildTrajectorySegments();
   }
 
   setWaveform(value) {
@@ -173,16 +191,16 @@ export class MartigliOscillator {
 
   runtimeMetrics(timeSec = nowSeconds()) {
     const value = this.valueAt(timeSec);
-    const period = this._lastPeriod ?? this.config.startPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.startPeriodSec;
+    const period = this._lastPeriod ?? this.getStartPeriod();
     const frequencyHz = period > 0 ? 1 / period : 0;
     const breathsPerMinute = frequencyHz * 60;
     return {
       id: this.id,
       label: this.label,
       waveform: this.config.waveform,
-      startPeriodSec: this.config.startPeriodSec,
-      endPeriodSec: this.config.endPeriodSec,
-      transitionSec: this.config.transitionSec,
+      startPeriodSec: this.getStartPeriod(),
+      endPeriodSec: this.getEndPeriod(),
+      transitionSec: this._totalTrajectoryDuration ?? this.config.transitionSec,
       inhaleRatio: this.config.inhaleRatio,
       amplitude: this.config.amplitude,
       value,
@@ -194,15 +212,87 @@ export class MartigliOscillator {
     };
   }
 
+  getStartPeriod() {
+    return this.trajectory[0]?.period ?? this.config.startPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.startPeriodSec;
+  }
+
+  getEndPeriod() {
+    return this.trajectory[this.trajectory.length - 1]?.period ?? this.config.endPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.endPeriodSec;
+  }
+
+  getTrajectory() {
+    return this.trajectory.map((point) => ({ period: point.period, duration: point.duration }));
+  }
+
+  setTrajectory(points = []) {
+    this.trajectory = this._normalizeTrajectory(points);
+    if (!this.trajectory.length) {
+      this.trajectory = this._defaultTrajectory();
+    }
+    this._syncConfigFromTrajectory();
+    this._rebuildTrajectorySegments();
+  }
+
+  addTrajectoryPoint(point = {}) {
+    const last = this.trajectory[this.trajectory.length - 1] ?? { period: this.config.endPeriodSec, duration: 0 };
+    const next = {
+      period: clamp(Number.isFinite(point.period) ? point.period : last.period, 0.1, 120),
+      duration: Math.max(0, Number(point.duration ?? 60)),
+    };
+    this.trajectory.push(next);
+    this._syncConfigFromTrajectory();
+    this._rebuildTrajectorySegments();
+  }
+
+  updateTrajectoryPoint(index, updates = {}) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.trajectory.length) {
+      return;
+    }
+    const target = this.trajectory[index];
+    if (!target) return;
+    if (updates.period !== undefined && Number.isFinite(updates.period)) {
+      target.period = clamp(updates.period, 0.1, 120);
+    }
+    if (updates.duration !== undefined && Number.isFinite(updates.duration)) {
+      target.duration = Math.max(0, updates.duration);
+    }
+    this._syncConfigFromTrajectory();
+    this._rebuildTrajectorySegments();
+  }
+
+  removeTrajectoryPoint(index) {
+    if (this.trajectory.length <= 2) return;
+    if (!Number.isInteger(index) || index < 0 || index >= this.trajectory.length) {
+      return;
+    }
+    this.trajectory.splice(index, 1);
+    this._syncConfigFromTrajectory();
+    this._rebuildTrajectorySegments();
+  }
+
   _periodAt(elapsed) {
     if (!Number.isFinite(elapsed) || elapsed < 0) {
-      return this.config.startPeriodSec;
+      return this.getStartPeriod();
     }
-    if (this.config.transitionSec === 0) {
-      return this.config.endPeriodSec;
+    if (!this._segments?.length) {
+      return this.getEndPeriod();
     }
-    const progress = clamp(elapsed / this.config.transitionSec, 0, 1);
-    return this.config.startPeriodSec + progress * (this.config.endPeriodSec - this.config.startPeriodSec);
+    let accumulated = 0;
+    for (let i = 0; i < this._segments.length; i += 1) {
+      const segment = this._segments[i];
+      const segmentEnd = accumulated + segment.duration;
+      if (segment.duration <= 0) {
+        accumulated = segmentEnd;
+        continue;
+      }
+      if (elapsed <= segmentEnd) {
+        const progress = (elapsed - accumulated) / segment.duration;
+        const clamped = clamp(progress, 0, 1);
+        return segment.from + (segment.to - segment.from) * clamped;
+      }
+      accumulated = segmentEnd;
+    }
+    return this._finalPeriod ?? this.getEndPeriod();
   }
 
   _sessionEnvelope(timeSec, startTime) {
@@ -256,6 +346,75 @@ export class MartigliOscillator {
       return "steady";
     }
     return this.config.endPeriodSec > this.config.startPeriodSec ? "slows" : "quickens";
+  }
+
+  _defaultTrajectory() {
+    return [
+      { period: this.config.startPeriodSec, duration: 0 },
+      { period: this.config.endPeriodSec, duration: this.config.transitionSec },
+    ];
+  }
+
+  _normalizeTrajectory(points) {
+    if (!Array.isArray(points)) return [];
+    return points
+      .map((point) => ({
+        period: clamp(Number(point?.period) || this.config.startPeriodSec, 0.1, 120),
+        duration: Math.max(0, Number(point?.duration) || 0),
+      }))
+      .filter(Boolean);
+  }
+
+  _syncConfigFromTrajectory() {
+    if (!this.trajectory.length) return;
+    this.config.startPeriodSec = this.trajectory[0]?.period ?? this.config.startPeriodSec;
+    const last = this.trajectory[this.trajectory.length - 1];
+    this.config.endPeriodSec = last?.period ?? this.config.endPeriodSec;
+    const totalDuration = this.trajectory.reduce(
+      (acc, point, index) => (index === 0 ? acc : acc + (point.duration ?? 0)),
+      0,
+    );
+    this._totalTrajectoryDuration = totalDuration;
+    if (this.trajectory.length === 2) {
+      this.config.transitionSec = this.trajectory[1]?.duration ?? this.config.transitionSec;
+    } else {
+      this.config.transitionSec = totalDuration;
+    }
+  }
+
+  _isSimpleTrajectory() {
+    return this.trajectory.length === 2;
+  }
+
+  _syncSimpleTrajectory() {
+    if (!this._isSimpleTrajectory()) return;
+    this.trajectory[0].period = this.config.startPeriodSec;
+    this.trajectory[1].period = this.config.endPeriodSec;
+    this.trajectory[1].duration = this.config.transitionSec;
+  }
+
+  _rebuildTrajectorySegments() {
+    this.trajectory = this._normalizeTrajectory(this.trajectory);
+    if (!this.trajectory.length) {
+      this.trajectory = this._defaultTrajectory();
+    }
+    this._segments = [];
+    let accumulated = 0;
+    for (let i = 0; i < this.trajectory.length - 1; i += 1) {
+      const current = this.trajectory[i];
+      const next = this.trajectory[i + 1];
+      const duration = Math.max(0, next.duration ?? 0);
+      this._segments.push({
+        start: accumulated,
+        duration,
+        from: current.period,
+        to: next.period,
+      });
+      accumulated += duration;
+    }
+    const last = this.trajectory[this.trajectory.length - 1];
+    this._finalPeriod = last?.period ?? this.config.endPeriodSec;
+    this._totalTrajectoryDuration = accumulated;
   }
 }
 
