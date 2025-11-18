@@ -171,6 +171,29 @@ export class MartigliOscillator {
     return shaped * this.config.amplitude * envelope;
   }
 
+  runtimeMetrics(timeSec = nowSeconds()) {
+    const value = this.valueAt(timeSec);
+    const period = this._lastPeriod ?? this.config.startPeriodSec ?? DEFAULT_MARTIGLI_CONFIG.startPeriodSec;
+    const frequencyHz = period > 0 ? 1 / period : 0;
+    const breathsPerMinute = frequencyHz * 60;
+    return {
+      id: this.id,
+      label: this.label,
+      waveform: this.config.waveform,
+      startPeriodSec: this.config.startPeriodSec,
+      endPeriodSec: this.config.endPeriodSec,
+      transitionSec: this.config.transitionSec,
+      inhaleRatio: this.config.inhaleRatio,
+      amplitude: this.config.amplitude,
+      value,
+      phase: Number.isFinite(this._phase) ? ((this._phase % 1) + 1) % 1 : 0,
+      period,
+      frequencyHz,
+      breathsPerMinute,
+      trend: this._trendLabel(),
+    };
+  }
+
   _periodAt(elapsed) {
     if (!Number.isFinite(elapsed) || elapsed < 0) {
       return this.config.startPeriodSec;
@@ -226,6 +249,13 @@ export class MartigliOscillator {
       default:
         return Math.sin(normalizedPhase * TWO_PI);
     }
+  }
+
+  _trendLabel() {
+    if (this.config.endPeriodSec === this.config.startPeriodSec) {
+      return "steady";
+    }
+    return this.config.endPeriodSec > this.config.startPeriodSec ? "slows" : "quickens";
   }
 }
 
@@ -482,6 +512,14 @@ export class MartigliState {
     this._emit();
   }
 
+  setAmplitude(value, id = this.referenceId) {
+    if (!Number.isFinite(value)) return;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setAmplitude(value);
+    this._emit();
+  }
+
   setConceptUri(uri, id = this.referenceId) {
     const osc = id ? this._oscillations.get(id) : null;
     if (!osc) return;
@@ -496,6 +534,12 @@ export class MartigliState {
     if (!osc) return;
     osc.label = trimmed;
     this._emit();
+  }
+
+  getRuntimeMetrics(id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return null;
+    return osc.runtimeMetrics();
   }
 }
 

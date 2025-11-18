@@ -135,8 +135,21 @@ const ui = {
   martigliStart: document.getElementById("martigli-start"),
   martigliEnd: document.getElementById("martigli-end"),
   martigliWaveform: document.getElementById("martigli-waveform"),
+  martigliTransition: document.getElementById("martigli-transition"),
+  martigliInhale: document.getElementById("martigli-inhale"),
+  martigliInhaleValue: document.getElementById("martigli-inhale-value"),
+  martigliAmplitude: document.getElementById("martigli-amplitude"),
+  martigliAmplitudeValue: document.getElementById("martigli-amplitude-value"),
   martigliPreview: document.getElementById("martigli-preview"),
   martigliCanvas: document.getElementById("martigli-canvas"),
+  martigliLiveSummary: document.getElementById("martigli-live-summary"),
+  martigliLiveIndicator: document.getElementById("martigli-live-indicator"),
+  martigliLiveValue: document.getElementById("martigli-live-value"),
+  martigliLivePhase: document.getElementById("martigli-live-phase"),
+  martigliLivePeriod: document.getElementById("martigli-live-period"),
+  martigliLiveBpm: document.getElementById("martigli-live-bpm"),
+  martigliLiveWaveform: document.getElementById("martigli-live-waveform"),
+  martigliLiveTrend: document.getElementById("martigli-live-trend"),
   martigliOscillationSelect: document.getElementById("martigli-oscillation-select"),
   martigliAdd: document.getElementById("martigli-add"),
   martigliRename: document.getElementById("martigli-rename"),
@@ -244,6 +257,18 @@ const videoCanvasController =
   ui.martigliCanvas && typeof videoEngine.attachCanvas === "function"
     ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
     : null;
+
+const MARTIGLI_TELEMETRY_FIELDS = [
+  "martigliLiveValue",
+  "martigliLivePhase",
+  "martigliLivePeriod",
+  "martigliLiveBpm",
+  "martigliLiveWaveform",
+  "martigliLiveTrend",
+];
+const MARTIGLI_TELEMETRY_INTERVAL_MS = 140;
+let martigliTelemetryFrame = null;
+let martigliTelemetryLastTick = 0;
 
 STRUCTURE_MANIFEST.forEach((entry) => {
   rdfLinker.register(entry.id, `urn:nso:structure:${entry.id}`, { label: entry.label });
@@ -954,16 +979,103 @@ const getActiveSessionRecord = () => {
   return null;
 };
 
+const createMartigliLabRecord = () => ({
+  id: "martigli-lab",
+  label: "Martigli Lab",
+  description: "Design Martigli oscillations before binding them to a session.",
+  visibility: "scratch",
+  folder: "Lab",
+  updatedAt: new Date().toISOString(),
+  tracks: [],
+  martigli: martigliState.snapshot(),
+});
+
 const ensureSessionModalVisible = () => {
   const record = getActiveSessionRecord();
-  if (!record) {
-    setMessage("Open a session from the Sessions card before editing Martigli oscillations.", "info");
-    return false;
+  if (!record && ui.modal?.classList.contains("hidden")) {
+    openDetailModal(createMartigliLabRecord(), "lab");
+    return true;
   }
-  if (ui.modal?.classList.contains("hidden")) {
+  if (record && ui.modal?.classList.contains("hidden")) {
     openDetailModal(record, "session");
   }
   return true;
+};
+
+const describeMartigliLiveSummary = (reference) => {
+  if (!reference) {
+    return "Awaiting Martigli data.";
+  }
+  const config = reference.config ?? {};
+  const label = reference.label ?? "Active oscillation";
+  const transition = Number(config.transitionSec ?? 0);
+  const transitionText = transition > 0 ? `${Math.round(transition)}s window` : "Instant window";
+  const inhaleRatio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
+  const inhaleText = `Inhale ${Math.round(inhaleRatio * 100)}%`;
+  const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
+  const amplitudeText = `${amplitude.toFixed(2)}× amp`;
+  return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
+};
+
+const formatMartigliTrendText = (trend) => {
+  if (trend === "slows") return "Slowing";
+  if (trend === "quickens") return "Quickening";
+  return "Steady";
+};
+
+const setMartigliTelemetryPlaceholders = () => {
+  MARTIGLI_TELEMETRY_FIELDS.forEach((field) => {
+    if (ui[field]) {
+      ui[field].textContent = "—";
+    }
+  });
+  if (ui.martigliLiveIndicator) {
+    ui.martigliLiveIndicator.classList.remove("active");
+  }
+};
+
+const updateMartigliTelemetry = () => {
+  if (!ui.martigliLiveValue || typeof martigliState.getRuntimeMetrics !== "function") {
+    return;
+  }
+  const metrics = martigliState.getRuntimeMetrics();
+  if (!metrics) {
+    setMartigliTelemetryPlaceholders();
+    return;
+  }
+  const formatNumber = (value, digits = 2) =>
+    Number.isFinite(value) ? value.toFixed(digits) : "—";
+  ui.martigliLiveValue.textContent = formatNumber(metrics.value, 2);
+  ui.martigliLivePhase.textContent = Number.isFinite(metrics.phase)
+    ? `${Math.round(metrics.phase * 100)}%`
+    : "—";
+  ui.martigliLivePeriod.textContent = Number.isFinite(metrics.period)
+    ? `${metrics.period.toFixed(1)}s`
+    : "—";
+  ui.martigliLiveBpm.textContent = Number.isFinite(metrics.breathsPerMinute)
+    ? metrics.breathsPerMinute.toFixed(1)
+    : "—";
+  ui.martigliLiveWaveform.textContent = (metrics.waveform ?? "—").toString().substring(0, 4).toUpperCase();
+  ui.martigliLiveTrend.textContent = formatMartigliTrendText(metrics.trend);
+  if (ui.martigliLiveIndicator) {
+    ui.martigliLiveIndicator.classList.add("active");
+  }
+};
+
+const ensureMartigliTelemetryLoop = () => {
+  if (typeof window === "undefined" || martigliTelemetryFrame !== null) {
+    return;
+  }
+  const loop = (timestamp) => {
+    if (!document.hidden) {
+      if (!martigliTelemetryLastTick || timestamp - martigliTelemetryLastTick >= MARTIGLI_TELEMETRY_INTERVAL_MS) {
+        updateMartigliTelemetry();
+        martigliTelemetryLastTick = timestamp;
+      }
+    }
+    martigliTelemetryFrame = window.requestAnimationFrame(loop);
+  };
+  martigliTelemetryFrame = window.requestAnimationFrame(loop);
 };
 
 const getOscillationLabel = (snapshot, id) => {
@@ -983,13 +1095,9 @@ const updateMartigliOscillationStatus = (snapshot = martigliState.snapshot()) =>
       : "No oscillations loaded yet.";
   }
   if (ui.martigliDashboardSummary) {
-    if (!dashboardState.activeSessionId) {
-      ui.martigliDashboardSummary.textContent = defaultDashboardCopy.martigliDashboardSummary;
-    } else if (!count) {
-      ui.martigliDashboardSummary.textContent = "Session has no Martigli oscillations yet.";
-    } else {
-      ui.martigliDashboardSummary.textContent = `${count} oscillation${plural} • Active: ${activeLabel}`;
-    }
+    ui.martigliDashboardSummary.textContent = count
+      ? `${count} oscillation${plural} • Active: ${activeLabel}`
+      : "No Martigli oscillations yet.";
   }
 };
 
@@ -1185,9 +1293,10 @@ function closeDetailModal() {
   }
 }
 
-function openDetailModal(record, kind) {
+function openDetailModal(record, kind, options = {}) {
   if (!ui.modal) return;
-  const normalizedKind = kind === "session" ? "session" : "preset";
+  const normalizedKind = kind === "session" ? "session" : kind === "lab" ? "lab" : "preset";
+  const persistSessionContext = options.persistSessionContext ?? normalizedKind === "session";
   activeModalRecord = {
     id: record.id ?? null,
     kind: normalizedKind,
@@ -1195,18 +1304,27 @@ function openDetailModal(record, kind) {
   };
   activeModalData = record;
   ui.modalTitle.textContent = record.label ?? record.name ?? record.id ?? "Untitled";
-  ui.modalKind.textContent = normalizedKind === "session" ? "Session" : "Preset";
+  if (ui.modalKind) {
+    ui.modalKind.textContent =
+      normalizedKind === "session"
+        ? "Session"
+        : normalizedKind === "lab"
+          ? "Martigli Lab"
+          : "Preset";
+  }
   if (ui.sessionHint) {
     ui.sessionHint.textContent =
       normalizedKind === "session"
         ? "Applying this session will update Martigli, audio, video, and haptic controls."
-        : "Viewing a preset — open a session to sync all modalities.";
+        : normalizedKind === "lab"
+          ? "Lab mode — tweak Martigli oscillations before binding them to a session."
+          : "Viewing a preset — open a session to sync all modalities.";
   }
   renderModalMeta(record, normalizedKind);
   renderModalTrackSections(record, normalizedKind);
   renderSensoryPanelsForRecord(record, normalizedKind);
   renderMartigliParams(record);
-  if (normalizedKind === "session") {
+  if (normalizedKind === "session" && persistSessionContext) {
     noteActiveSessionRecord(record);
   }
   renderStructurePreview(record);
@@ -1231,6 +1349,7 @@ function openDetailModal(record, kind) {
 
 const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
   if (!snapshot) return;
+  const reference = martigliState.getReference?.() ?? null;
   const delta = snapshot.endPeriod - snapshot.startPeriod;
   const direction = delta === 0 ? "steady" : delta > 0 ? "slows" : "quickens";
   const summary = `Breath ${direction} from ${snapshot.startPeriod}s to ${snapshot.endPeriod}s on a ${snapshot.waveform} wave.`;
@@ -1238,19 +1357,18 @@ const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
     ui.martigliPreview.textContent = summary;
   }
   if (ui.martigliDashboardPreview) {
-    if (dashboardState.activeSessionId) {
-      const prefix = dashboardState.activeSessionLabel
-        ? `${dashboardState.activeSessionLabel}: `
-        : "";
-      ui.martigliDashboardPreview.textContent = `${prefix}${summary}`;
-    } else {
-      ui.martigliDashboardPreview.textContent = defaultDashboardCopy.martigliPreview;
-    }
+    const prefix = dashboardState.activeSessionLabel ? `${dashboardState.activeSessionLabel}: ` : "";
+    ui.martigliDashboardPreview.textContent = `${prefix}${summary}`;
+  }
+  if (ui.martigliLiveSummary) {
+    ui.martigliLiveSummary.textContent = describeMartigliLiveSummary(reference);
   }
 };
 
 const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
   if (!snapshot) return;
+  const reference = martigliState.getReference?.() ?? null;
+  const config = reference?.config ?? {};
   if (ui.martigliStart && document.activeElement !== ui.martigliStart) {
     ui.martigliStart.value = String(snapshot.startPeriod);
   }
@@ -1259,6 +1377,23 @@ const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
   }
   if (ui.martigliWaveform && ui.martigliWaveform.value !== snapshot.waveform) {
     ui.martigliWaveform.value = snapshot.waveform;
+  }
+  if (ui.martigliTransition && document.activeElement !== ui.martigliTransition) {
+    ui.martigliTransition.value = String(config.transitionSec ?? 0);
+  }
+  if (ui.martigliInhale && document.activeElement !== ui.martigliInhale) {
+    const ratio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
+    ui.martigliInhale.value = String(ratio);
+    if (ui.martigliInhaleValue) {
+      ui.martigliInhaleValue.textContent = `${Math.round(ratio * 100)}%`;
+    }
+  }
+  if (ui.martigliAmplitude && document.activeElement !== ui.martigliAmplitude) {
+    const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
+    ui.martigliAmplitude.value = String(amplitude);
+    if (ui.martigliAmplitudeValue) {
+      ui.martigliAmplitudeValue.textContent = `${amplitude.toFixed(2)}×`;
+    }
   }
 };
 
@@ -1279,7 +1414,36 @@ const bindMartigliWidget = () => {
     martigliState.setWaveform(value);
     kernel.recordInteraction("martigli.update", { field: "waveform", value });
   });
+  if (ui.martigliTransition) {
+    ui.martigliTransition.addEventListener("input", (event) => {
+      const value = Number(event.target.value);
+      martigliState.setTransitionDuration(value);
+      kernel.recordInteraction("martigli.update", { field: "transitionSec", value });
+    });
+  }
+  if (ui.martigliInhale) {
+    ui.martigliInhale.addEventListener("input", (event) => {
+      const value = Number(event.target.value);
+      martigliState.setInhaleRatio(value);
+      if (ui.martigliInhaleValue) {
+        ui.martigliInhaleValue.textContent = `${Math.round(value * 100)}%`;
+      }
+      kernel.recordInteraction("martigli.update", { field: "inhaleRatio", value });
+    });
+  }
+  if (ui.martigliAmplitude) {
+    ui.martigliAmplitude.addEventListener("input", (event) => {
+      const value = Number(event.target.value);
+      martigliState.setAmplitude(value);
+      if (ui.martigliAmplitudeValue) {
+        ui.martigliAmplitudeValue.textContent = `${value.toFixed(2)}×`;
+      }
+      kernel.recordInteraction("martigli.update", { field: "amplitude", value });
+    });
+  }
   syncMartigliInputs();
+  updateMartigliTelemetry();
+  ensureMartigliTelemetryLoop();
 };
 
 const updateAuthState = (user) => {
@@ -1501,11 +1665,13 @@ if (ui.sessionNavigator) {
   });
 }
 
+setMartigliTelemetryPlaceholders();
 bindMartigliWidget();
 martigliState.subscribe((snapshot) => {
   syncMartigliInputs(snapshot);
   updateMartigliPreview(snapshot);
   renderMartigliOscillationSelect(snapshot);
+  updateMartigliTelemetry();
 });
 updateMartigliPreview(martigliState.snapshot());
 updateMartigliOscillationStatus(martigliState.snapshot());
@@ -1527,6 +1693,8 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     audioEngine.stop();
+  } else {
+    updateMartigliTelemetry();
   }
 });
 

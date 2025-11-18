@@ -304,7 +304,13 @@ function parseTurtle(ttlText) {
       const pairSpace = pair.search(/\s/);
       if (pairSpace === -1) continue;
 
-      currentPredicate = expandURI(pair.substring(0, pairSpace).trim());
+      let predicateRaw = pair.substring(0, pairSpace).trim();
+      // Handle 'a' as shorthand for rdf:type
+      if (predicateRaw === 'a') {
+        currentPredicate = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+      } else {
+        currentPredicate = expandURI(predicateRaw);
+      }
       const objectPart = pair.substring(pairSpace + 1).trim();
 
       // Handle multiple objects separated by commas
@@ -394,14 +400,71 @@ function buildGraph(rdfData) {
   const skosBroader = "http://www.w3.org/2004/02/skos/core#broader";
   const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
 
+  // Build concept-to-class mapping (XConcept -> X via skos:related)
+  const conceptToClass = new Map();
+  const conceptResources = new Map();
+
+  for (const triple of rdfData.triples) {
+    if (triple.predicate === skosRelated && triple.objectType === "uri") {
+      const subjectRes = rdfData.resources.get(triple.subject);
+      const objectRes = rdfData.resources.get(triple.object);
+
+      console.log('Checking skos:related:', {
+        subject: triple.subject,
+        object: triple.object,
+        subjectTypes: subjectRes?.types,
+        objectTypes: objectRes?.types
+      });
+
+      // Check both directions: Concept -> Class or Class -> Concept
+      if (subjectRes?.types.includes(conceptURI) && objectRes?.types.includes(classURI)) {
+        // Concept -> Class
+        console.log('Mapping concept to class:', triple.subject, '->', triple.object);
+        conceptToClass.set(triple.subject, triple.object);
+        conceptResources.set(triple.subject, subjectRes);
+      } else if (subjectRes?.types.includes(classURI) && objectRes?.types.includes(conceptURI)) {
+        // Class -> Concept (map concept to class)
+        console.log('Mapping concept to class (reverse):', triple.object, '->', triple.subject);
+        conceptToClass.set(triple.object, triple.subject);
+        conceptResources.set(triple.object, objectRes);
+      }
+    }
+  }
+
+  console.log('Total concept-to-class mappings:', conceptToClass.size);
+
   // Create nodes for classes, properties, and concepts
   for (const [uri, resource] of rdfData.resources) {
+    // Skip concepts that are mapped to classes (will be merged)
+    if (conceptToClass.has(uri)) {
+      console.log('Skipping concept node (will be merged):', uri);
+      continue;
+    }
+
     let nodeType = "resource";
     let color = "#64748b"; // default gray
+    let mergedResource = resource;
+    let relatedConcept = null;
 
     if (resource.types.includes(classURI)) {
       nodeType = "class";
       color = "#38bdf8"; // blue
+
+      // Check if there's a concept related to this class
+      for (const [conceptURI, classURI] of conceptToClass) {
+        if (classURI === uri) {
+          relatedConcept = conceptResources.get(conceptURI);
+          // Create merged resource with both class and concept data
+          mergedResource = {
+            ...resource,
+            conceptData: relatedConcept,
+            conceptURI: conceptURI
+          };
+          // Also map concept URI to this class node for getElementById lookups
+          nodeMap.add(conceptURI);
+          break;
+        }
+      }
     } else if (resource.types.includes(objectPropertyURI)) {
       nodeType = "objectProperty";
       color = "#a78bfa"; // purple
@@ -416,10 +479,10 @@ function buildGraph(rdfData) {
     elements.push({
       data: {
         id: uri,
-        label: resource.label || getLocalName(uri),
+        label: mergedResource.label || getLocalName(uri),
         type: nodeType,
         color: color,
-        resource: resource,
+        resource: mergedResource,
       },
     });
     nodeMap.add(uri);
@@ -428,6 +491,12 @@ function buildGraph(rdfData) {
   // Create edges
   for (const triple of rdfData.triples) {
     const { subject, predicate, object, objectType } = triple;
+
+    // Skip skos:related edges between merged concept/class pairs
+    if (predicate === skosRelated && (conceptToClass.has(subject) || conceptToClass.has(object))) {
+      console.log('Skipping skos:related edge between merged concept/class:', subject, '->', object);
+      continue;
+    }
 
     // Only create edges for URI objects that exist as nodes
     if (objectType === "uri" && nodeMap.has(object)) {
@@ -488,7 +557,7 @@ function buildGraph(rdfData) {
     }
   }
 
-  return elements;
+  return { elements, conceptToClass };
 }
 
 // Get layout configuration by name
@@ -694,10 +763,26 @@ function initCytoscape(elements) {
 
 function focusConceptIfNeeded() {
   if (!pendingConceptFocus || !cy) return;
-  const node = cy.getElementById(pendingConceptFocus);
+
+  console.log('Attempting to focus concept:', pendingConceptFocus);
+  let node = cy.getElementById(pendingConceptFocus);
+
+  // If not found directly, check if it's a concept URI mapped to a class
+  if ((!node || node.empty()) && window.conceptToClassMapping) {
+    const mappedClassURI = window.conceptToClassMapping.get(pendingConceptFocus);
+    if (mappedClassURI) {
+      console.log('Concept URI mapped to class URI:', mappedClassURI);
+      node = cy.getElementById(mappedClassURI);
+    }
+  }
+
   if (!node || node.empty()) {
+    console.warn('Concept node not found:', pendingConceptFocus);
+    console.log('Available nodes:', cy.nodes().map(n => n.id()).slice(0, 10));
     return;
   }
+
+  console.log('Found node:', node.id());
   // Center node without excessive zoom - just pan to it
   cy.center(node);
   node.select();
@@ -745,6 +830,51 @@ async function showURIInspector(resource) {
 
   // Properties
   ui.inspectorProperties.innerHTML = "";
+
+  // If this resource has merged concept data, show it first
+  if (resource.conceptData) {
+    const conceptSection = document.createElement("div");
+    conceptSection.style.cssText = "margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;";
+
+    const conceptHeader = document.createElement("strong");
+    conceptHeader.textContent = "Concept Information";
+    conceptHeader.style.cssText = "display: block; margin-bottom: 0.5rem; color: #22d3ee;";
+    conceptSection.appendChild(conceptHeader);
+
+    const conceptURI = document.createElement("div");
+    conceptURI.style.cssText = "font-size: 0.85em; color: #666; margin-bottom: 0.5rem;";
+    conceptURI.textContent = `URI: ${resource.conceptURI}`;
+    conceptSection.appendChild(conceptURI);
+
+    // Add concept properties
+    for (const [predicate, values] of Object.entries(resource.conceptData.properties)) {
+      const predicateLabel = getLocalName(predicate);
+      const dt = document.createElement("dt");
+      dt.textContent = predicateLabel + " (concept)";
+      dt.style.color = "#22d3ee";
+      conceptSection.appendChild(dt);
+
+      for (const val of values) {
+        const dd = document.createElement("dd");
+        dd.textContent = val.type === "uri" ? getLocalName(val.value) : val.value;
+        conceptSection.appendChild(dd);
+      }
+    }
+
+    ui.inspectorProperties.appendChild(conceptSection);
+
+    // Add relationship note
+    const relationNote = document.createElement("div");
+    relationNote.style.cssText = "font-size: 0.85em; color: #666; font-style: italic; margin-bottom: 1rem; padding: 0.5rem; background: #f9fafb; border-radius: 4px;";
+    relationNote.textContent = `This class has an associated SKOS concept (merged view). The concept provides additional semantic metadata via skos:definition and skos:prefLabel.`;
+    ui.inspectorProperties.appendChild(relationNote);
+
+    const classHeader = document.createElement("strong");
+    classHeader.textContent = "Class Information";
+    classHeader.style.cssText = "display: block; margin-bottom: 0.5rem; color: #38bdf8;";
+    ui.inspectorProperties.appendChild(classHeader);
+  }
+
   for (const [predicate, values] of Object.entries(resource.properties)) {
     const predicateLabel = getLocalName(predicate);
     const dt = document.createElement("dt");
@@ -1037,7 +1167,10 @@ async function loadOntology(ontologyKey) {
     const isXml = fileContent.trim().startsWith("<?xml") || fileContent.trim().startsWith("<rdf:RDF");
 
     const rdfData = isXml ? parseOwlXml(fileContent) : parseTurtle(fileContent);
-    const elements = buildGraph(rdfData);
+    const { elements, conceptToClass } = buildGraph(rdfData);
+
+    // Store concept mapping globally for getElementById lookups
+    window.conceptToClassMapping = conceptToClass;
 
     initCytoscape(elements);
     ui.loading.classList.add("hidden");
@@ -1245,5 +1378,9 @@ window.addEventListener('popstate', (event) => {
 });
 
 // Initial load
+// Set selector to match current ontology (from URL or default)
+if (ui.ontologySelector) {
+  ui.ontologySelector.value = currentOntology;
+}
 updateOntologyDescription();
 loadOntology(currentOntology);

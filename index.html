@@ -168,7 +168,39 @@
               <div id="modal-martigli" class="martigli-params"></div>
             </div>
             <section aria-labelledby="martigli-widget-label" class="martigli-widget" data-role="widget">
-              <h5 id="martigli-widget-label">Live Controls</h5>
+              <div class="martigli-live-header">
+                <div class="martigli-live-indicator" id="martigli-live-indicator" aria-hidden="true"></div>
+                <div>
+                  <h5 id="martigli-widget-label">Live Controls</h5>
+                  <p id="martigli-live-summary" class="muted-text small">Awaiting Martigli data.</p>
+                </div>
+              </div>
+              <div class="martigli-telemetry" aria-live="polite">
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Value</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-value">—</p>
+                </div>
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Phase</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-phase">—</p>
+                </div>
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Period</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-period">—</p>
+                </div>
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Breaths / min</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-bpm">—</p>
+                </div>
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Wave</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-waveform">—</p>
+                </div>
+                <div class="martigli-telemetry-card">
+                  <p class="martigli-telemetry-label">Trend</p>
+                  <p class="martigli-telemetry-value" id="martigli-live-trend">—</p>
+                </div>
+              </div>
               <div class="widget-grid">
                 <label>
                   Start period (s)
@@ -179,6 +211,10 @@
                   <input type="range" id="martigli-end" min="8" max="40" step="1" value="20" />
                 </label>
                 <label>
+                  Transition window (s)
+                  <input type="range" id="martigli-transition" min="0" max="600" step="10" value="120" />
+                </label>
+                <label>
                   Waveform
                   <select id="martigli-waveform">
                     <option value="sine">Sine</option>
@@ -186,6 +222,20 @@
                     <option value="square">Square</option>
                     <option value="saw">Sawtooth</option>
                   </select>
+                </label>
+                <label>
+                  Inhale ratio
+                  <div class="range-field">
+                    <input type="range" id="martigli-inhale" min="0.1" max="0.9" step="0.05" value="0.5" />
+                    <span id="martigli-inhale-value" class="range-value">50%</span>
+                  </div>
+                </label>
+                <label>
+                  Amplitude
+                  <div class="range-field">
+                    <input type="range" id="martigli-amplitude" min="0" max="1" step="0.01" value="1" />
+                    <span id="martigli-amplitude-value" class="range-value">1.00×</span>
+                  </div>
                 </label>
               </div>
             </section>
