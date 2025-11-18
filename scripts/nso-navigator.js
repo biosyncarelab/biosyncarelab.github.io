@@ -1023,6 +1023,19 @@ function initCytoscape(elements) {
     }
   });
 
+  // Apply initial pan/zoom from URL if present
+  if (initialPanZoom && initialPanZoom.zoom !== null) {
+    cy.zoom(initialPanZoom.zoom);
+  }
+  if (initialPanZoom && initialPanZoom.pan && initialPanZoom.pan.x !== null && initialPanZoom.pan.y !== null) {
+    cy.pan({ x: initialPanZoom.pan.x, y: initialPanZoom.pan.y });
+  }
+
+  // Keep URL in sync with viewport changes
+  cy.on("viewport", () => {
+    updateURLState(currentURI);
+  });
+
   if (pendingConceptFocus) {
     setTimeout(focusConceptIfNeeded, 300);
   }
@@ -2360,6 +2373,8 @@ const hydrateFiltersFromURL = () => {
   if (requestedFilters.showProperties !== null) {
     showPropertiesAsNodes = requestedFilters.showProperties === "1";
     ui.propertiesToggleText.textContent = showPropertiesAsNodes ? "Hide Properties" : "Show Properties";
+    if (ui.filterObject) ui.filterObject.checked = showPropertiesAsNodes;
+    if (ui.filterData) ui.filterData.checked = showPropertiesAsNodes;
   }
 };
 
@@ -2617,6 +2632,7 @@ ui.layoutSelector.addEventListener("change", (e) => {
   if (cy) {
     const layout = cy.layout(getLayoutConfig(currentLayout));
     layout.run();
+    updateURLState(currentURI);
   }
 });
 
