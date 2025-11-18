@@ -2,15 +2,82 @@
 
 These briefs align with the principles in `README.md`: keep diffs small, define specs first, and coordinate agents before touching code. Measure success primarily by how much simpler, shorter, and flatter the codebase becomes after each contribution.
 
+## 🏗️ **NEW: Refactored Architecture (Nov 2025)**
+
+**IMPORTANT**: The codebase has been refactored into a clean modular architecture. All agents must use these new modules:
+
+### **Core Modules Overview**
+
+**State Management** (`scripts/state/`):
+- `app-state.js` - Centralized state with observer pattern (use for all state operations)
+- `url-state-manager.js` - URL sharing (sessions can be shared via URLs)
+
+**Data Layer** (`scripts/auth/`):
+- `firebase-init.js` - Firebase setup (import from here, not directly)
+- `auth-manager.js` - Authentication operations (signIn, signOut, etc.)
+- `session-manager.js` - Session CRUD (pure data, no UI)
+
+**UI Layer** (`scripts/auth/`):
+- `ui-renderer.js` - Rendering functions (pure, no data fetching)
+- `modal-controller.js` - Modal management
+
+**Configuration**:
+- `scripts/constants.js` - All magic values (use these constants)
+- `firestore.rules` - Secure database rules (users can only access own data)
+
+**Integration Example**:
+- `scripts/auth/integration-example.js` - Complete working example of how modules work together
+
+### **Architecture Principles**
+
+1. **Separation of Concerns**:
+   - Data layer: Fetch/save data, return results (no UI code)
+   - UI layer: Render UI from data (no data fetching)
+   - State layer: Central state, notify subscribers (no UI or data code)
+   - Coordination: Wire everything together
+
+2. **Observer Pattern for Reactive UI**:
+   ```javascript
+   import { appState } from './scripts/state/app-state.js';
+
+   // Subscribe to state changes → UI auto-updates
+   appState.subscribe((state) => {
+     renderUI(state); // Called automatically when state changes
+   });
+
+   // Update state → subscribers notified automatically
+   appState.setSessions(sessions);
+   ```
+
+3. **Always Use Modules**:
+   - ❌ Don't: Direct Firebase imports, global state, mixed concerns
+   - ✅ Do: Import from firebase-init.js, use app-state.js, separate data/UI/state
+
+4. **URL State Sharing**:
+   - All sessions can be shared via URLs
+   - State automatically serializes to URL parameters
+   - Use `createShareableURL(appState)` to generate shareable links
+
+### **📖 Detailed Architecture & Migration Guide**
+
+**→ SEE [POD-ARCHITECTURE-GUIDE.md](./POD-ARCHITECTURE-GUIDE.md) for complete instructions:**
+- Core neurosensory concepts (Martigli waves, sensory tracks, RDF integration)
+- Pod-specific module usage and examples
+- Week-by-week migration workflow (Option B: Full Integration)
+- Success criteria and testing requirements
+
 ## Shared Guardrails
-- Always validate that new work preserves existing functionality; rerun relevant checks after each change.
-- Prefer Make targets for essential workflows (`make firebase-login`, `make seed-local`, `make deploy-firestore-rules`, `make test`, etc.) so commands stay reproducible across agents.
-- The dashboard now exposes a direct "Open NSO Navigator" link; use it when coordinating ontology tasks so users can reach `nso-navigator.html` from the main UI.
-- Prefer simplifying or deleting code over adding complexity; document why additions are unavoidable.
-- Track line counts and file additions in every PR; if the diff grows, explain the payback plan (e.g., forthcoming deletions, consolidation).
-- Keep specs (`docs/Features.md`, clarifications log) in sync with implementation decisions.
-- Record assumptions; if anything is unclear, append to the clarifications list before coding.
-- Respect clarified priorities: 1) Firebase persistence, 2) BSCLab UI tied to Firebase, 3) migrate biosyncare algorithms with simplification.
+- **NEW**: All new features must use the refactored modules (see architecture above)
+- **NEW**: Update state via `app-state.js`, never directly modify global variables
+- **NEW**: Use constants from `scripts/constants.js` for magic numbers and strings
+- Always validate that new work preserves existing functionality; rerun relevant checks after each change
+- Prefer Make targets for essential workflows (`make firebase-login`, `make seed-local`, `make deploy-firestore-rules`, `make test`, etc.) so commands stay reproducible across agents
+- The dashboard now exposes a direct "Open NSO Navigator" link; use it when coordinating ontology tasks so users can reach `nso-navigator.html` from the main UI
+- Prefer simplifying or deleting code over adding complexity; document why additions are unavoidable
+- Track line counts and file additions in every PR; if the diff grows, explain the payback plan (e.g., forthcoming deletions, consolidation)
+- Keep specs (`docs/Features.md`, clarifications log) in sync with implementation decisions
+- Record assumptions; if anything is unclear, append to the clarifications list before coding
+- Respect clarified priorities: 1) Firebase persistence, 2) BSCLab UI tied to Firebase, 3) migrate biosyncare algorithms with simplification, 4) RDF semantic integration is central
 
 ## Current Focus Pods (Nov 2025)
 
