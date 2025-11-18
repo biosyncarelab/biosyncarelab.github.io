@@ -112,6 +112,22 @@ const urlParams =
   typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
 const requestedConcept = urlParams.get("concept");
 const requestedOntology = urlParams.get("ontology");
+const requestedLayout = urlParams.get("layout");
+const requestedFilters = {
+  evidence: urlParams.get("ev"),
+  safetySerious: urlParams.get("safeSerious"),
+  safetySafeOnly: urlParams.get("safeOnly"),
+  modalities: urlParams.get("mod"),
+  outcomes: urlParams.get("out"),
+  meta: urlParams.get("meta"),
+  edges: urlParams.get("edges"),
+  showProperties: urlParams.get("props"),
+};
+const requestedView = {
+  zoom: urlParams.get("zoom"),
+  panX: urlParams.get("panx"),
+  panY: urlParams.get("pany"),
+};
 
 // State
 let currentUser = null;
@@ -119,10 +135,17 @@ let currentURI = null;
 let cy = null;
 let currentOntology =
   requestedOntology && ontologyFiles[requestedOntology] ? requestedOntology : "bsc-outcomes";
-let currentLayout = "cose";
+let currentLayout = requestedLayout || "cose";
 // Default to CognitiveOutcome if no concept requested
 let pendingConceptFocus = requestedConcept || "https://biosyncarelab.github.io/ont#CognitiveOutcome";
 let showPropertiesAsNodes = true;
+let initialPanZoom = {
+  zoom: requestedView.zoom ? parseFloat(requestedView.zoom) : null,
+  pan: {
+    x: requestedView.panX ? parseFloat(requestedView.panX) : null,
+    y: requestedView.panY ? parseFloat(requestedView.panY) : null,
+  }
+};
 
 // UI Elements
 const ui = {
@@ -148,6 +171,8 @@ const ui = {
   filterObject: document.getElementById("filter-object"),
   filterData: document.getElementById("filter-data"),
   filterSkos: document.getElementById("filter-skos"),
+  selectAllFilters: document.getElementById("select-all-filters"),
+  invertFilters: document.getElementById("invert-filters"),
   evidenceLevelSlider: document.getElementById("evidence-level-slider"),
   evidenceLevelValue: document.getElementById("evidence-level-value"),
   filterSeriousWarnings: document.getElementById("filter-serious-warnings"),
@@ -175,6 +200,12 @@ const ui = {
 
 if (ui.ontologySelector) {
   ui.ontologySelector.value = currentOntology;
+}
+
+// Hydrate filters/layout from URL
+hydrateFiltersFromURL();
+if (ui.layoutSelector && currentLayout) {
+  ui.layoutSelector.value = currentLayout;
 }
 
 // Auth state listener
@@ -1049,8 +1080,56 @@ function updateURLState(conceptURI = null) {
     params.set('concept', conceptURI);
   }
 
+  // Layout
+  if (currentLayout) {
+    params.set('layout', currentLayout);
+  }
+
+  // Filters
+  const setListParam = (key, values) => {
+    if (values && values.length) {
+      params.set(key, values.join(','));
+    }
+  };
+
+  if (ui.evidenceLevelSlider) {
+    params.set('ev', ui.evidenceLevelSlider.value || "0");
+  }
+  if (ui.filterSeriousWarnings) params.set('safeSerious', ui.filterSeriousWarnings.checked ? "1" : "0");
+  if (ui.filterSafeOnly) params.set('safeOnly', ui.filterSafeOnly.checked ? "1" : "0");
+
+  setListParam('mod', ["audio","visual","mixed"].filter((m) => ui[`filter${m[0].toUpperCase()+m.slice(1)}`]?.checked));
+  setListParam('out', ["cognitive","emotional","physiological","behavioral"].filter((o) => ui[`filter${o[0].toUpperCase()+o.slice(1)}`]?.checked));
+  setListParam('meta', ["protocol","group","other"].filter((m) => {
+    if (m === "protocol") return ui.filterProtocol?.checked;
+    if (m === "group") return ui.filterGroup?.checked;
+    if (m === "other") return ui.filterOtherMeta?.checked;
+    return false;
+  }));
+  setListParam('edges', ["subclass","object","data","skos"].filter((e) => {
+    if (e === "subclass") return ui.filterSubclass?.checked;
+    if (e === "object") return ui.filterObject?.checked;
+    if (e === "data") return ui.filterData?.checked;
+    if (e === "skos") return ui.filterSkos?.checked;
+    return false;
+  }));
+
+  params.set('props', showPropertiesAsNodes ? "1" : "0");
+
+  // Viewport
+  if (cy) {
+    params.set('zoom', cy.zoom().toFixed(3));
+    const pan = cy.pan();
+    params.set('panx', pan.x.toFixed(2));
+    params.set('pany', pan.y.toFixed(2));
+  } else {
+    if (initialPanZoom.zoom !== null) params.set('zoom', initialPanZoom.zoom);
+    if (initialPanZoom.pan.x !== null) params.set('panx', initialPanZoom.pan.x);
+    if (initialPanZoom.pan.y !== null) params.set('pany', initialPanZoom.pan.y);
+  }
+
   const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ ontology: currentOntology, concept: conceptURI }, '', newURL);
+  window.history.replaceState({ ontology: currentOntology, concept: conceptURI }, '', newURL);
 }
 
 // Show URI inspector sidebar
@@ -2179,6 +2258,111 @@ const updateEvidenceSliderLabel = () => {
   ui.evidenceLevelValue.textContent = `${value.toFixed(1)}+`;
 };
 
+const filterCheckboxKeys = [
+  "filterSeriousWarnings",
+  "filterSafeOnly",
+  "filterAudio",
+  "filterVisual",
+  "filterMixed",
+  "filterCognitive",
+  "filterEmotional",
+  "filterPhysiological",
+  "filterBehavioral",
+  "filterProtocol",
+  "filterGroup",
+  "filterOtherMeta",
+  "filterSubclass",
+  "filterObject",
+  "filterData",
+  "filterSkos",
+];
+
+const setAllFiltersChecked = (checked) => {
+  filterCheckboxKeys.forEach((key) => {
+    if (ui[key]) {
+      ui[key].checked = checked;
+    }
+  });
+  if (ui.evidenceLevelSlider) {
+    ui.evidenceLevelSlider.value = 0;
+    updateEvidenceSliderLabel();
+  }
+  showPropertiesAsNodes = true;
+  if (ui.propertiesToggleText) ui.propertiesToggleText.textContent = "Hide Properties";
+  applySemanticFilters();
+  updateEdgeVisibility();
+  updateURLState(currentURI);
+};
+
+const invertFilters = () => {
+  filterCheckboxKeys.forEach((key) => {
+    if (ui[key]) {
+      ui[key].checked = !ui[key].checked;
+    }
+  });
+  applySemanticFilters();
+  updateEdgeVisibility();
+  updateURLState(currentURI);
+};
+
+const hydrateFiltersFromURL = () => {
+  // Evidence
+  if (ui.evidenceLevelSlider && requestedFilters.evidence !== null) {
+    ui.evidenceLevelSlider.value = requestedFilters.evidence;
+    updateEvidenceSliderLabel();
+  }
+
+  // Safety
+  if (ui.filterSeriousWarnings && requestedFilters.safetySerious !== null) {
+    ui.filterSeriousWarnings.checked = requestedFilters.safetySerious === "1";
+  }
+  if (ui.filterSafeOnly && requestedFilters.safetySafeOnly !== null) {
+    ui.filterSafeOnly.checked = requestedFilters.safetySafeOnly === "1";
+  }
+
+  const parseList = (val) => new Set((val || "").split(",").filter(Boolean));
+
+  // Modality
+  const modSet = parseList(requestedFilters.modalities);
+  ["Audio","Visual","Mixed"].forEach((m) => {
+    if (ui[`filter${m}`] && modSet.size) {
+      ui[`filter${m}`].checked = modSet.has(m.toLowerCase());
+    }
+  });
+
+  // Outcomes
+  const outSet = parseList(requestedFilters.outcomes);
+  const outKeys = ["Cognitive","Emotional","Physiological","Behavioral"];
+  outKeys.forEach((o) => {
+    if (ui[`filter${o}`] && outSet.size) {
+      ui[`filter${o}`].checked = outSet.has(o.toLowerCase());
+    }
+  });
+
+  // Meta entities
+  const metaSet = parseList(requestedFilters.meta);
+  if (metaSet.size) {
+    if (ui.filterProtocol) ui.filterProtocol.checked = metaSet.has("protocol");
+    if (ui.filterGroup) ui.filterGroup.checked = metaSet.has("group");
+    if (ui.filterOtherMeta) ui.filterOtherMeta.checked = metaSet.has("other");
+  }
+
+  // Edges
+  const edgeSet = parseList(requestedFilters.edges);
+  if (edgeSet.size) {
+    if (ui.filterSubclass) ui.filterSubclass.checked = edgeSet.has("subclass");
+    if (ui.filterObject) ui.filterObject.checked = edgeSet.has("object");
+    if (ui.filterData) ui.filterData.checked = edgeSet.has("data");
+    if (ui.filterSkos) ui.filterSkos.checked = edgeSet.has("skos");
+  }
+
+  // Properties toggle
+  if (requestedFilters.showProperties !== null) {
+    showPropertiesAsNodes = requestedFilters.showProperties === "1";
+    ui.propertiesToggleText.textContent = showPropertiesAsNodes ? "Hide Properties" : "Show Properties";
+  }
+};
+
 const getMetaCategoryFromResource = (resource, nodeId = "") => {
   const label = (resource.label || getLocalName(nodeId) || "").toLowerCase();
   const subclasses = getPropertyValues(resource, rdfsSubclass).map((s) => s.toLowerCase());
@@ -2342,6 +2526,7 @@ function applySemanticFilters() {
   }
 
   updateFilterSummary();
+  updateURLState(currentURI);
 }
 
 function resetSemanticFilters() {
@@ -2358,6 +2543,12 @@ function resetSemanticFilters() {
   ["filterAudio", "filterVisual", "filterMixed", "filterCognitive", "filterEmotional", "filterPhysiological", "filterBehavioral"].forEach((key) => {
     if (ui[key]) ui[key].checked = true;
   });
+  ["filterProtocol","filterGroup","filterOtherMeta","filterSubclass","filterObject","filterData","filterSkos"].forEach((key) => {
+    if (ui[key]) ui[key].checked = true;
+  });
+
+  showPropertiesAsNodes = true;
+  if (ui.propertiesToggleText) ui.propertiesToggleText.textContent = "Hide Properties";
 
   cy.nodes().forEach((node) => node.style("display", "element"));
   updateEdgeVisibility();
@@ -2368,6 +2559,7 @@ function resetSemanticFilters() {
 
   applySemanticFilters();
   updateFilterSummary();
+  updateURLState(currentURI);
 }
 
 // Event listeners
@@ -2467,6 +2659,14 @@ if (ui.resetFilters) {
   ui.resetFilters.addEventListener("click", resetSemanticFilters);
 }
 
+if (ui.selectAllFilters) {
+  ui.selectAllFilters.addEventListener("click", () => setAllFiltersChecked(true));
+}
+
+if (ui.invertFilters) {
+  ui.invertFilters.addEventListener("click", invertFilters);
+}
+
 updateFilterSummary();
 
 // Toggle property nodes visibility
@@ -2476,7 +2676,12 @@ ui.toggleProperties.addEventListener("click", () => {
   // Update button text
   ui.propertiesToggleText.textContent = showPropertiesAsNodes ? "Hide Properties" : "Show Properties";
 
+  // Tie property visibility to object/data edges for user clarity
+  if (ui.filterObject) ui.filterObject.checked = showPropertiesAsNodes;
+  if (ui.filterData) ui.filterData.checked = showPropertiesAsNodes;
+
   updatePropertyVisualization();
+  updateURLState(currentURI);
 });
 
 // Update property visualization

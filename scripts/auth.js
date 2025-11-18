@@ -1764,23 +1764,8 @@ const MARTIGLI_TELEMETRY_FIELDS = [
   },
   {
     key: "period",
-    label: "Period",
+    label: "Current Period",
     format: (metrics) => (Number.isFinite(metrics.period) ? `${metrics.period.toFixed(1)}s` : "—"),
-  },
-  {
-    key: "startPeriodSec",
-    label: "Initial",
-    format: (metrics) => (Number.isFinite(metrics.startPeriodSec) ? `${metrics.startPeriodSec.toFixed(1)}s` : "—"),
-  },
-  {
-    key: "endPeriodSec",
-    label: "Final",
-    format: (metrics) => (Number.isFinite(metrics.endPeriodSec) ? `${metrics.endPeriodSec.toFixed(1)}s` : "—"),
-  },
-  {
-    key: "waveform",
-    label: "Wave",
-    format: (metrics) => (metrics.waveform ?? "—").toString().substring(0, 4).toUpperCase(),
   },
 ];
 
@@ -1792,7 +1777,7 @@ const recordMartigliInteraction = (eventName, payload = {}) => {
 
 const createTelemetrySection = () => {
   const container = document.createElement("div");
-  container.className = "martigli-telemetry";
+  container.className = "martigli-telemetry martigli-telemetry--compact";
   const refs = {};
   MARTIGLI_TELEMETRY_FIELDS.forEach(({ key, label }) => {
     const card = document.createElement("div");
@@ -2321,6 +2306,44 @@ const createMartigliTimelineChart = () => {
   return state;
 };
 
+const describeElapsedLabel = (seconds) => {
+  const label = formatSeconds(seconds);
+  return label === "0s" ? "not started" : label;
+};
+
+const updateMartigliStatusChips = (widget, osc = {}, metrics = null) => {
+  if (!widget?.statusChips) return;
+  const chips = widget.statusChips;
+  const elapsedSeconds = computeElapsedSeconds(osc);
+  const startPeriod = Number.isFinite(osc.startPeriodSec)
+    ? osc.startPeriodSec
+    : Number.isFinite(osc.startPeriod)
+      ? osc.startPeriod
+      : 10;
+  const endPeriod = Number.isFinite(osc.endPeriodSec)
+    ? osc.endPeriodSec
+    : Number.isFinite(osc.endPeriod)
+      ? osc.endPeriod
+      : 20;
+  const transitionSec = Number.isFinite(osc.transitionSec) ? osc.transitionSec : 0;
+  const currentPeriod = Number.isFinite(metrics?.period) ? metrics.period : startPeriod;
+  const progressPct = transitionSec > 0 ? Math.round(clampNumber((elapsedSeconds / transitionSec) * 100, 0, 100)) : null;
+
+  if (chips.elapsed) {
+    chips.elapsed.textContent = `Elapsed ${describeElapsedLabel(elapsedSeconds)}`;
+    chips.elapsed.dataset.state = widget.isRunning ? "running" : "idle";
+  }
+  if (chips.current) {
+    const progressText = progressPct !== null ? ` • ${progressPct}% transition` : "";
+    chips.current.textContent = `Current ${formatMartigliDecimal(currentPeriod, 1)}s${progressText}`;
+    chips.current.dataset.state = widget.isRunning ? "running" : osc.sessionPaused ? "paused" : "idle";
+  }
+  if (chips.plan) {
+    const transitionLabel = transitionSec > 0 ? formatSeconds(transitionSec) : "instant";
+    chips.plan.textContent = `${formatMartigliDecimal(startPeriod, 1)}s → ${formatMartigliDecimal(endPeriod, 1)}s • ${transitionLabel}`;
+  }
+};
+
 const createMartigliDashboardWidget = (osc) => {
   const widget = {
     oscillationId: osc.id,
@@ -2400,6 +2423,22 @@ const createMartigliDashboardWidget = (osc) => {
   visualizer.appendChild(visualizerLabel);
   visualizer.appendChild(visualSurface);
   visualColumn.appendChild(visualizer);
+
+  const statusBar = document.createElement("div");
+  statusBar.className = "martigli-status-bar";
+  const elapsedChip = document.createElement("span");
+  elapsedChip.className = "martigli-status-chip";
+  elapsedChip.textContent = "Elapsed —";
+  const currentChip = document.createElement("span");
+  currentChip.className = "martigli-status-chip martigli-status-chip--accent";
+  currentChip.textContent = "Current period —";
+  const planChip = document.createElement("span");
+  planChip.className = "martigli-status-chip";
+  planChip.textContent = "Plan —";
+  statusBar.appendChild(elapsedChip);
+  statusBar.appendChild(currentChip);
+  statusBar.appendChild(planChip);
+  visualColumn.appendChild(statusBar);
 
   const telemetry = createTelemetrySection();
   const telemetryShell = document.createElement("div");
@@ -2540,6 +2579,11 @@ const createMartigliDashboardWidget = (osc) => {
   widget.charts = {
     waveform: waveformChart,
     timeline: timelineChart,
+  };
+  widget.statusChips = {
+    elapsed: elapsedChip,
+    current: currentChip,
+    plan: planChip,
   };
   widget.trajectory = {
     list: trajectoryList,
@@ -2810,6 +2854,7 @@ const updateMartigliWidget = (widget, osc, isReference = false) => {
     const status = stateInfo?.label ?? "Idle";
     widget.summary.textContent = `${describeMartigliLiveSummary(osc)} • ${status}`;
   }
+  updateMartigliStatusChips(widget, osc, widget.metrics ?? null);
   syncMartigliWidgetControls(widget, osc);
   renderMartigliTrajectoryList(widget, osc);
   if (widget.charts?.waveform?.render) {
@@ -2837,6 +2882,7 @@ const updateMartigliWidgetTelemetry = (widget) => {
     if (widget.charts?.timeline?.render) {
       widget.charts.timeline.render(widget.snapshot ?? {}, null);
     }
+    updateMartigliStatusChips(widget, widget.snapshot ?? {}, null);
     return;
   }
   widget.metrics = metrics;
@@ -2855,6 +2901,7 @@ const updateMartigliWidgetTelemetry = (widget) => {
   if (widget.charts?.timeline?.render) {
     widget.charts.timeline.render(widget.snapshot ?? {}, metrics);
   }
+  updateMartigliStatusChips(widget, widget.snapshot ?? {}, metrics);
 };
 
 const updateMartigliTelemetryForAll = () => {
