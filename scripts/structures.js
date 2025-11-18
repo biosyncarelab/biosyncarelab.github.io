@@ -686,6 +686,52 @@ export class MartigliState {
     this._emit();
   }
 
+  setSessionWindow(windowConfig = {}, id = this.referenceId) {
+    if (!windowConfig || typeof windowConfig !== "object") return;
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.bindSessionWindow(windowConfig);
+    this._emit();
+  }
+
+  startOscillation(id = this.referenceId) {
+    const timestamp = nowSeconds();
+    this.setSessionWindow({ startTime: timestamp, endTime: null }, id);
+  }
+
+  stopOscillation(id = this.referenceId) {
+    const timestamp = nowSeconds();
+    this.setSessionWindow({ endTime: timestamp }, id);
+  }
+
+  setTrajectory(points = [], id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.setTrajectory(points);
+    this._emit();
+  }
+
+  addTrajectoryPoint(point = {}, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.addTrajectoryPoint(point);
+    this._emit();
+  }
+
+  updateTrajectoryPoint(index, updates = {}, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.updateTrajectoryPoint(index, updates);
+    this._emit();
+  }
+
+  removeTrajectoryPoint(index, id = this.referenceId) {
+    const osc = id ? this._oscillations.get(id) : null;
+    if (!osc) return;
+    osc.removeTrajectoryPoint(index);
+    this._emit();
+  }
+
   renameOscillation(label, id = this.referenceId) {
     const trimmed = typeof label === "string" ? label.trim() : "";
     if (!trimmed) return;

@@ -90,6 +90,7 @@
               <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add Oscillation</button>
             </div>
             <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
+            <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
           </article>
 
           <article class="neuro-card" id="dashboard-sensory-card">
@@ -167,98 +168,15 @@
               <h5>Stored Parameters</h5>
               <div id="modal-martigli" class="martigli-params"></div>
             </div>
-            <section aria-labelledby="martigli-widget-label" class="martigli-widget" data-role="widget">
-              <div class="martigli-live-header">
-                <div class="martigli-live-indicator" id="martigli-live-indicator" aria-hidden="true"></div>
-                <div>
-                  <h5 id="martigli-widget-label">Live Controls</h5>
-                  <p id="martigli-live-summary" class="muted-text small">Awaiting Martigli data.</p>
-                </div>
-                <div class="martigli-live-buttons">
-                  <button type="button" id="martigli-live-start" class="ghost tiny">Start</button>
-                  <button type="button" id="martigli-live-stop" class="ghost tiny" disabled>Stop</button>
-                </div>
-              </div>
-              <div class="martigli-telemetry" aria-live="polite">
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Value</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-value">—</p>
-                </div>
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Phase</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-phase">—</p>
-                </div>
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Period</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-period">—</p>
-                </div>
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Breaths / min</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-bpm">—</p>
-                </div>
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Wave</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-waveform">—</p>
-                </div>
-                <div class="martigli-telemetry-card">
-                  <p class="martigli-telemetry-label">Trend</p>
-                  <p class="martigli-telemetry-value" id="martigli-live-trend">—</p>
-                </div>
-              </div>
-              <div class="widget-grid">
-                <label>
-                  Start period (s)
-                  <input type="range" id="martigli-start" min="4" max="20" step="1" value="10" />
-                </label>
-                <label>
-                  End period (s)
-                  <input type="range" id="martigli-end" min="8" max="40" step="1" value="20" />
-                </label>
-                <label>
-                  Transition window (s)
-                  <input type="range" id="martigli-transition" min="0" max="600" step="10" value="120" />
-                </label>
-                <label>
-                  Waveform
-                  <select id="martigli-waveform">
-                    <option value="sine">Sine</option>
-                    <option value="triangle">Triangle</option>
-                    <option value="square">Square</option>
-                    <option value="saw">Sawtooth</option>
-                  </select>
-                </label>
-                <label>
-                  Inhale ratio
-                  <div class="range-field">
-                    <input type="range" id="martigli-inhale" min="0.1" max="0.9" step="0.05" value="0.5" />
-                    <span id="martigli-inhale-value" class="range-value">50%</span>
-                  </div>
-                </label>
-                <label>
-                  Amplitude
-                  <div class="range-field">
-                    <input type="range" id="martigli-amplitude" min="0" max="1" step="0.01" value="1" />
-                    <span id="martigli-amplitude-value" class="range-value">1.00×</span>
-                  </div>
-                </label>
-              </div>
-              <div class="martigli-trajectory">
-                <div class="martigli-trajectory-head">
-                  <div>
-                    <h6>Breathing Trajectory</h6>
-                    <p class="muted-text small">Stack period + duration targets to mirror biosyncare control.</p>
-                  </div>
-                  <button type="button" id="martigli-trajectory-add" class="ghost tiny">+ Add point</button>
-                </div>
-                <div id="martigli-trajectory-list" class="martigli-trajectory-list" aria-live="polite"></div>
-              </div>
-            </section>
             <div class="martigli-visual">
               <h5>Visual Preview</h5>
               <canvas id="martigli-canvas" width="360" height="160" aria-label="Martigli waveform preview"></canvas>
               <p class="muted-text">Canvas pulses with the current Martigli snapshot; video engines will hook here.</p>
             </div>
           </div>
+          <p class="muted-text small">
+            Live Martigli controls are available directly on the Martigli / Breathing Oscillations dashboard card.
+          </p>
         </section>
 
         <section class="modal-card" id="audio-card" aria-labelledby="audio-card-label">

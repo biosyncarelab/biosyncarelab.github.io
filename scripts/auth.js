@@ -130,26 +130,11 @@ const ui = {
   sessionHint: document.getElementById("session-card-hint"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
   martigliDashboardSummary: document.getElementById("martigli-dashboard-summary"),
+  martigliDashboardList: document.getElementById("martigli-dashboard-list"),
   modalMartigli: document.getElementById("modal-martigli"),
   modalClose: document.getElementById("modal-close"),
-  martigliStart: document.getElementById("martigli-start"),
-  martigliEnd: document.getElementById("martigli-end"),
-  martigliWaveform: document.getElementById("martigli-waveform"),
-  martigliTransition: document.getElementById("martigli-transition"),
-  martigliInhale: document.getElementById("martigli-inhale"),
-  martigliInhaleValue: document.getElementById("martigli-inhale-value"),
-  martigliAmplitude: document.getElementById("martigli-amplitude"),
-  martigliAmplitudeValue: document.getElementById("martigli-amplitude-value"),
   martigliPreview: document.getElementById("martigli-preview"),
   martigliCanvas: document.getElementById("martigli-canvas"),
-  martigliLiveSummary: document.getElementById("martigli-live-summary"),
-  martigliLiveIndicator: document.getElementById("martigli-live-indicator"),
-  martigliLiveValue: document.getElementById("martigli-live-value"),
-  martigliLivePhase: document.getElementById("martigli-live-phase"),
-  martigliLivePeriod: document.getElementById("martigli-live-period"),
-  martigliLiveBpm: document.getElementById("martigli-live-bpm"),
-  martigliLiveWaveform: document.getElementById("martigli-live-waveform"),
-  martigliLiveTrend: document.getElementById("martigli-live-trend"),
   martigliOscillationSelect: document.getElementById("martigli-oscillation-select"),
   martigliAdd: document.getElementById("martigli-add"),
   martigliRename: document.getElementById("martigli-rename"),
@@ -180,6 +165,12 @@ const defaultDashboardCopy = {
   visualSensoryStatus: ui.visualSensoryStatus?.textContent ?? "",
   hapticSensoryStatus: ui.hapticSensoryStatus?.textContent ?? "",
   martigliOscillationStatus: ui.martigliOscillationStatus?.textContent ?? "",
+};
+
+const martigliDashboard = {
+  list: ui.martigliDashboardList,
+  widgets: new Map(),
+  emptyNotice: null,
 };
 
 const sensoryPanels = {
@@ -258,14 +249,6 @@ const videoCanvasController =
     ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
     : null;
 
-const MARTIGLI_TELEMETRY_FIELDS = [
-  "martigliLiveValue",
-  "martigliLivePhase",
-  "martigliLivePeriod",
-  "martigliLiveBpm",
-  "martigliLiveWaveform",
-  "martigliLiveTrend",
-];
 const MARTIGLI_TELEMETRY_INTERVAL_MS = 140;
 let martigliTelemetryFrame = null;
 let martigliTelemetryLastTick = 0;
@@ -1006,8 +989,8 @@ const describeMartigliLiveSummary = (reference) => {
   if (!reference) {
     return "Awaiting Martigli data.";
   }
-  const config = reference.config ?? {};
-  const label = reference.label ?? "Active oscillation";
+  const config = reference.config ?? reference ?? {};
+  const label = reference.label ?? config.label ?? "Active oscillation";
   const transition = Number(config.transitionSec ?? 0);
   const transitionText = transition > 0 ? `${Math.round(transition)}s window` : "Instant window";
   const inhaleRatio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
@@ -1023,43 +1006,509 @@ const formatMartigliTrendText = (trend) => {
   return "Steady";
 };
 
-const setMartigliTelemetryPlaceholders = () => {
-  MARTIGLI_TELEMETRY_FIELDS.forEach((field) => {
-    if (ui[field]) {
-      ui[field].textContent = "—";
-    }
+const formatMartigliDecimal = (value, digits = 2) =>
+  Number.isFinite(value) ? value.toFixed(digits) : "—";
+
+const MARTIGLI_TELEMETRY_FIELDS = [
+  { key: "value", label: "Value", format: (metrics) => formatMartigliDecimal(metrics.value, 2) },
+  {
+    key: "phase",
+    label: "Phase",
+    format: (metrics) => (Number.isFinite(metrics.phase) ? `${Math.round(metrics.phase * 100)}%` : "—"),
+  },
+  {
+    key: "period",
+    label: "Period",
+    format: (metrics) => (Number.isFinite(metrics.period) ? `${metrics.period.toFixed(1)}s` : "—"),
+  },
+  {
+    key: "bpm",
+    label: "Breaths / min",
+    format: (metrics) => formatMartigliDecimal(metrics.breathsPerMinute, 1),
+  },
+  {
+    key: "waveform",
+    label: "Wave",
+    format: (metrics) => (metrics.waveform ?? "—").toString().substring(0, 4).toUpperCase(),
+  },
+  { key: "trend", label: "Trend", format: (metrics) => formatMartigliTrendText(metrics.trend) },
+];
+
+const MARTIGLI_TRAJECTORY_LIMIT = 16;
+
+const recordMartigliInteraction = (eventName, payload = {}) => {
+  kernel.recordInteraction(eventName, payload);
+};
+
+const createTelemetrySection = () => {
+  const container = document.createElement("div");
+  container.className = "martigli-telemetry";
+  const refs = {};
+  MARTIGLI_TELEMETRY_FIELDS.forEach(({ key, label }) => {
+    const card = document.createElement("div");
+    card.className = "martigli-telemetry-card";
+    const heading = document.createElement("p");
+    heading.className = "martigli-telemetry-label";
+    heading.textContent = label;
+    const value = document.createElement("p");
+    value.className = "martigli-telemetry-value";
+    value.textContent = "—";
+    card.appendChild(heading);
+    card.appendChild(value);
+    container.appendChild(card);
+    refs[key] = value;
   });
-  if (ui.martigliLiveIndicator) {
-    ui.martigliLiveIndicator.classList.remove("active");
+  return { container, refs };
+};
+
+const createRangeLabel = (text) => {
+  const label = document.createElement("label");
+  const title = document.createElement("span");
+  title.textContent = text;
+  label.appendChild(title);
+  return label;
+};
+
+const createMartigliDashboardWidget = (osc) => {
+  const widget = {
+    oscillationId: osc.id,
+  };
+  const root = document.createElement("section");
+  root.className = "martigli-widget";
+  root.dataset.oscillationId = osc.id ?? "";
+
+  const header = document.createElement("div");
+  header.className = "martigli-live-header";
+  const indicator = document.createElement("div");
+  indicator.className = "martigli-live-indicator";
+  indicator.setAttribute("aria-hidden", "true");
+  const headerText = document.createElement("div");
+  const title = document.createElement("h5");
+  title.textContent = osc.label ?? "Martigli Oscillation";
+  const summary = document.createElement("p");
+  summary.className = "muted-text small";
+  summary.textContent = describeMartigliLiveSummary(osc);
+  headerText.appendChild(title);
+  headerText.appendChild(summary);
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "martigli-live-buttons";
+  const startButton = document.createElement("button");
+  startButton.type = "button";
+  startButton.className = "ghost tiny";
+  startButton.textContent = "Start";
+  const stopButton = document.createElement("button");
+  stopButton.type = "button";
+  stopButton.className = "ghost tiny";
+  stopButton.textContent = "Stop";
+  stopButton.disabled = true;
+  buttonGroup.appendChild(startButton);
+  buttonGroup.appendChild(stopButton);
+  header.appendChild(indicator);
+  header.appendChild(headerText);
+  header.appendChild(buttonGroup);
+  root.appendChild(header);
+
+  const telemetry = createTelemetrySection();
+  root.appendChild(telemetry.container);
+
+  const controlGrid = document.createElement("div");
+  controlGrid.className = "widget-grid";
+
+  const startInput = document.createElement("input");
+  startInput.type = "range";
+  startInput.min = "4";
+  startInput.max = "20";
+  startInput.step = "1";
+  const startLabel = createRangeLabel("Start period (s)");
+  startLabel.appendChild(startInput);
+
+  const endInput = document.createElement("input");
+  endInput.type = "range";
+  endInput.min = "8";
+  endInput.max = "40";
+  endInput.step = "1";
+  const endLabel = createRangeLabel("End period (s)");
+  endLabel.appendChild(endInput);
+
+  const transitionInput = document.createElement("input");
+  transitionInput.type = "range";
+  transitionInput.min = "0";
+  transitionInput.max = "600";
+  transitionInput.step = "10";
+  const transitionLabel = createRangeLabel("Transition window (s)");
+  transitionLabel.appendChild(transitionInput);
+
+  const waveformSelect = document.createElement("select");
+  [
+    ["sine", "Sine"],
+    ["triangle", "Triangle"],
+    ["square", "Square"],
+    ["saw", "Sawtooth"],
+    ["breath", "Breath"],
+  ].forEach(([value, text]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = text;
+    waveformSelect.appendChild(option);
+  });
+  const waveformLabel = createRangeLabel("Waveform");
+  waveformLabel.appendChild(waveformSelect);
+
+  const inhaleLabel = createRangeLabel("Inhale ratio");
+  const inhaleField = document.createElement("div");
+  inhaleField.className = "range-field";
+  const inhaleInput = document.createElement("input");
+  inhaleInput.type = "range";
+  inhaleInput.min = "0.1";
+  inhaleInput.max = "0.9";
+  inhaleInput.step = "0.05";
+  const inhaleValue = document.createElement("span");
+  inhaleValue.className = "range-value";
+  inhaleValue.textContent = "50%";
+  inhaleField.appendChild(inhaleInput);
+  inhaleField.appendChild(inhaleValue);
+  inhaleLabel.appendChild(inhaleField);
+
+  const amplitudeLabel = createRangeLabel("Amplitude");
+  const amplitudeField = document.createElement("div");
+  amplitudeField.className = "range-field";
+  const amplitudeInput = document.createElement("input");
+  amplitudeInput.type = "range";
+  amplitudeInput.min = "0";
+  amplitudeInput.max = "1.5";
+  amplitudeInput.step = "0.01";
+  const amplitudeValue = document.createElement("span");
+  amplitudeValue.className = "range-value";
+  amplitudeValue.textContent = "1.00×";
+  amplitudeField.appendChild(amplitudeInput);
+  amplitudeField.appendChild(amplitudeValue);
+  amplitudeLabel.appendChild(amplitudeField);
+
+  controlGrid.appendChild(startLabel);
+  controlGrid.appendChild(endLabel);
+  controlGrid.appendChild(transitionLabel);
+  controlGrid.appendChild(waveformLabel);
+  controlGrid.appendChild(inhaleLabel);
+  controlGrid.appendChild(amplitudeLabel);
+  root.appendChild(controlGrid);
+
+  const trajectorySection = document.createElement("div");
+  trajectorySection.className = "martigli-trajectory";
+  const trajectoryHead = document.createElement("div");
+  trajectoryHead.className = "martigli-trajectory-head";
+  const trajectoryText = document.createElement("div");
+  const trajectoryTitle = document.createElement("h6");
+  trajectoryTitle.textContent = "Breathing Trajectory";
+  const trajectoryHint = document.createElement("p");
+  trajectoryHint.className = "muted-text small";
+  trajectoryHint.textContent = "Stack period/duration points to sculpt the envelope.";
+  trajectoryText.appendChild(trajectoryTitle);
+  trajectoryText.appendChild(trajectoryHint);
+  const addTrajectoryButton = document.createElement("button");
+  addTrajectoryButton.type = "button";
+  addTrajectoryButton.className = "ghost tiny";
+  addTrajectoryButton.textContent = "+ Add point";
+  trajectoryHead.appendChild(trajectoryText);
+  trajectoryHead.appendChild(addTrajectoryButton);
+  const trajectoryList = document.createElement("div");
+  trajectoryList.className = "martigli-trajectory-list";
+  trajectoryList.setAttribute("aria-live", "polite");
+  trajectorySection.appendChild(trajectoryHead);
+  trajectorySection.appendChild(trajectoryList);
+  root.appendChild(trajectorySection);
+
+  widget.root = root;
+  widget.indicator = indicator;
+  widget.title = title;
+  widget.summary = summary;
+  widget.buttons = { start: startButton, stop: stopButton };
+  widget.telemetryRefs = telemetry.refs;
+  widget.controls = {
+    start: startInput,
+    end: endInput,
+    transition: transitionInput,
+    waveform: waveformSelect,
+    inhale: inhaleInput,
+    inhaleValue,
+    amplitude: amplitudeInput,
+    amplitudeValue,
+  };
+  widget.trajectory = {
+    list: trajectoryList,
+    addButton: addTrajectoryButton,
+  };
+
+  startButton.addEventListener("click", () => {
+    if (!widget.oscillationId) return;
+    martigliState.startOscillation(widget.oscillationId);
+    recordMartigliInteraction("martigli.session.start", { oscillatorId: widget.oscillationId });
+  });
+  stopButton.addEventListener("click", () => {
+    if (!widget.oscillationId) return;
+    martigliState.stopOscillation(widget.oscillationId);
+    recordMartigliInteraction("martigli.session.stop", { oscillatorId: widget.oscillationId });
+  });
+
+  startInput.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    martigliState.setStartPeriod(value, widget.oscillationId);
+    recordMartigliInteraction("martigli.update", { field: "startPeriod", value, oscillatorId: widget.oscillationId });
+  });
+  endInput.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    martigliState.setEndPeriod(value, widget.oscillationId);
+    recordMartigliInteraction("martigli.update", { field: "endPeriod", value, oscillatorId: widget.oscillationId });
+  });
+  transitionInput.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    martigliState.setTransitionDuration(value, widget.oscillationId);
+    recordMartigliInteraction("martigli.update", { field: "transitionSec", value, oscillatorId: widget.oscillationId });
+  });
+  waveformSelect.addEventListener("change", (event) => {
+    const value = event.target.value;
+    martigliState.setWaveform(value, widget.oscillationId);
+    recordMartigliInteraction("martigli.update", { field: "waveform", value, oscillatorId: widget.oscillationId });
+  });
+  inhaleInput.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    martigliState.setInhaleRatio(value, widget.oscillationId);
+    inhaleValue.textContent = `${Math.round(value * 100)}%`;
+    recordMartigliInteraction("martigli.update", { field: "inhaleRatio", value, oscillatorId: widget.oscillationId });
+  });
+  amplitudeInput.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    martigliState.setAmplitude(value, widget.oscillationId);
+    amplitudeValue.textContent = `${value.toFixed(2)}×`;
+    recordMartigliInteraction("martigli.update", { field: "amplitude", value, oscillatorId: widget.oscillationId });
+  });
+  addTrajectoryButton.addEventListener("click", () => {
+    const snapshot = martigliState.snapshot();
+    const oscSnapshot = snapshot.oscillations?.find((entry) => entry.id === widget.oscillationId) ?? null;
+    const lastPoint = oscSnapshot?.trajectory?.[oscSnapshot.trajectory.length - 1] ?? null;
+    const nextPoint = {
+      period: lastPoint?.period ?? oscSnapshot?.endPeriodSec ?? 20,
+      duration: lastPoint?.duration ?? 60,
+    };
+    martigliState.addTrajectoryPoint(nextPoint, widget.oscillationId);
+    recordMartigliInteraction("martigli.trajectory.add", {
+      oscillatorId: widget.oscillationId,
+      period: nextPoint.period,
+      duration: nextPoint.duration,
+    });
+  });
+
+  return widget;
+};
+
+const renderMartigliTrajectoryList = (widget, osc) => {
+  if (!widget?.trajectory?.list) return;
+  const list = widget.trajectory.list;
+  clearList(list);
+  const points = Array.isArray(osc.trajectory) && osc.trajectory.length ? osc.trajectory : [];
+  if (!points.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted-text small";
+    empty.textContent = "No trajectory points yet.";
+    list.appendChild(empty);
+    if (widget.trajectory.addButton) {
+      widget.trajectory.addButton.disabled = false;
+    }
+    return;
+  }
+  points.forEach((point, index) => {
+    const row = document.createElement("div");
+    row.className = "martigli-trajectory-row";
+
+    const periodLabel = createRangeLabel("Period (s)");
+    const periodInput = document.createElement("input");
+    periodInput.type = "number";
+    periodInput.min = "0.1";
+    periodInput.max = "120";
+    periodInput.step = "0.1";
+    periodInput.value = String(point.period ?? 0);
+    periodInput.addEventListener("change", (event) => {
+      const value = Number(event.target.value);
+      martigliState.updateTrajectoryPoint(index, { period: value }, widget.oscillationId);
+      recordMartigliInteraction("martigli.trajectory.update", {
+        oscillatorId: widget.oscillationId,
+        field: "period",
+        index,
+        value,
+      });
+    });
+    periodLabel.appendChild(periodInput);
+
+    const durationLabel = createRangeLabel(index === 0 ? "Duration (s, auto)" : "Duration (s)");
+    const durationInput = document.createElement("input");
+    durationInput.type = "number";
+    durationInput.min = "0";
+    durationInput.step = "1";
+    durationInput.value = String(point.duration ?? 0);
+    durationInput.disabled = index === 0;
+    durationInput.addEventListener("change", (event) => {
+      const value = Number(event.target.value);
+      martigliState.updateTrajectoryPoint(index, { duration: value }, widget.oscillationId);
+      recordMartigliInteraction("martigli.trajectory.update", {
+        oscillatorId: widget.oscillationId,
+        field: "duration",
+        index,
+        value,
+      });
+    });
+    durationLabel.appendChild(durationInput);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "ghost tiny";
+    removeButton.textContent = "Remove";
+    removeButton.disabled = points.length <= 2;
+    removeButton.addEventListener("click", () => {
+      martigliState.removeTrajectoryPoint(index, widget.oscillationId);
+      recordMartigliInteraction("martigli.trajectory.remove", {
+        oscillatorId: widget.oscillationId,
+        index,
+      });
+    });
+
+    row.appendChild(periodLabel);
+    row.appendChild(durationLabel);
+    row.appendChild(removeButton);
+    list.appendChild(row);
+  });
+  if (widget.trajectory.addButton) {
+    widget.trajectory.addButton.disabled = points.length >= MARTIGLI_TRAJECTORY_LIMIT;
   }
 };
 
-const updateMartigliTelemetry = () => {
-  if (!ui.martigliLiveValue || typeof martigliState.getRuntimeMetrics !== "function") {
-    return;
+const syncMartigliWidgetControls = (widget, osc) => {
+  const controls = widget.controls ?? {};
+  const { start, end, transition, waveform, inhale, inhaleValue, amplitude, amplitudeValue } = controls;
+  if (start && document.activeElement !== start) {
+    start.value = String(osc.startPeriodSec ?? osc.startPeriod ?? 10);
   }
-  const metrics = martigliState.getRuntimeMetrics();
+  if (end && document.activeElement !== end) {
+    end.value = String(osc.endPeriodSec ?? osc.endPeriod ?? 20);
+  }
+  if (transition && document.activeElement !== transition) {
+    transition.value = String(osc.transitionSec ?? 0);
+  }
+  if (waveform && waveform.value !== (osc.waveform ?? "sine")) {
+    waveform.value = osc.waveform ?? "sine";
+  }
+  if (inhale && document.activeElement !== inhale) {
+    const ratio = Number.isFinite(osc.inhaleRatio) ? osc.inhaleRatio : 0.5;
+    inhale.value = String(ratio);
+    if (inhaleValue) {
+      inhaleValue.textContent = `${Math.round(ratio * 100)}%`;
+    }
+  }
+  if (amplitude && document.activeElement !== amplitude) {
+    const amp = Number.isFinite(osc.amplitude) ? osc.amplitude : 1;
+    amplitude.value = String(amp);
+    if (amplitudeValue) {
+      amplitudeValue.textContent = `${amp.toFixed(2)}×`;
+    }
+  }
+};
+
+const setMartigliWidgetRunningState = (widget, osc) => {
+  const running = osc.sessionEnd === undefined || osc.sessionEnd === null;
+  widget.isRunning = running;
+  if (widget.buttons?.start) {
+    widget.buttons.start.disabled = running;
+  }
+  if (widget.buttons?.stop) {
+    widget.buttons.stop.disabled = !running;
+  }
+  if (widget.root) {
+    widget.root.dataset.state = running ? "running" : "stopped";
+  }
+  if (widget.indicator) {
+    widget.indicator.classList.toggle("active", false);
+  }
+};
+
+const updateMartigliWidget = (widget, osc, isReference = false) => {
+  widget.oscillationId = osc.id;
+  if (widget.root) {
+    widget.root.dataset.oscillationId = osc.id ?? "";
+    widget.root.dataset.reference = isReference ? "true" : "false";
+  }
+  if (widget.title) {
+    widget.title.textContent = osc.label ?? "Martigli Oscillation";
+  }
+  if (widget.summary) {
+    const status = osc.sessionEnd === undefined || osc.sessionEnd === null ? "Live" : "Stopped";
+    widget.summary.textContent = `${describeMartigliLiveSummary(osc)} - ${status}`;
+  }
+  syncMartigliWidgetControls(widget, osc);
+  renderMartigliTrajectoryList(widget, osc);
+  setMartigliWidgetRunningState(widget, osc);
+};
+
+const updateMartigliWidgetTelemetry = (widget) => {
+  if (!widget?.telemetryRefs) return;
+  const metrics = martigliState.getRuntimeMetrics(widget.oscillationId);
   if (!metrics) {
-    setMartigliTelemetryPlaceholders();
+    Object.values(widget.telemetryRefs).forEach((el) => {
+      if (el) el.textContent = "—";
+    });
+    if (widget.indicator) {
+      widget.indicator.classList.remove("active");
+    }
     return;
   }
-  const formatNumber = (value, digits = 2) =>
-    Number.isFinite(value) ? value.toFixed(digits) : "—";
-  ui.martigliLiveValue.textContent = formatNumber(metrics.value, 2);
-  ui.martigliLivePhase.textContent = Number.isFinite(metrics.phase)
-    ? `${Math.round(metrics.phase * 100)}%`
-    : "—";
-  ui.martigliLivePeriod.textContent = Number.isFinite(metrics.period)
-    ? `${metrics.period.toFixed(1)}s`
-    : "—";
-  ui.martigliLiveBpm.textContent = Number.isFinite(metrics.breathsPerMinute)
-    ? metrics.breathsPerMinute.toFixed(1)
-    : "—";
-  ui.martigliLiveWaveform.textContent = (metrics.waveform ?? "—").toString().substring(0, 4).toUpperCase();
-  ui.martigliLiveTrend.textContent = formatMartigliTrendText(metrics.trend);
-  if (ui.martigliLiveIndicator) {
-    ui.martigliLiveIndicator.classList.add("active");
+  MARTIGLI_TELEMETRY_FIELDS.forEach(({ key, format }) => {
+    const target = widget.telemetryRefs[key];
+    if (target) {
+      target.textContent = format(metrics);
+    }
+  });
+  if (widget.indicator) {
+    widget.indicator.classList.toggle("active", Boolean(widget.isRunning));
   }
+};
+
+const updateMartigliTelemetryForAll = () => {
+  if (!martigliDashboard.widgets.size) return;
+  martigliDashboard.widgets.forEach((widget) => updateMartigliWidgetTelemetry(widget));
+};
+
+const renderMartigliDashboardList = (snapshot = martigliState.snapshot()) => {
+  if (!martigliDashboard.list) return;
+  const seen = new Set();
+  const oscillations = snapshot.oscillations ?? [];
+  oscillations.forEach((osc) => {
+    const oscId = osc.id ?? `osc-${Math.random().toString(36).slice(2, 8)}`;
+    const normalized = { ...osc, id: oscId };
+    let widget = martigliDashboard.widgets.get(oscId);
+    if (!widget) {
+      widget = createMartigliDashboardWidget(normalized);
+      martigliDashboard.widgets.set(oscId, widget);
+    }
+    updateMartigliWidget(widget, normalized, snapshot.referenceId === normalized.id);
+    martigliDashboard.list.appendChild(widget.root);
+    seen.add(normalized.id);
+  });
+  Array.from(martigliDashboard.widgets.keys()).forEach((id) => {
+    if (!seen.has(id)) {
+      const widget = martigliDashboard.widgets.get(id);
+      widget?.root?.remove();
+      martigliDashboard.widgets.delete(id);
+    }
+  });
+  if (!seen.size) {
+    if (!martigliDashboard.emptyNotice) {
+      const notice = document.createElement("p");
+      notice.className = "muted-text small";
+      notice.textContent = 'No Martigli oscillations yet. Use "Add Oscillation" to begin.';
+      martigliDashboard.emptyNotice = notice;
+    }
+    martigliDashboard.list.appendChild(martigliDashboard.emptyNotice);
+  } else if (martigliDashboard.emptyNotice?.parentNode) {
+    martigliDashboard.emptyNotice.remove();
+  }
+  updateMartigliTelemetryForAll();
 };
 
 const ensureMartigliTelemetryLoop = () => {
@@ -1067,9 +1516,9 @@ const ensureMartigliTelemetryLoop = () => {
     return;
   }
   const loop = (timestamp) => {
-    if (!document.hidden) {
+    if (!document.hidden && martigliDashboard.widgets.size) {
       if (!martigliTelemetryLastTick || timestamp - martigliTelemetryLastTick >= MARTIGLI_TELEMETRY_INTERVAL_MS) {
-        updateMartigliTelemetry();
+        updateMartigliTelemetryForAll();
         martigliTelemetryLastTick = timestamp;
       }
     }
@@ -1360,91 +1809,8 @@ const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
     const prefix = dashboardState.activeSessionLabel ? `${dashboardState.activeSessionLabel}: ` : "";
     ui.martigliDashboardPreview.textContent = `${prefix}${summary}`;
   }
-  if (ui.martigliLiveSummary) {
-    ui.martigliLiveSummary.textContent = describeMartigliLiveSummary(reference);
-  }
 };
 
-const syncMartigliInputs = (snapshot = martigliState.snapshot()) => {
-  if (!snapshot) return;
-  const reference = martigliState.getReference?.() ?? null;
-  const config = reference?.config ?? {};
-  if (ui.martigliStart && document.activeElement !== ui.martigliStart) {
-    ui.martigliStart.value = String(snapshot.startPeriod);
-  }
-  if (ui.martigliEnd && document.activeElement !== ui.martigliEnd) {
-    ui.martigliEnd.value = String(snapshot.endPeriod);
-  }
-  if (ui.martigliWaveform && ui.martigliWaveform.value !== snapshot.waveform) {
-    ui.martigliWaveform.value = snapshot.waveform;
-  }
-  if (ui.martigliTransition && document.activeElement !== ui.martigliTransition) {
-    ui.martigliTransition.value = String(config.transitionSec ?? 0);
-  }
-  if (ui.martigliInhale && document.activeElement !== ui.martigliInhale) {
-    const ratio = Number.isFinite(config.inhaleRatio) ? config.inhaleRatio : 0.5;
-    ui.martigliInhale.value = String(ratio);
-    if (ui.martigliInhaleValue) {
-      ui.martigliInhaleValue.textContent = `${Math.round(ratio * 100)}%`;
-    }
-  }
-  if (ui.martigliAmplitude && document.activeElement !== ui.martigliAmplitude) {
-    const amplitude = Number.isFinite(config.amplitude) ? config.amplitude : 1;
-    ui.martigliAmplitude.value = String(amplitude);
-    if (ui.martigliAmplitudeValue) {
-      ui.martigliAmplitudeValue.textContent = `${amplitude.toFixed(2)}×`;
-    }
-  }
-};
-
-const bindMartigliWidget = () => {
-  if (!ui.martigliStart || !ui.martigliEnd || !ui.martigliWaveform) return;
-  ui.martigliStart.addEventListener("input", (event) => {
-    const value = Number(event.target.value);
-    martigliState.setStartPeriod(value);
-    kernel.recordInteraction("martigli.update", { field: "startPeriod", value });
-  });
-  ui.martigliEnd.addEventListener("input", (event) => {
-    const value = Number(event.target.value);
-    martigliState.setEndPeriod(value);
-    kernel.recordInteraction("martigli.update", { field: "endPeriod", value });
-  });
-  ui.martigliWaveform.addEventListener("change", (event) => {
-    const value = event.target.value;
-    martigliState.setWaveform(value);
-    kernel.recordInteraction("martigli.update", { field: "waveform", value });
-  });
-  if (ui.martigliTransition) {
-    ui.martigliTransition.addEventListener("input", (event) => {
-      const value = Number(event.target.value);
-      martigliState.setTransitionDuration(value);
-      kernel.recordInteraction("martigli.update", { field: "transitionSec", value });
-    });
-  }
-  if (ui.martigliInhale) {
-    ui.martigliInhale.addEventListener("input", (event) => {
-      const value = Number(event.target.value);
-      martigliState.setInhaleRatio(value);
-      if (ui.martigliInhaleValue) {
-        ui.martigliInhaleValue.textContent = `${Math.round(value * 100)}%`;
-      }
-      kernel.recordInteraction("martigli.update", { field: "inhaleRatio", value });
-    });
-  }
-  if (ui.martigliAmplitude) {
-    ui.martigliAmplitude.addEventListener("input", (event) => {
-      const value = Number(event.target.value);
-      martigliState.setAmplitude(value);
-      if (ui.martigliAmplitudeValue) {
-        ui.martigliAmplitudeValue.textContent = `${value.toFixed(2)}×`;
-      }
-      kernel.recordInteraction("martigli.update", { field: "amplitude", value });
-    });
-  }
-  syncMartigliInputs();
-  updateMartigliTelemetry();
-  ensureMartigliTelemetryLoop();
-};
 
 const updateAuthState = (user) => {
   if (!user) {
@@ -1665,13 +2031,13 @@ if (ui.sessionNavigator) {
   });
 }
 
-setMartigliTelemetryPlaceholders();
-bindMartigliWidget();
+renderMartigliDashboardList(martigliState.snapshot());
+ensureMartigliTelemetryLoop();
 martigliState.subscribe((snapshot) => {
-  syncMartigliInputs(snapshot);
   updateMartigliPreview(snapshot);
   renderMartigliOscillationSelect(snapshot);
-  updateMartigliTelemetry();
+  updateMartigliOscillationStatus(snapshot);
+  renderMartigliDashboardList(snapshot);
 });
 updateMartigliPreview(martigliState.snapshot());
 updateMartigliOscillationStatus(martigliState.snapshot());
@@ -1694,7 +2060,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     audioEngine.stop();
   } else {
-    updateMartigliTelemetry();
+    updateMartigliTelemetryForAll();
   }
 });
 

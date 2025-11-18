@@ -241,6 +241,23 @@ function parseTurtle(ttlText) {
     // Skip comments and empty lines
     if (!line || line.startsWith("#")) continue;
 
+    // Strip inline comments (everything after # that's not inside angle brackets or quotes)
+    // Don't strip # if it's inside angle brackets (part of URI like <...#Concept>)
+    if (!line.startsWith("@prefix") && !line.startsWith("@base")) {
+      const hashIndex = line.indexOf('#');
+      if (hashIndex > 0) {
+        // Check if # is inside angle brackets
+        const beforeHash = line.substring(0, hashIndex);
+        const openBrackets = (beforeHash.match(/</g) || []).length;
+        const closeBrackets = (beforeHash.match(/>/g) || []).length;
+
+        // Only strip if brackets are balanced (# is not inside a URI)
+        if (openBrackets === closeBrackets && (beforeHash.includes('.') || beforeHash.includes(';'))) {
+          line = beforeHash.trim();
+        }
+      }
+    }
+
     // Handle prefix declarations separately
     if (line.startsWith("@prefix") || line.startsWith("@base")) {
       if (currentStatement) {
@@ -399,6 +416,9 @@ function buildGraph(rdfData) {
   const skosRelated = "http://www.w3.org/2004/02/skos/core#related";
   const skosBroader = "http://www.w3.org/2004/02/skos/core#broader";
   const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
+  const dctSource = "http://purl.org/dc/terms/source";
+  const dctIsReplacedBy = "http://purl.org/dc/terms/isReplacedBy";
+  const owlDeprecated = "http://www.w3.org/2002/07/owl#deprecated";
 
   // Build concept-to-class mapping (XConcept -> X via skos:related)
   const conceptToClass = new Map();
@@ -433,15 +453,42 @@ function buildGraph(rdfData) {
 
   console.log('Total concept-to-class mappings:', conceptToClass.size);
 
+  // Build deprecated-to-replacement mapping (deprecated entities -> replacement via dct:isReplacedBy)
+  const deprecatedToReplacement = new Map();
+  const deprecatedResources = new Map();
+
+  for (const triple of rdfData.triples) {
+    if (triple.predicate === dctIsReplacedBy && triple.objectType === "uri") {
+      const deprecatedRes = rdfData.resources.get(triple.subject);
+      const replacementRes = rdfData.resources.get(triple.object);
+
+      // Check if subject is deprecated
+      const deprecatedProp = deprecatedRes?.properties[owlDeprecated];
+      if (deprecatedProp && deprecatedProp[0]?.value === "true") {
+        console.log('Mapping deprecated entity to replacement:', triple.subject, '->', triple.object);
+        deprecatedToReplacement.set(triple.subject, triple.object);
+        deprecatedResources.set(triple.subject, deprecatedRes);
+      }
+    }
+  }
+
+  console.log('Total deprecated-to-replacement mappings:', deprecatedToReplacement.size);
+
   // Store properties separately (they will become edges, not nodes)
   const objectProperties = new Map();
   const datatypeProperties = new Map();
 
-  // Create nodes for classes and concepts (but NOT properties)
+  // Create nodes for classes and concepts (but NOT properties or deprecated entities)
   for (const [uri, resource] of rdfData.resources) {
     // Skip concepts that are mapped to classes (will be merged)
     if (conceptToClass.has(uri)) {
       console.log('Skipping concept node (will be merged):', uri);
+      continue;
+    }
+
+    // Skip deprecated entities that are replaced by other entities (will be merged)
+    if (deprecatedToReplacement.has(uri)) {
+      console.log('Skipping deprecated node (will be merged into replacement):', uri);
       continue;
     }
 
@@ -469,7 +516,33 @@ function buildGraph(rdfData) {
           break;
         }
       }
+
+      // Check if there are deprecated entities that replace to this class
+      const deprecatedEntities = [];
+      for (const [deprecatedURI, replacementURI] of deprecatedToReplacement) {
+        if (replacementURI === uri) {
+          const deprecatedRes = deprecatedResources.get(deprecatedURI);
+          deprecatedEntities.push({
+            uri: deprecatedURI,
+            data: deprecatedRes
+          });
+          // Also map deprecated URI to this replacement node for getElementById lookups
+          nodeMap.add(deprecatedURI);
+        }
+      }
+
+      if (deprecatedEntities.length > 0) {
+        mergedResource = {
+          ...mergedResource,
+          deprecatedEntities: deprecatedEntities
+        };
+      }
     } else if (resource.types.includes(objectPropertyURI)) {
+      // Skip built-in RDF/OWL properties - they have special handling
+      if (uri === subClassOf || uri === domain || uri === range ||
+          uri === skosRelated || uri === skosBroader || uri === skosNarrower) {
+        continue; // Skip creating node AND skip storing as property
+      }
       // Store object properties separately - they will become edges
       objectProperties.set(uri, resource);
       console.log('Storing object property for edge creation:', uri);
@@ -508,6 +581,11 @@ function buildGraph(rdfData) {
 
     // Skip domain/range edges - we handle these separately when creating property edges
     if (predicate === domain || predicate === range) {
+      continue;
+    }
+
+    // Skip metadata edges that should only appear in inspector (not as graph edges)
+    if (predicate === dctSource || predicate === dctIsReplacedBy || predicate === owlDeprecated) {
       continue;
     }
 
@@ -560,6 +638,11 @@ function buildGraph(rdfData) {
   const thingURI = "http://www.w3.org/2002/07/owl#Thing";
 
   for (const [propertyURI, propertyResource] of objectProperties) {
+    // Skip built-in RDF/OWL properties that have special handling
+    if (propertyURI === subClassOf || propertyURI === domain || propertyURI === range ||
+        propertyURI === skosRelated || propertyURI === skosBroader || propertyURI === skosNarrower) {
+      continue;
+    }
     // Get domain and range from property
     let domainURIs = [];
     let rangeURIs = [];
@@ -711,7 +794,7 @@ function buildGraph(rdfData) {
     }
   }
 
-  return { elements, conceptToClass };
+  return { elements, conceptToClass, deprecatedToReplacement };
 }
 
 // Get layout configuration by name
@@ -930,6 +1013,15 @@ function focusConceptIfNeeded() {
     }
   }
 
+  // If still not found, check if it's a deprecated URI mapped to a replacement
+  if ((!node || node.empty()) && window.deprecatedToReplacementMapping) {
+    const replacementURI = window.deprecatedToReplacementMapping.get(pendingConceptFocus);
+    if (replacementURI) {
+      console.log('Deprecated URI mapped to replacement URI:', replacementURI);
+      node = cy.getElementById(replacementURI);
+    }
+  }
+
   if (!node || node.empty()) {
     console.warn('Concept node not found:', pendingConceptFocus);
     console.log('Available nodes:', cy.nodes().map(n => n.id()).slice(0, 10));
@@ -976,14 +1068,43 @@ async function showURIInspector(resource) {
   const types = resource.types.map(getLocalName).join(", ") || "Resource";
   ui.inspectorType.textContent = types;
 
-  // Definition (from rdfs:comment or dct:description)
+  // Definition (from rdfs:comment or dct:description or skos:definition)
   const commentProp = resource.properties["http://www.w3.org/2000/01/rdf-schema#comment"];
   const descProp = resource.properties["http://purl.org/dc/terms/description"];
-  const definition = commentProp?.[0]?.value || descProp?.[0]?.value || "No definition available.";
+  const skosDef = resource.conceptData?.properties["http://www.w3.org/2004/02/skos/core#definition"];
+  const definition = commentProp?.[0]?.value || skosDef?.[0]?.value || descProp?.[0]?.value || "No definition available.";
   ui.inspectorDefinition.textContent = definition;
 
   // Properties
   ui.inspectorProperties.innerHTML = "";
+
+  // Helper function to create a section header
+  const createSectionHeader = (text, color = "#38bdf8") => {
+    const header = document.createElement("strong");
+    header.textContent = text;
+    header.style.cssText = `display: block; margin-top: 1rem; margin-bottom: 0.5rem; color: ${color}; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem;`;
+    return header;
+  };
+
+  // Helper function to create a clickable link to another node
+  const createNodeLink = (uri, label) => {
+    const link = document.createElement("a");
+    link.href = "#";
+    link.textContent = label || getLocalName(uri);
+    link.title = uri;
+    link.style.color = "#3b82f6";
+    link.style.textDecoration = "underline";
+    link.onclick = (e) => {
+      e.preventDefault();
+      const targetNode = cy.getElementById(uri);
+      if (targetNode && !targetNode.empty()) {
+        cy.center(targetNode);
+        targetNode.select();
+        showURIInspector(targetNode.data("resource"));
+      }
+    };
+    return link;
+  };
 
   // If this resource has merged concept data, show it first
   if (resource.conceptData) {
@@ -1033,12 +1154,173 @@ async function showURIInspector(resource) {
     const predicateLabel = getLocalName(predicate);
     const dt = document.createElement("dt");
     dt.textContent = predicateLabel;
+
+    // Highlight special metadata properties
+    if (predicate === "http://www.w3.org/2002/07/owl#deprecated") {
+      dt.style.color = "#f59e0b"; // amber for deprecated
+      dt.style.fontWeight = "bold";
+    } else if (predicate === "http://purl.org/dc/terms/isReplacedBy") {
+      dt.style.color = "#10b981"; // green for replacement info
+    } else if (predicate === "http://purl.org/dc/terms/source") {
+      dt.style.color = "#6366f1"; // indigo for source
+    }
+
     ui.inspectorProperties.appendChild(dt);
 
     for (const val of values) {
       const dd = document.createElement("dd");
-      dd.textContent = val.type === "uri" ? getLocalName(val.value) : val.value;
+
+      // For URI values, show full URI as link if it's a replacement or source
+      if (val.type === "uri") {
+        if (predicate === "http://purl.org/dc/terms/isReplacedBy" ||
+            predicate === "http://purl.org/dc/terms/source") {
+          // Show full URI for important metadata
+          const link = document.createElement("a");
+          link.href = "#";
+          link.textContent = getLocalName(val.value);
+          link.title = val.value; // Show full URI on hover
+          link.style.color = "#3b82f6";
+          link.onclick = (e) => {
+            e.preventDefault();
+            // Try to find and focus the target node
+            const targetNode = cy.getElementById(val.value);
+            if (targetNode && !targetNode.empty()) {
+              cy.center(targetNode);
+              targetNode.select();
+              showURIInspector(targetNode.data("resource"));
+            }
+          };
+          dd.appendChild(link);
+        } else {
+          dd.textContent = getLocalName(val.value);
+        }
+      } else {
+        dd.textContent = val.value;
+      }
+
       ui.inspectorProperties.appendChild(dd);
+    }
+  }
+
+  // Add relationship information from graph
+  if (cy) {
+    const node = cy.getElementById(resource.uri);
+    if (node && !node.empty()) {
+      // Outgoing relationships
+      const outgoingEdges = node.connectedEdges(`[source = "${resource.uri}"]`);
+      if (outgoingEdges.length > 0) {
+        ui.inspectorProperties.appendChild(createSectionHeader("Outgoing Relationships", "#8b5cf6"));
+
+        const grouped = {};
+        outgoingEdges.forEach(edge => {
+          const edgeType = edge.data("edgeType");
+          const predicate = edge.data("predicate");
+          const target = edge.target();
+          const targetURI = target.id();
+          const targetLabel = target.data("label");
+
+          const key = `${edgeType}:${predicate}`;
+          if (!grouped[key]) {
+            grouped[key] = { edgeType, predicate, targets: [] };
+          }
+          grouped[key].targets.push({ uri: targetURI, label: targetLabel });
+        });
+
+        for (const [key, info] of Object.entries(grouped)) {
+          const dt = document.createElement("dt");
+          dt.textContent = getLocalName(info.predicate);
+          dt.style.color = "#8b5cf6";
+          ui.inspectorProperties.appendChild(dt);
+
+          info.targets.forEach(target => {
+            const dd = document.createElement("dd");
+            dd.appendChild(createNodeLink(target.uri, target.label));
+            ui.inspectorProperties.appendChild(dd);
+          });
+        }
+      }
+
+      // Incoming relationships
+      const incomingEdges = node.connectedEdges(`[target = "${resource.uri}"]`);
+      if (incomingEdges.length > 0) {
+        ui.inspectorProperties.appendChild(createSectionHeader("Incoming Relationships", "#ec4899"));
+
+        const grouped = {};
+        incomingEdges.forEach(edge => {
+          const edgeType = edge.data("edgeType");
+          const predicate = edge.data("predicate");
+          const source = edge.source();
+          const sourceURI = source.id();
+          const sourceLabel = source.data("label");
+
+          const key = `${edgeType}:${predicate}`;
+          if (!grouped[key]) {
+            grouped[key] = { edgeType, predicate, sources: [] };
+          }
+          grouped[key].sources.push({ uri: sourceURI, label: sourceLabel });
+        });
+
+        for (const [key, info] of Object.entries(grouped)) {
+          const dt = document.createElement("dt");
+          dt.textContent = getLocalName(info.predicate) + " (from)";
+          dt.style.color = "#ec4899";
+          ui.inspectorProperties.appendChild(dt);
+
+          info.sources.forEach(source => {
+            const dd = document.createElement("dd");
+            dd.appendChild(createNodeLink(source.uri, source.label));
+            ui.inspectorProperties.appendChild(dd);
+          });
+        }
+      }
+
+      // Properties where this class is the domain
+      const domainEdges = cy.edges(`[edgeType = "objectProperty"][source = "${resource.uri}"], [edgeType = "datatypeProperty"][source = "${resource.uri}"]`);
+      if (domainEdges.length > 0) {
+        ui.inspectorProperties.appendChild(createSectionHeader("Properties (Domain)", "#10b981"));
+
+        domainEdges.forEach(edge => {
+          const predicate = edge.data("predicate");
+          const target = edge.target();
+          const targetLabel = target.data("label");
+          const edgeType = edge.data("edgeType");
+
+          const dt = document.createElement("dt");
+          dt.textContent = getLocalName(predicate);
+          dt.style.color = edgeType === "objectProperty" ? "#a78bfa" : "#fb923c";
+          ui.inspectorProperties.appendChild(dt);
+
+          const dd = document.createElement("dd");
+          dd.textContent = `→ ${targetLabel}`;
+          dd.style.fontSize = "0.9em";
+          dd.style.color = "#666";
+          ui.inspectorProperties.appendChild(dd);
+        });
+      }
+
+      // Properties where this class is the range
+      const rangeEdges = cy.edges(`[edgeType = "objectProperty"][target = "${resource.uri}"], [edgeType = "datatypeProperty"][target = "${resource.uri}"]`);
+      if (rangeEdges.length > 0) {
+        ui.inspectorProperties.appendChild(createSectionHeader("Properties (Range)", "#f59e0b"));
+
+        rangeEdges.forEach(edge => {
+          const predicate = edge.data("predicate");
+          const source = edge.source();
+          const sourceLabel = source.data("label");
+          const edgeType = edge.data("edgeType");
+
+          const dt = document.createElement("dt");
+          dt.textContent = getLocalName(predicate);
+          dt.style.color = edgeType === "objectProperty" ? "#a78bfa" : "#fb923c";
+          ui.inspectorProperties.appendChild(dt);
+
+          const dd = document.createElement("dd");
+          dd.textContent = `← ${sourceLabel}`;
+          dd.style.fontSize = "0.9em";
+          dd.style.color = "#666";
+          ui.inspectorProperties.appendChild(dd);
+        });
+      }
     }
   }
 
@@ -1321,10 +1603,11 @@ async function loadOntology(ontologyKey) {
     const isXml = fileContent.trim().startsWith("<?xml") || fileContent.trim().startsWith("<rdf:RDF");
 
     const rdfData = isXml ? parseOwlXml(fileContent) : parseTurtle(fileContent);
-    const { elements, conceptToClass } = buildGraph(rdfData);
+    const { elements, conceptToClass, deprecatedToReplacement } = buildGraph(rdfData);
 
-    // Store concept mapping globally for getElementById lookups
+    // Store mappings globally for getElementById lookups
     window.conceptToClassMapping = conceptToClass;
+    window.deprecatedToReplacementMapping = deprecatedToReplacement;
 
     initCytoscape(elements);
     ui.loading.classList.add("hidden");
@@ -1449,15 +1732,14 @@ function updateEdgeVisibility() {
   const filters = {
     subclass: ui.filterSubclass.checked,
     hierarchy: ui.filterSubclass.checked, // hierarchy uses same checkbox as subclass
-    domain: ui.filterDomain.checked,
-    range: ui.filterRange.checked,
+    objectProperty: true, // Always show object property edges (new system)
+    datatypeProperty: true, // Always show datatype property edges (new system)
     related: ui.filterRelated.checked,
     relation: true, // Default for unclassified edges
   };
 
-  console.log('[Edge Visibility] Filters:', filters, 'Show properties:', showPropertiesAsNodes);
+  console.log('[Edge Visibility] Filters:', filters);
 
-  let hiddenByProperty = 0;
   let hiddenByFilter = 0;
   let shown = 0;
 
@@ -1471,25 +1753,7 @@ function updateEdgeVisibility() {
       return;
     }
 
-    const sourceType = source.data("type");
-    const targetType = target.data("type");
-
-    // Check if edge involves a property node
-    const involvesProperty =
-      sourceType === "objectProperty" ||
-      sourceType === "datatypeProperty" ||
-      targetType === "objectProperty" ||
-      targetType === "datatypeProperty";
-
-    // If properties are hidden and this edge involves a property, hide it
-    if (!showPropertiesAsNodes && involvesProperty) {
-      edge.style("display", "none");
-      hiddenByProperty++;
-      return;
-    }
-
-    // If properties are shown and this edge involves a property, always respect edge type filters
-    // Apply normal edge filters
+    // Apply edge filters
     const shouldShow = filters[edgeType] !== undefined ? filters[edgeType] : filters.relation;
 
     edge.style("display", shouldShow ? "element" : "none");
@@ -1501,7 +1765,7 @@ function updateEdgeVisibility() {
     }
   });
 
-  console.log(`[Edge Visibility] Hidden by property: ${hiddenByProperty}, Hidden by filter: ${hiddenByFilter}, Shown: ${shown}`);
+  console.log(`[Edge Visibility] Hidden by filter: ${hiddenByFilter}, Shown: ${shown}`);
 }
 
 ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
