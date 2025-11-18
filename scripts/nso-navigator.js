@@ -145,6 +145,9 @@ const ui = {
   toggleProperties: document.getElementById("toggle-properties"),
   propertiesToggleText: document.getElementById("properties-toggle-text"),
   edgeFilters: document.getElementById("edge-filters"),
+  filterObject: document.getElementById("filter-object"),
+  filterData: document.getElementById("filter-data"),
+  filterSkos: document.getElementById("filter-skos"),
   evidenceLevelSlider: document.getElementById("evidence-level-slider"),
   evidenceLevelValue: document.getElementById("evidence-level-value"),
   filterSeriousWarnings: document.getElementById("filter-serious-warnings"),
@@ -161,9 +164,6 @@ const ui = {
   filterCount: document.getElementById("filter-count"),
   filterStatus: document.getElementById("filter-status"),
   filterSubclass: document.getElementById("filter-subclass"),
-  filterDomain: document.getElementById("filter-domain"),
-  filterRange: document.getElementById("filter-range"),
-  filterRelated: document.getElementById("filter-related"),
   resetView: document.getElementById("reset-view"),
   loading: document.getElementById("loading-indicator"),
   error: document.getElementById("error-message"),
@@ -428,8 +428,8 @@ function buildGraph(rdfData) {
   const domain = "http://www.w3.org/2000/01/rdf-schema#domain";
   const range = "http://www.w3.org/2000/01/rdf-schema#range";
   const skosRelated = "http://www.w3.org/2004/02/skos/core#related";
-  const skosBroader = "http://www.w3.org/2004/02/skos/core#broader";
-  const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
+const skosBroader = "http://www.w3.org/2004/02/skos/core#broader";
+const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
   const dctSource = "http://purl.org/dc/terms/source";
   const dctIsReplacedBy = "http://purl.org/dc/terms/isReplacedBy";
   const owlDeprecated = "http://www.w3.org/2002/07/owl#deprecated";
@@ -617,16 +617,16 @@ function buildGraph(rdfData) {
         edgeStyle = "solid";
         edgeWidth = 3;
       }
-      // SKOS broader/narrower (hierarchy)
+      // SKOS broader/narrower
       else if (predicate === skosBroader || predicate === skosNarrower) {
-        edgeClass = "hierarchy";
+        edgeClass = "skos";
         edgeColor = "#38bdf8"; // blue
         edgeStyle = "dashed";
         edgeWidth = 2;
       }
       // SKOS related
       else if (predicate === skosRelated) {
-        edgeClass = "related";
+        edgeClass = "skos";
         edgeColor = "#22d3ee"; // cyan
         edgeStyle = "dotted";
         edgeWidth = 1.5;
@@ -958,28 +958,10 @@ function initCytoscape(elements) {
         },
       },
       {
-        selector: "edge[edgeType='hierarchy']",
+        selector: "edge[edgeType='skos']",
         style: {
           "line-style": "dashed",
           width: 2,
-        },
-      },
-      {
-        selector: "edge[edgeType='domain']",
-        style: {
-          "line-style": "dashed",
-        },
-      },
-      {
-        selector: "edge[edgeType='range']",
-        style: {
-          "line-style": "dashed",
-        },
-      },
-      {
-        selector: "edge[edgeType='related']",
-        style: {
-          "line-style": "dotted",
         },
       },
       {
@@ -2406,33 +2388,39 @@ if (ui.evidenceLevelSlider) {
   ui.evidenceLevelSlider.addEventListener("input", () => {
     updateEvidenceSliderLabel();
     applySemanticFilters();
-    });
-    updateEvidenceSliderLabel();
-  }
-
-  const autoApplyCheckboxes = [
-    "filterSeriousWarnings",
-    "filterSafeOnly",
-    "filterAudio",
-    "filterVisual",
-    "filterMixed",
-    "filterCognitive",
-    "filterEmotional",
-    "filterPhysiological",
-    "filterBehavioral",
-  ];
-
-  autoApplyCheckboxes.forEach((key) => {
-    if (ui[key]) {
-      ui[key].addEventListener("change", applySemanticFilters);
-    }
   });
+  updateEvidenceSliderLabel();
+}
 
-  if (ui.resetFilters) {
-    ui.resetFilters.addEventListener("click", resetSemanticFilters);
+const autoApplyCheckboxes = [
+  "filterSeriousWarnings",
+  "filterSafeOnly",
+  "filterAudio",
+  "filterVisual",
+  "filterMixed",
+  "filterCognitive",
+  "filterEmotional",
+  "filterPhysiological",
+  "filterBehavioral",
+];
+
+autoApplyCheckboxes.forEach((key) => {
+  if (ui[key]) {
+    ui[key].addEventListener("change", applySemanticFilters);
   }
+});
 
-  updateFilterSummary();
+["filterObject", "filterData", "filterSkos", "filterSubclass"].forEach((key) => {
+  if (ui[key]) {
+    ui[key].addEventListener("change", updateEdgeVisibility);
+  }
+});
+
+if (ui.resetFilters) {
+  ui.resetFilters.addEventListener("click", resetSemanticFilters);
+}
+
+updateFilterSummary();
 
 // Toggle property nodes visibility
 ui.toggleProperties.addEventListener("click", () => {
@@ -2475,11 +2463,10 @@ function updateEdgeVisibility() {
   if (!cy) return;
 
   const filters = {
-    subclass: ui.filterSubclass.checked,
-    hierarchy: ui.filterSubclass.checked, // hierarchy uses same checkbox as subclass
-    objectProperty: true, // Always show object property edges (new system)
-    datatypeProperty: true, // Always show datatype property edges (new system)
-    related: ui.filterRelated.checked,
+    subclass: !!ui.filterSubclass?.checked,
+    skos: !!ui.filterSkos?.checked,
+    objectProperty: !!ui.filterObject?.checked,
+    datatypeProperty: !!ui.filterData?.checked,
     relation: true, // Default for unclassified edges
   };
 
@@ -2523,10 +2510,10 @@ function updateEdgeVisibility() {
   console.log(`[Edge Visibility] Hidden by filter: ${hiddenByFilter}, Shown: ${shown}`);
 }
 
-ui.filterSubclass.addEventListener("change", updateEdgeVisibility);
-ui.filterDomain.addEventListener("change", updateEdgeVisibility);
-ui.filterRange.addEventListener("change", updateEdgeVisibility);
-ui.filterRelated.addEventListener("change", updateEdgeVisibility);
+ui.filterSubclass?.addEventListener("change", updateEdgeVisibility);
+ui.filterObject?.addEventListener("change", updateEdgeVisibility);
+ui.filterData?.addEventListener("change", updateEdgeVisibility);
+ui.filterSkos?.addEventListener("change", updateEdgeVisibility);
 
 // Handle browser back/forward buttons
 window.addEventListener('popstate', (event) => {

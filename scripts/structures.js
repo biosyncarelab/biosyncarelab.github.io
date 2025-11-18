@@ -10,7 +10,6 @@ const clamp = (value, min, max) => {
 const TWO_PI = Math.PI * 2;
 
 const DEFAULT_MARTIGLI_CONFIG = {
-  id: "martigli-primary",
   label: "Primary Martigli",
   startPeriodSec: 10,
   endPeriodSec: 20,
@@ -38,10 +37,19 @@ const nowSeconds = () => {
   return Date.now() / 1000;
 };
 
+const createMartigliId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `martigli-${crypto.randomUUID()}`;
+  }
+  return `martigli-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export class MartigliOscillator {
   constructor(config = {}) {
-    const merged = { ...DEFAULT_MARTIGLI_CONFIG, ...(config ?? {}) };
-    this.id = merged.id ?? `martigli-${Math.random().toString(36).slice(2, 8)}`;
+    const rawConfig = config ?? {};
+    const merged = { ...DEFAULT_MARTIGLI_CONFIG, ...rawConfig };
+    const providedId = rawConfig.id ?? rawConfig.referenceId ?? null;
+    this.id = providedId ?? createMartigliId();
     this.label = merged.label ?? "Martigli";
     this.metadata = {
       conceptUri: merged.conceptUri ?? null,

@@ -88,23 +88,6 @@
           </footer>
         </section>
 
-        <section class="lab-panel martigli-panel" id="dashboard-martigli-card">
-          <div class="panel-head">
-            <div>
-              <p class="panel-eyebrow">Martigli / Breathing</p>
-              <h2>Martigli oscillations</h2>
-              <p id="martigli-dashboard-preview" class="muted-text small">
-                Live Martigli widget syncs with your current dashboard session.
-              </p>
-            </div>
-            <div class="panel-actions">
-              <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add oscillation</button>
-            </div>
-          </div>
-          <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
-          <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
-        </section>
-
         <section class="lab-panel sensory-panel" id="dashboard-sensory-card">
           <div class="panel-head">
             <div>
@@ -114,6 +97,19 @@
             </div>
           </div>
           <div class="track-grid">
+            <section class="track-panel martigli-panel" id="dashboard-martigli-card">
+              <div class="section-headline">
+                <h3>Martigli tracks</h3>
+                <p id="martigli-dashboard-preview" class="muted-text small">
+                  Live Martigli widget syncs with your current dashboard session.
+                </p>
+              </div>
+              <div class="panel-actions">
+                <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add oscillation</button>
+              </div>
+              <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
+              <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
+            </section>
             <section class="track-panel">
               <div class="section-headline">
                 <h3>Audio tracks</h3>
