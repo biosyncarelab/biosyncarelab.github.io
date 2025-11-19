@@ -28,9 +28,8 @@ import {
   updateBrowserURL,
   copyShareableURL,
 } from "./state/url-state-manager.js";
-// Note: ui-renderer.js functions available for future use
-// Currently using existing renderDashboardList for gradual migration
-import { createModalController } from "./auth/modal-controller.js";
+// Note: ui-renderer.js and modal-controller.js functions available for future use
+// Currently using existing renderDashboardList and modal handling for gradual migration
 import {
   NSO_BASE_URI,
   DASHBOARD_ONTOLOGY_LINKS,
@@ -213,7 +212,16 @@ appState.subscribe((state) => {
   refreshControls();
 });
 
-// Legacy state for gradual migration
+// ========================================
+// Legacy State Variables (Gradual Migration)
+// ========================================
+// NOTE: These variables are kept temporarily during gradual migration to appState.
+// They are synced with appState for backwards compatibility.
+// TODO: Remove once fully migrated to appState observer pattern.
+//
+// - isBusy: Synced with appState.busy via setBusy()
+// - isFetchingDashboard: Synced with appState.fetchingDashboard
+// - dashboardState: Synced with appState.sessions and appState.activeSessionId
 let isBusy = false;
 let isFetchingDashboard = false;
 const dashboardState = {
@@ -957,6 +965,10 @@ const refreshControls = () => {
   }
 };
 
+/**
+ * Set busy state and refresh UI controls
+ * @param {boolean} nextBusy - Whether the app is busy (loading/saving)
+ */
 const setBusy = (nextBusy) => {
   appState.setBusy(nextBusy);
   isBusy = nextBusy; // Legacy sync
@@ -1226,6 +1238,11 @@ const renderDashboardList = (list, statusEl, items, emptyLabel, kind) => {
   });
 };
 
+/**
+ * Load user's sessions from Firestore and update UI
+ * Triggers reactive UI updates via appState.setSessions()
+ * Logs "sessions.loaded" activity event
+ */
 const loadDashboardData = async () => {
   const state = appState.snapshot();
   if (state.fetchingDashboard) return;
@@ -1417,6 +1434,13 @@ const handleSessionApply = () => {
   }
 };
 
+/**
+ * Save current session to Firestore
+ * Collects current app state (Martigli, track bindings, etc.) and persists to database
+ * Requires authenticated user and active Martigli configuration
+ * Logs "session.saved" activity event
+ * @returns {Promise<void>}
+ */
 const handleSessionSave = async () => {
   const contextRecord = activeModalData ?? null;
   if (!contextRecord) {
@@ -3344,7 +3368,13 @@ const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
   }
 };
 
-
+/**
+ * Update authentication state when user signs in or out
+ * Triggers reactive UI updates via appState.setUser()
+ * If signed in, loads user's sessions from Firestore
+ * If signed out, clears state and hides dashboard
+ * @param {object|null} user - Firebase user object or null if signed out
+ */
 const updateAuthState = (user) => {
   // Update appState - subscription will handle UI updates
   if (!user) {
