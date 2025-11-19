@@ -1,11 +1,6 @@
 // Import from new modular architecture
 import { auth, db, useAuthEmulator, isLocalhost } from "./auth/firebase-init.js";
-// Keep Firebase primitives for telemetry (to be refactored into telemetry module later)
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import { logInteraction } from "./auth/telemetry-manager.js";
 import {
   signInWithGoogle,
   signInWithEmail,
@@ -33,7 +28,8 @@ import {
   updateMartigliWidget,
   updateMartigliWidgetTelemetry,
   describeMartigliLiveSummary,
-  createMartigliDashboardWidget
+  createMartigliDashboardWidget,
+  ensureMartigliTelemetryLoop
 } from "./auth/martigli-ui.js";
 import {
   renderSensoryPanels,
@@ -169,33 +165,6 @@ const sensoryPanels = {
 };
 
 // Registries moved to track-ui.js
-
-const logInteraction = (entry) => {
-  try {
-    const user = auth.currentUser;
-    const payload = {
-      kind: entry?.kind ?? "unknown",
-      payload: entry?.payload ?? {},
-      ts: entry?.ts ?? Date.now(),
-      recordedAt: serverTimestamp(),
-      user: user
-        ? {
-            uid: user.uid,
-            email: user.email ?? null,
-          }
-        : null,
-      client: {
-        emulator: useAuthEmulator,
-        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
-      },
-    };
-    addDoc(collection(db, "telemetry"), payload).catch((err) =>
-      console.warn("Telemetry write failed", err),
-    );
-  } catch (err) {
-    console.warn("Telemetry enqueue failed", err);
-  }
-};
 
 const setMessage = (text, type = "") => {
   renderMessage(ui.messages, text, type);
@@ -1041,33 +1010,6 @@ const ensureSessionModalVisible = () => {
   return true;
 };
 
-let telemetryFrameId = null;
-const ensureMartigliTelemetryLoop = () => {
-  if (telemetryFrameId) cancelAnimationFrame(telemetryFrameId);
-
-  const loop = () => {
-    const now = Date.now() / 1000;
-
-    // Update dashboard widgets
-    if (ui.martigliDashboardList) {
-      const children = Array.from(ui.martigliDashboardList.children);
-      children.forEach((root) => {
-        const widget = root.widget;
-        if (!widget || !widget.oscillationId) return;
-
-        const osc = martigliState._oscillations.get(widget.oscillationId);
-        if (osc) {
-           const metrics = osc.runtimeMetrics(now);
-           updateMartigliWidgetTelemetry(widget, metrics);
-        }
-      });
-    }
-
-    telemetryFrameId = requestAnimationFrame(loop);
-  };
-  loop();
-};
-
 // renderMartigliDashboardList function added
 const renderMartigliDashboardList = (snapshot) => {
   renderMartigliDashboard(ui.martigliDashboardList, snapshot, {
@@ -1635,7 +1577,7 @@ if (ui.sessionNavigator) {
 }
 
 renderMartigliDashboardList(martigliState.snapshot());
-ensureMartigliTelemetryLoop();
+ensureMartigliTelemetryLoop(martigliState, ui.martigliDashboardList);
 martigliState.subscribe((snapshot) => {
   updateMartigliPreview(snapshot);
   renderMartigliOscillationSelect(snapshot);
