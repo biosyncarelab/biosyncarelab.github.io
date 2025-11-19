@@ -71,14 +71,187 @@ export function toggleAuthPanels(authPanel, dashboardPanel, isAuthenticated) {
   }
 }
 
+const formatMetaValue = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  return String(value);
+};
+
+const createMetaGrid = (fields) => {
+  const dl = document.createElement("dl");
+  dl.className = "card-meta";
+  fields
+    .filter((field) => field)
+    .forEach(({ label, value }) => {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = formatMetaValue(value);
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+  return dl;
+};
+
+const buildNavigatorUrl = (link) => {
+  if (!link || !link.uri) return null;
+  const params = new URLSearchParams({ concept: link.uri });
+  if (link.navigator) {
+    params.set("ontology", link.navigator);
+  }
+  return `nso-navigator.html?${params.toString()}`;
+};
+
+const createNavigatorButton = (target) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ghost tiny navigator-link";
+  button.textContent = "View in Navigator";
+  const destination = typeof target === "string" ? target : buildNavigatorUrl(target);
+  if (destination) {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (typeof window !== "undefined") {
+        window.open(destination, "_blank", "noopener,noreferrer");
+      }
+    });
+  } else {
+    button.disabled = true;
+  }
+  return button;
+};
+
+const createOntologySlot = (kind, id, rdfLinker) => {
+  const slot = document.createElement("div");
+  slot.className = "ontology-slot";
+  slot.dataset.kind = kind;
+  if (id) {
+    slot.dataset.recordId = id;
+  }
+  const links = id && rdfLinker ? rdfLinker.get(id) : [];
+  slot.innerHTML = "";
+  if (links.length) {
+    const primary = links[0];
+    const tooltip = primary.summary ?? primary.definition ?? primary.label ?? primary.uri;
+    slot.title = tooltip;
+    const primaryWrap = document.createElement("div");
+    primaryWrap.className = "ontology-slot-primary";
+    const navigatorUrl = buildNavigatorUrl(primary);
+    const anchor = document.createElement("a");
+    anchor.href = navigatorUrl ?? primary.uri;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.textContent = primary.label ?? primary.uri;
+    anchor.title = tooltip;
+    primaryWrap.appendChild(anchor);
+    if (links.length > 1) {
+      const extra = document.createElement("span");
+      extra.className = "muted-text";
+      extra.textContent = ` +${links.length - 1} more`;
+      primaryWrap.appendChild(extra);
+    }
+    slot.appendChild(primaryWrap);
+    const navigatorButton = createNavigatorButton(primary);
+    navigatorButton.textContent = "Open in Navigator";
+    slot.appendChild(navigatorButton);
+    const copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "ghost tiny copy-uri";
+    copyButton.textContent = "Copy URI";
+    copyButton.addEventListener("click", () => {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(primary.uri).then(
+          () => {
+            copyButton.textContent = "Copied";
+            setTimeout(() => {
+              copyButton.textContent = "Copy URI";
+            }, 1200);
+          },
+          () => window.open(primary.uri, "_blank", "noopener,noreferrer"),
+        );
+      } else {
+        window.open(primary.uri, "_blank", "noopener,noreferrer");
+      }
+    });
+    slot.appendChild(copyButton);
+  } else {
+    const emptyLabel = document.createElement("span");
+    emptyLabel.textContent = "Map to NSO";
+    emptyLabel.className = "muted-text";
+    slot.title = "No ontology references yet";
+    slot.appendChild(emptyLabel);
+    slot.appendChild(createNavigatorButton("nso-navigator.html"));
+  }
+  return slot;
+};
+
+const getTrackCount = (entry) => {
+  if (!entry) return 0;
+  if (Number.isFinite(entry.trackCount)) {
+    return entry.trackCount;
+  }
+  // Fallback if tracks array is present
+  if (Array.isArray(entry.tracks)) return entry.tracks.length;
+  if (Array.isArray(entry.voices)) return entry.voices.length;
+  return 0;
+};
+
+const createDashboardCard = (item, kind, callbacks = {}, rdfLinker) => {
+  const li = document.createElement("li");
+  li.className = "dashboard-item";
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  const title = document.createElement("h3");
+  title.textContent = item.label ?? item.name ?? item.id ?? "Untitled";
+  const pill = document.createElement("span");
+  pill.className = "pill";
+  pill.textContent = (item.visibility ?? kind ?? "Session").toString();
+  head.appendChild(title);
+  head.appendChild(pill);
+  li.appendChild(head);
+
+  if (item.description) {
+    const description = document.createElement("p");
+    description.textContent = item.description;
+    li.appendChild(description);
+  }
+
+  li.appendChild(
+    createMetaGrid([
+      { label: "Folder", value: item.folderId ?? item.folder ?? "—" },
+      { label: "Tracks", value: getTrackCount(item) },
+      { label: "Updated", value: item.updatedAt ?? item.createdAt ?? "—" },
+    ]),
+  );
+
+  const footer = document.createElement("div");
+  footer.className = "card-footer";
+  const openBtn = document.createElement("button");
+  openBtn.type = "button";
+  openBtn.className = "primary small";
+  openBtn.textContent = "Open";
+  openBtn.addEventListener("click", () => callbacks.onOpen?.(item, kind));
+  footer.appendChild(openBtn);
+  footer.appendChild(createOntologySlot(kind, item.id, rdfLinker));
+  li.appendChild(footer);
+
+  return li;
+};
+
 /**
- * Render session list
+ * Render session list (Rich Dashboard Version)
  * @param {HTMLElement} listEl - Container element
  * @param {HTMLElement} statusEl - Status text element
  * @param {Array} sessions - Array of session objects
  * @param {Function} onSessionClick - Callback when session is clicked
+ * @param {object} rdfLinker - RDF Linker instance
  */
-export function renderSessionList(listEl, statusEl, sessions, onSessionClick) {
+export function renderSessionList(listEl, statusEl, sessions, onSessionClick, rdfLinker) {
   if (!listEl || !statusEl) return;
 
   clearList(listEl);
@@ -91,13 +264,13 @@ export function renderSessionList(listEl, statusEl, sessions, onSessionClick) {
   statusEl.textContent = `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
 
   sessions.forEach(session => {
-    const card = createSessionCard(session, onSessionClick);
+    const card = createDashboardCard(session, 'session', { onOpen: onSessionClick }, rdfLinker);
     listEl.appendChild(card);
   });
 }
 
 /**
- * Create a session card element
+ * Create a session card element (Simple Version - Deprecated/Fallback)
  * @param {object} session - Session data
  * @param {Function} onSessionClick - Click handler
  * @returns {HTMLElement}
@@ -124,6 +297,81 @@ export function createSessionCard(session, onSessionClick) {
 
   return li;
 }
+
+export function renderStructurePreview(record, elements, structureStore, rdfLinker) {
+  if (!elements.structureSection || !elements.structureSummary || !elements.structureList) {
+    return;
+  }
+  const { datasets, error, loading } = structureStore.snapshot();
+  if (loading && !datasets.length) {
+    elements.structureSummary.textContent = "Loading structure preview…";
+    elements.structureList.innerHTML = "";
+    return;
+  }
+  if (error) {
+    elements.structureSummary.textContent = "Unable to load structure data.";
+    elements.structureList.innerHTML = "";
+    return;
+  }
+  if (!datasets.length) {
+    elements.structureSummary.textContent = "No structure payload available.";
+    elements.structureList.innerHTML = "";
+    return;
+  }
+  elements.structureSummary.textContent = `${datasets.length} structure set${datasets.length > 1 ? "s" : ""} ready.`;
+  elements.structureList.innerHTML = "";
+  datasets.forEach((dataset) => {
+    const container = document.createElement("li");
+    container.className = "structure-card";
+    const heading = document.createElement("h5");
+    heading.textContent = dataset.label ?? dataset.id;
+    const meta = document.createElement("div");
+    meta.className = "structure-meta";
+    const method = document.createElement("span");
+    method.textContent = dataset.source?.method ?? "Unknown method";
+    const sequenceCount = document.createElement("span");
+    const totalSequences = dataset.sequences?.length ?? 0;
+    sequenceCount.textContent = `${totalSequences} sequence${totalSequences === 1 ? "" : "s"}`;
+    meta.appendChild(method);
+    meta.appendChild(sequenceCount);
+    container.appendChild(heading);
+    container.appendChild(meta);
+
+    const ontologyLinks = rdfLinker ? rdfLinker.get(dataset.id) : [];
+    if (ontologyLinks.length) {
+      const ontHint = document.createElement("p");
+      ontHint.className = "muted-text";
+      const firstLink = ontologyLinks[0];
+      ontHint.textContent = `Ontology link: ${firstLink.label ?? firstLink.uri}`;
+      container.appendChild(ontHint);
+    }
+
+    (dataset.sequences ?? []).slice(0, 2).forEach((sequence) => {
+      const seqBlock = document.createElement("div");
+      seqBlock.className = "structure-sequence";
+      const seqTitle = document.createElement("p");
+      seqTitle.className = "structure-sequence-title";
+      seqTitle.textContent = sequence.label ?? sequence.id;
+      const rows = document.createElement("p");
+      rows.className = "structure-rows";
+      const previewRows = (sequence.rows ?? []).slice(0, 2).map((row) => row.join(" "));
+      rows.textContent = previewRows.length ? previewRows.join(" / ") : "No rows available.";
+      seqBlock.appendChild(seqTitle);
+      seqBlock.appendChild(rows);
+      container.appendChild(seqBlock);
+    });
+
+    if ((dataset.sequences?.length ?? 0) > 2) {
+      const more = document.createElement("p");
+      more.className = "muted-text";
+      const remaining = dataset.sequences.length - 2;
+      more.textContent = `+${remaining} more sequence${remaining === 1 ? "" : "s"}`;
+      container.appendChild(more);
+    }
+
+    elements.structureList.appendChild(container);
+  });
+};
 
 /**
  * Render Martigli oscillator list in dashboard
