@@ -1,6 +1,8 @@
 import { firebaseConfig } from "./firebase-config.js";
 import { BSCLabKernel } from "./structures.js";
 import { STRUCTURE_MANIFEST } from "./structures-loader.js";
+import { appState } from "./state/app-state.js";
+import { copyShareableURL } from "./state/url-state-manager.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import {
   getAnalytics,
@@ -128,6 +130,8 @@ const ui = {
   modalMeta: document.getElementById("modal-meta"),
   sessionApply: document.getElementById("session-apply"),
   sessionSave: document.getElementById("session-save"),
+  sessionShareLink: document.getElementById("session-share-link"),
+  sessionShareIndicator: document.getElementById("session-share-indicator"),
   sessionHint: document.getElementById("session-card-hint"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
   martigliDashboardSummary: document.getElementById("martigli-dashboard-summary"),
@@ -245,6 +249,7 @@ const dashboardState = {
 };
 const kernel = new BSCLabKernel({ onInteraction: logInteraction });
 kernel.init();
+appState.setKernel(kernel);
 const martigliState = kernel.martigli;
 const audioEngine = kernel.audio;
 const structureStore = kernel.structures;
@@ -1443,6 +1448,64 @@ const handleSessionSave = async () => {
   } else {
     console.log("Session draft", draft);
     setMessage("Clipboard unavailable; session draft logged to console.", "info");
+  }
+};
+
+const syncAppStateSnapshot = () => {
+  const currentUser = auth.currentUser
+    ? {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email ?? null,
+      }
+    : null;
+
+  appState.setState({
+    currentUser,
+    sessions: [...dashboardState.sessions],
+    activeSessionId: dashboardState.activeSessionId,
+    activeSessionLabel: dashboardState.activeSessionLabel,
+    isBusy,
+    isFetchingDashboard,
+  });
+
+  appState.trackBindingRegistry = new Map(trackBindingRegistry);
+  appState.trackExpansionState = new Map(trackExpansionState);
+  appState.lastStructureRecord = lastStructureRecord;
+  appState.activeVideoLayerId = activeVideoLayerId;
+
+  return appState;
+};
+
+const showSessionShareIndicator = (text = "State in URL") => {
+  if (!ui.sessionShareIndicator) return;
+  ui.sessionShareIndicator.textContent = text;
+  ui.sessionShareIndicator.classList.remove("hidden");
+};
+
+const handleSessionShareLink = async () => {
+  if (!dashboardState.activeSessionId) {
+    setMessage("Select or open a session before creating a share link.", "info");
+    return;
+  }
+
+  try {
+    syncAppStateSnapshot();
+    const success = await copyShareableURL(appState);
+    kernel.recordInteraction("session.share.url", {
+      sessionId: dashboardState.activeSessionId,
+      label: dashboardState.activeSessionLabel,
+      success,
+    });
+
+    if (success) {
+      showSessionShareIndicator("Link copied");
+      setMessage("Shareable BSCLab link copied to clipboard.", "success");
+    } else {
+      setMessage("Clipboard unavailable. Please try again.", "error");
+    }
+  } catch (err) {
+    console.error("Share link failed", err);
+    setMessage("Unable to generate shareable link.", "error");
   }
 };
 
@@ -3401,6 +3464,10 @@ if (ui.sessionApply) {
 
 if (ui.sessionSave) {
   ui.sessionSave.addEventListener("click", handleSessionSave);
+}
+
+if (ui.sessionShareLink) {
+  ui.sessionShareLink.addEventListener("click", handleSessionShareLink);
 }
 
 if (ui.martigliOscillationSelect) {

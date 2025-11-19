@@ -152,30 +152,27 @@ npm run deploy:firestore-rules
 
 ---
 
-### **2. Add URL Sharing Button (30 minutes)**
+### **2. Dashboard Share-Link Wiring (30 minutes)**
 
-Edit `index.html` after line with session controls:
+✅ Done. The dashboard now ships with a native share control and handler:
 
-```html
-<!-- Add this button somewhere in your dashboard -->
-<button id="copy-share-link" class="ghost small">
-  📋 Copy Shareable Link
-</button>
+- `index.html` → session panel includes `#session-share-link` button + `#session-share-indicator` badge.
+- `scripts/auth.js` → captures the live dashboard snapshot, calls `copyShareableURL(appState)`, updates indicator, and logs the interaction via kernel analytics.
 
-<script type="module">
-import { appState } from './scripts/state/app-state.js';
-import { copyShareableURL } from './scripts/state/url-state-manager.js';
+```js
+const handleSessionShareLink = async () => {
+   syncAppStateSnapshot();
+   const success = await copyShareableURL(appState);
+   if (success) {
+      showSessionShareIndicator("Link copied");
+      setMessage("Shareable BSCLab link copied to clipboard.", "success");
+   }
+};
 
-document.getElementById('copy-share-link').addEventListener('click', async () => {
-  const success = await copyShareableURL(appState);
-  if (success) {
-    alert('✅ Shareable link copied to clipboard!');
-  }
-});
-</script>
+ui.sessionShareLink?.addEventListener("click", handleSessionShareLink);
 ```
 
-**Result:** Users can instantly share sessions via URL!
+**Result:** When a session is active, clicking the share icon copies a URL that fully restores dashboard state (session, tracks, bindings, indicators).
 
 ---
 
