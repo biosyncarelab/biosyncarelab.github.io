@@ -1,108 +1,53 @@
-import { firebaseConfig } from "./firebase-config.js";
-import { BSCLabKernel } from "./structures.js";
-import { STRUCTURE_MANIFEST } from "./structures-loader.js";
-import { appState } from "./state/app-state.js";
-import { copyShareableURL } from "./state/url-state-manager.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+// Import from new modular architecture
+import { auth, db, useAuthEmulator, isLocalhost } from "./auth/firebase-init.js";
+// Keep Firebase primitives for telemetry (to be refactored into telemetry module later)
 import {
-  getAnalytics,
-  isSupported as isAnalyticsSupported,
-} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-analytics.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  connectAuthEmulator,
-} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import {
-  getFirestore,
-  connectFirestoreEmulator,
   collection,
-  getDocs,
   addDoc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  signOut as authSignOut,
+  onAuthChange,
+  getCurrentUser,
+} from "./auth/auth-manager.js";
+import {
+  fetchSessions,
+  createSession,
+  updateSession,
+  deleteSession,
+  collectSessionDraft as collectSessionDraftFromState,
+} from "./auth/session-manager.js";
+import { appState } from "./state/app-state.js";
+import {
+  createShareableURL,
+  restoreFromURL,
+  updateBrowserURL,
+  copyShareableURL,
+} from "./state/url-state-manager.js";
+import {
+  renderSessionList,
+  renderAuthState,
+  toggleAuthPanels,
+  setMessage,
+} from "./auth/ui-renderer.js";
+import { createModalController } from "./auth/modal-controller.js";
+import {
+  NSO_BASE_URI,
+  DASHBOARD_ONTOLOGY_LINKS,
+  SESSION_CLASS_LINK,
+  MARTIGLI_CONFIG,
+  UI_CONFIG,
+  FIRESTORE_COLLECTIONS,
+} from "./constants.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const isLocalhost =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
-const useAuthEmulator = isLocalhost && !window.localStorage?.getItem("bsc.useProdAuth");
-
-const NSO_BASE_URI = "https://biosyncare.github.io/rdf/harmonicare/SSO_Ontology.owl#";
-const DASHBOARD_ONTOLOGY_LINKS = {
-  "community-default-alpha": [
-    {
-      uri: `${NSO_BASE_URI}BrainwaveEntrainment`,
-      label: "Brainwave Entrainment",
-      navigator: "harmonicare-sso",
-      summary: "Protocols that synchronize neural oscillations using rhythmic sensory cues.",
-    },
-    {
-      uri: `${NSO_BASE_URI}AudiovisualStimulation`,
-      label: "Audiovisual Stimulation",
-      navigator: "harmonicare-sso",
-      summary: "Combined light and sound entrainment techniques referenced by the session baseline.",
-    },
-  ],
-  sine: [
-    {
-      uri: `${NSO_BASE_URI}AudioStimulation`,
-      label: "Audio Stimulation",
-      navigator: "harmonicare-sso",
-      summary: "General-purpose sonic cues covering pure tones, isochronous beats, and modulated voices.",
-    },
-    {
-      uri: `${NSO_BASE_URI}AudioTechniques`,
-      label: "Audio Techniques",
-      navigator: "harmonicare-sso",
-      summary: "Families of sound design approaches catalogued in the SSO ontology.",
-    },
-  ],
-  "binaural-alpha": [
-    {
-      uri: `${NSO_BASE_URI}BinauralBeats`,
-      label: "Binaural Beats",
-      navigator: "harmonicare-sso",
-      summary: "Left/right carrier offsets targeting specific brainwave ranges (alpha, theta, etc.).",
-    },
-    {
-      uri: `${NSO_BASE_URI}AudioTechniques`,
-      label: "Audio Techniques",
-      navigator: "harmonicare-sso",
-      summary: "Families of sound design approaches catalogued in the SSO ontology.",
-    },
-  ],
-};
-
-const SESSION_CLASS_LINK = {
-  uri: `${NSO_BASE_URI}Session`,
-  label: "Session Class",
-  navigator: "harmonicare-sso",
-  summary: "Canonical definition of the Session concept within the NSO / SSO ontology.",
-};
-
-const db = getFirestore(app);
-
-if (useAuthEmulator) {
-  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-  connectFirestoreEmulator(db, "127.0.0.1", 8085);
-}
-auth.useDeviceLanguage();
-
-// Load analytics only on supported targets to avoid reference errors on Node-like UA.
-isAnalyticsSupported()
-  .then((supported) => {
-    if (supported) {
-      getAnalytics(app);
-    }
-  })
-  .catch((err) => console.warn("Analytics unavailable", err));
+// Keep existing imports
+import { firebaseConfig } from "./firebase-config.js";
+import { BSCLabKernel } from "./structures.js";
+import { STRUCTURE_MANIFEST } from "./structures-loader.js";
 
 const ui = {
   state: document.getElementById("auth-state"),
@@ -1257,12 +1202,18 @@ const renderDashboardList = (list, statusEl, items, emptyLabel, kind) => {
 const loadDashboardData = async () => {
   if (isFetchingDashboard) return;
   if (!ui.dashboard) return;
+
+  const user = getCurrentUser();
+  if (!user) {
+    console.warn("No user for dashboard load");
+    return;
+  }
+
   isFetchingDashboard = true;
   setDashboardVisibility(true);
   ui.sessionStatus.textContent = "Loading sessions…";
   try {
-    const sessionSnap = await getDocs(collection(db, "sessions"));
-    const sessions = sessionSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const sessions = await fetchSessions(user.uid);
     dashboardState.sessions = sessions;
     renderDashboardList(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.", "session");
   } catch (err) {
@@ -3358,7 +3309,7 @@ const handleError = (error) => {
   setMessage(error.message || "Something went wrong", "error");
 };
 
-onAuthStateChanged(auth, (user) => {
+onAuthChange((user) => {
   updateAuthState(user);
   if (user) {
     setMessage(`Welcome back, ${user.email ?? "friend"}!`, "success");
@@ -3370,9 +3321,8 @@ onAuthStateChanged(auth, (user) => {
 if (ui.googleSignIn) {
   ui.googleSignIn.addEventListener("click", async () => {
     setBusy(true);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithGoogle();
     } catch (err) {
       handleError(err);
     } finally {
@@ -3384,7 +3334,7 @@ if (ui.googleSignIn) {
 const handleSignOut = async () => {
   setBusy(true);
   try {
-    await signOut(auth);
+    await authSignOut();
     setMessage("Signed out", "info");
   } catch (err) {
     handleError(err);
@@ -3411,7 +3361,7 @@ ui.emailForm.addEventListener("submit", async (event) => {
 
   setBusy(true);
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmail(email, password);
     ui.emailForm.reset();
     setMessage("Signed in via email", "success");
   } catch (err) {
@@ -3431,7 +3381,7 @@ ui.emailSignUp.addEventListener("click", async () => {
 
   setBusy(true);
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    await signUpWithEmail(email, password);
     ui.emailForm.reset();
     setMessage("Account created. Check your inbox for verification if required.", "success");
   } catch (err) {

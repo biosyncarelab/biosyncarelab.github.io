@@ -217,7 +217,7 @@ console.log('✅ Round-trip serialization preserves data\n');
 
 console.log('6️⃣  Testing Session Manager...');
 
-const { validateSessionData, collectSessionDraft } = await import("../scripts/auth/session-manager.js");
+const { validateSessionData, collectSessionDraft } = await import("../scripts/auth/session-validator.js");
 
 // Test validation
 const validSession = {
@@ -260,7 +260,7 @@ console.log('✅ Session manager works\n');
 
 console.log('7️⃣  Testing Auth Manager Validation...');
 
-const { isValidEmail, validatePassword } = await import("../scripts/auth/auth-manager.js");
+const { isValidEmail, validatePassword } = await import("../scripts/auth/auth-validator.js");
 
 // Test email validation
 assert.equal(isValidEmail('test@example.com'), true, 'Valid email recognized');

@@ -61,7 +61,7 @@ isAnalyticsSupported()
 /**
  * Export Firebase instances for use throughout the app
  */
-export { app, auth, db, useAuthEmulator };
+export { app, auth, db, useAuthEmulator, isLocalhost };
 
 /**
  * Utility to check if running in emulator mode
