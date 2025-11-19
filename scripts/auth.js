@@ -28,12 +28,8 @@ import {
   updateBrowserURL,
   copyShareableURL,
 } from "./state/url-state-manager.js";
-import {
-  renderSessionList,
-  renderAuthState,
-  toggleAuthPanels,
-  setMessage,
-} from "./auth/ui-renderer.js";
+// Note: ui-renderer.js functions available for future use
+// Currently using existing renderDashboardList for gradual migration
 import { createModalController } from "./auth/modal-controller.js";
 import {
   NSO_BASE_URI,
