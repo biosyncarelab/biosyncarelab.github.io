@@ -185,6 +185,39 @@ const setMessage = (text, type = "") => {
   ui.messages.dataset.type = type;
 };
 
+const kernel = new BSCLabKernel({ onInteraction: logInteraction });
+kernel.init();
+appState.setKernel(kernel);
+
+// Wire up reactive UI via state subscriptions
+appState.subscribe((state) => {
+  // Update session list when sessions change
+  if (ui.sessionList && ui.sessionStatus) {
+    const sessions = state.sessions || [];
+    if (sessions.length > 0) {
+      renderDashboardList(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.", "session");
+    } else if (!state.fetchingDashboard) {
+      ui.sessionStatus.textContent = state.currentUser ? "No sessions found." : "Sign in to load sessions.";
+      clearList(ui.sessionList);
+    }
+  }
+
+  // Update auth UI when user changes
+  if (state.currentUser) {
+    if (ui.state) ui.state.textContent = "Signed in";
+    if (ui.email) ui.email.textContent = state.currentUser.email ? `Email: ${state.currentUser.email}` : "";
+    if (ui.userId) ui.userId.textContent = `UID: ${state.currentUser.uid}`;
+  } else {
+    if (ui.state) ui.state.textContent = "Signed out";
+    if (ui.email) ui.email.textContent = "";
+    if (ui.userId) ui.userId.textContent = "";
+  }
+
+  // Update controls based on busy/user state
+  refreshControls();
+});
+
+// Legacy state for gradual migration
 let isBusy = false;
 let isFetchingDashboard = false;
 const dashboardState = {
@@ -192,9 +225,6 @@ const dashboardState = {
   activeSessionId: null,
   activeSessionLabel: null,
 };
-const kernel = new BSCLabKernel({ onInteraction: logInteraction });
-kernel.init();
-appState.setKernel(kernel);
 const martigliState = kernel.martigli;
 const audioEngine = kernel.audio;
 const structureStore = kernel.structures;
@@ -932,7 +962,8 @@ const refreshControls = () => {
 };
 
 const setBusy = (nextBusy) => {
-  isBusy = nextBusy;
+  appState.setBusy(nextBusy);
+  isBusy = nextBusy; // Legacy sync
   refreshControls();
 };
 
@@ -1200,7 +1231,8 @@ const renderDashboardList = (list, statusEl, items, emptyLabel, kind) => {
 };
 
 const loadDashboardData = async () => {
-  if (isFetchingDashboard) return;
+  const state = appState.snapshot();
+  if (state.fetchingDashboard) return;
   if (!ui.dashboard) return;
 
   const user = getCurrentUser();
@@ -1209,18 +1241,31 @@ const loadDashboardData = async () => {
     return;
   }
 
-  isFetchingDashboard = true;
+  appState.setFetchingDashboard(true);
   setDashboardVisibility(true);
   ui.sessionStatus.textContent = "Loading sessions…";
+
   try {
     const sessions = await fetchSessions(user.uid);
+
+    // Update appState - subscription will re-render UI automatically
+    appState.setSessions(sessions);
+
+    // Sync legacy state for gradual migration
     dashboardState.sessions = sessions;
-    renderDashboardList(ui.sessionList, ui.sessionStatus, sessions, "No sessions found.", "session");
+
+    // Log activity
+    kernel.recordInteraction("sessions.loaded", {
+      count: sessions.length,
+      userId: user.uid,
+    });
   } catch (err) {
     console.error("Dashboard load failed", err);
     ui.sessionStatus.textContent = "Unable to load sessions.";
+    appState.setSessions([]);
   } finally {
-    isFetchingDashboard = false;
+    appState.setFetchingDashboard(false);
+    isFetchingDashboard = false; // Legacy sync
   }
 };
 
@@ -1382,23 +1427,45 @@ const handleSessionSave = async () => {
     setMessage("Open a session first.", "info");
     return;
   }
+
+  const user = getCurrentUser();
+  if (!user) {
+    setMessage("Sign in to save sessions.", "error");
+    return;
+  }
+
   const draft = collectSessionDraft(contextRecord);
   if (!draft.martigli) {
     setMessage("Adjust the Martigli widget before saving a session.", "error");
     return;
   }
-  const serialized = JSON.stringify(draft, null, 2);
-  const copied = await copyToClipboard(serialized);
-  kernel.recordInteraction("session.save.snapshot", {
-    recordId: draft.id,
-    label: draft.label,
-    copied,
-  });
-  if (copied) {
-    setMessage("Current Martigli + track state copied to clipboard for session storage.", "success");
-  } else {
-    console.log("Session draft", draft);
-    setMessage("Clipboard unavailable; session draft logged to console.", "info");
+
+  setBusy(true);
+  try {
+    // Save to Firestore using session-manager
+    const savedSession = await createSession(user.uid, draft);
+
+    // Update appState with new session
+    const state = appState.snapshot();
+    appState.setSessions([...state.sessions, savedSession]);
+
+    // Log activity
+    kernel.recordInteraction("session.saved", {
+      sessionId: savedSession.id,
+      label: draft.label,
+      userId: user.uid,
+    });
+
+    setMessage(`Session "${draft.label}" saved successfully.`, "success");
+
+    // Optional: Copy to clipboard as backup
+    const serialized = JSON.stringify(savedSession, null, 2);
+    await copyToClipboard(serialized);
+  } catch (err) {
+    console.error("Session save failed", err);
+    setMessage(`Failed to save session: ${err.message}`, "error");
+  } finally {
+    setBusy(false);
   }
 };
 
@@ -3283,24 +3350,25 @@ const updateMartigliPreview = (snapshot = martigliState.snapshot()) => {
 
 
 const updateAuthState = (user) => {
+  // Update appState - subscription will handle UI updates
   if (!user) {
-    ui.state.textContent = "Signed out";
-    ui.email.textContent = "";
-    ui.userId.textContent = "";
+    appState.setUser(null);
+    appState.setSessions([]);
     setMessage("");
-    refreshControls();
     setDashboardVisibility(false);
-    clearList(ui.sessionList);
-    if (ui.sessionStatus) ui.sessionStatus.textContent = "Sign in to load sessions.";
     resetDashboardContext();
     closeDetailModal();
     return;
   }
 
-  ui.state.textContent = "Signed in";
-  ui.email.textContent = user.email ? `Email: ${user.email}` : "";
-  ui.userId.textContent = `UID: ${user.uid}`;
-  refreshControls();
+  // Set user in appState - subscription will update UI
+  appState.setUser({
+    uid: user.uid,
+    email: user.email || null,
+    displayName: user.displayName || null,
+  });
+
+  // Load user's sessions
   loadDashboardData();
 };
 
@@ -3556,3 +3624,39 @@ document.addEventListener("visibilitychange", () => {
 if (typeof window !== "undefined") {
   window.addEventListener("pagehide", () => audioEngine.stop());
 }
+
+// ========================================
+// URL State Restoration (runs on page load)
+// ========================================
+
+(async () => {
+  try {
+    const urlState = restoreFromURL();
+    if (urlState) {
+      // Restore state from URL
+      appState.setState(urlState.snapshot());
+
+      // Restore Martigli state if present
+      const serialized = urlState.toSerializable();
+      if (serialized.martigli) {
+        appState.applySerializedMartigliState(serialized);
+      }
+
+      // Show URL indicator
+      if (ui.sessionShareIndicator) {
+        ui.sessionShareIndicator.textContent = "State loaded from URL";
+        ui.sessionShareIndicator.classList.remove("hidden");
+      }
+
+      // Log activity
+      kernel.recordInteraction("session.url.restored", {
+        hasMartigli: !!serialized.martigli,
+        activeSessionId: serialized.activeSessionId || null,
+      });
+
+      console.log("✅ State restored from URL");
+    }
+  } catch (err) {
+    console.warn("URL state restoration failed:", err);
+  }
+})();
