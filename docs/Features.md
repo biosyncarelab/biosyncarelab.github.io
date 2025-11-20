@@ -95,28 +95,40 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 
 ## 3. Python Musical Structures
 
-### 3.1 Change Ringing & Group Permutations (🚧)
-- Scripts leveraging PyPI `music` package (recommend editable install) to generate permutations.
+### 3.1 Change Ringing & Group Permutations (✅)
+- Scripts leveraging PyPI `music` package (v1.0.0b5) to generate permutations.
 - Export to JSON/RDF for loading as audio modulation sequences (static assets in repo).
 - Provide test fixtures verifying expected permutation cycles.
 - Decisions: `music` package is first-party; license-clear to use all generated sequences.
 - Current asset: `data/structures/community-alpha-change-ringing.json` (plain-hunt rows for 4/6 bells, loops to rounds).
 - New assets: `data/structures/symmetry-lines.json` (mirror/rotation sweeps) and `data/structures/martigli-following-sequences.json` (phase-aligned orderings).
+- **Generated outputs** (2025-11-20):
+  - Raw peal files: 4 plain-changes peals (3-6 bells, 6-120 rows each)
+  - Comprehensive export: `external/biosyncare/scripts/music/output/musicStructures.json` (770KB)
+    - 4 change-ringing library entries + 1 additional (7 bells)
+    - 14 unique permutation families
+    - 4 symmetric group catalogs (S₃ through S₆)
+    - 4 symmetry structures with rotation/mirror/dihedral generators
+  - Compact version: `musicStructures.compact.json` (58KB) for frontend integration
+  - Minified versions available for production use
 
-### 3.2 Integration Pipeline (🧩)
-- Define transport format between Python outputs and BSCLab (REST? static JSON?).
+### 3.2 Integration Pipeline (✅)
+- Transport format: static JSON files synced to `data/structures/` directory.
+- Sync command: `make web-sync-music-data` copies compact export to frontend.
 - UI hooks to browse and assign sequences to tracks/parameters.
 - Decisions: keep backend-free; load static JSON/RDF, link to tracks via IDs.
+- Loader enhanced to handle both curated (1-based) and comprehensive (0-based) formats.
 
-### 3.3 Export Schema & Loader (🚧)
+### 3.3 Export Schema & Loader (✅)
 - Format shape (1-based rows; convert to 0-based in UI):
 	- `id`, `label`, `description`
 	- `source`: `method`, `library`, `generator`, `generated`, `notes`
 	- `sequences[]`: `id`, `label`, `orderDimension`, `rows[][]`, `loop`
 - Loader: `scripts/structures-loader.js` exports `loadStructures(url)` → adds `rowsZeroBased`, and `getSequence(structures, id)`.
-- TODO: add fixtures for regression and wire loader into the GUI once placement is confirmed.
-- Current work: `scripts/structures.js::StructureStore` caches the JSON payload and feeds the dashboard modal; still need fixtures + Firestore-backed selection flows.
+- Fixtures: `tests/structures.test.mjs` and `tests/comprehensive-structures.test.mjs` verify integrity.
+- Current work: `scripts/structures.js::StructureStore` caches the JSON payload and feeds the dashboard modal; still need Firestore-backed selection flows.
 - Assets now include `data/structures/martigli-following-sequences.json` and `data/structures/symmetry-lines.json`; the manifest exposes them all so the GUI can preview Martigli-following and symmetry datasets in addition to change ringing.
+- **Visualizer**: `structure-visualizer.html` provides standalone exploration UI with color-coded sequences, statistics, and permutation family/symmetry structure metadata (2025-11-20).
 
 ## 4. Cross-Cutting Infrastructure
 

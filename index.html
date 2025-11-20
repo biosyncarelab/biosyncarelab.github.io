@@ -4,7 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BioSynCare Lab</title>
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles/main.css" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js');
+        });
+      }
+    </script>
   </head>
   <body class="lab-surface">
     <div class="app-shell">
@@ -13,6 +21,10 @@
           <p class="brand-eyebrow">BioSynCare</p>
           <h1>BioSynCare Lab</h1>
           <p class="brand-tagline">Sync presets, sessions, tracks, and Martigli telemetry across devices.</p>
+          <div style="margin-top: 1rem;">
+            <a href="structure-visualizer.html" class="ghost small" style="text-decoration: none;">🎵 Structure Visualizer</a>
+            <a href="nso-navigator.html" class="ghost small" style="text-decoration: none; margin-left: 0.5rem;">🔍 NSO Navigator</a>
+          </div>
         </div>
         <div class="lab-auth" id="lab-auth">
           <div id="auth-chip" class="auth-chip hidden" aria-live="polite">

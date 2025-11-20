@@ -19,7 +19,10 @@ export function collectSessionDraft(appState, contextRecord = null) {
     // Martigli state
     martigli: appState.martigliState?.snapshot() ?? null,
 
-    // Track bindings
+    // Track Manager state (New Architecture)
+    tracks: appState.kernel?.tracks?.toJSON() ?? [],
+
+    // Track bindings (Legacy - to be migrated)
     trackBindings: appState.trackBindingRegistry.size > 0
       ? Array.from(appState.trackBindingRegistry.entries()).map(([id, binding]) => ({
           id,

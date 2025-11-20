@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Music Structure Visualizer - BioSynCare Lab</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <style>
+      .visualizer-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+
+      .visualizer-header {
+        margin-bottom: 2rem;
+      }
+
+      .visualizer-controls {
+        background: var(--surface-2, #f5f5f5);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .control-group {
+        margin-bottom: 1rem;
+      }
+
+      .control-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .control-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary, #333);
+      }
+
+      .control-group select {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 1px solid var(--border, #ddd);
+        border-radius: 4px;
+        background: white;
+        color: var(--text-primary, #333);
+        appearance: auto;
+        cursor: pointer;
+      }
+
+      .control-group select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .control-group select option {
+        color: #333;
+        background: white;
+        padding: 0.5rem;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        background: var(--surface-2, #f5f5f5);
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--accent, #6366f1);
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #666);
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary, #333);
+      }
+
+      .sequence-container {
+        background: white;
+        border: 1px solid var(--border, #ddd);
+        border-radius: 8px;
+        padding: 1.5rem;
+        overflow-x: auto;
+      }
+
+      .sequence-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border, #ddd);
+      }
+
+      .sequence-header h3 {
+        margin: 0;
+        color: var(--text-primary, #333);
+      }
+
+      .sequence-viz {
+        font-family: 'Courier New', monospace;
+        line-height: 1.8;
+      }
+
+      .row-line {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+      }
+
+      .row-index {
+        min-width: 50px;
+        color: var(--text-secondary, #999);
+        font-size: 0.875rem;
+        margin-right: 1rem;
+        text-align: right;
+      }
+
+      .row-cells {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .cell {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+      }
+
+      .cell:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      }
+
+      /* Color palette for elements (0-indexed) */
+      .cell-0 { background: #ef4444; color: white; }
+      .cell-1 { background: #f59e0b; color: white; }
+      .cell-2 { background: #10b981; color: white; }
+      .cell-3 { background: #3b82f6; color: white; }
+      .cell-4 { background: #8b5cf6; color: white; }
+      .cell-5 { background: #ec4899; color: white; }
+      .cell-6 { background: #06b6d4; color: white; }
+      .cell-7 { background: #84cc16; color: white; }
+      .cell-8 { background: #f43f5e; color: white; }
+      .cell-9 { background: #14b8a6; color: white; }
+
+      .legend {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border, #ddd);
+      }
+
+      .legend-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary, #666);
+      }
+
+      .legend-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      .legend-color {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 3px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-secondary, #999);
+      }
+
+      .additional-data {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: var(--surface-1, #fafafa);
+        border-radius: 8px;
+      }
+
+      .additional-data summary {
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.5rem;
+        user-select: none;
+      }
+
+      .additional-data summary:hover {
+        background: var(--surface-2, #f5f5f5);
+        border-radius: 4px;
+      }
+
+      .data-section {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .data-section pre {
+        background: white;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+
+      .nav-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: var(--accent, #6366f1);
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+
+      .nav-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="lab-surface">
+    <div class="visualizer-container">
+      <a href="index.html" class="nav-link">← Back to BioSynCare Lab</a>
+
+      <header class="visualizer-header">
+        <h1>Music Structure Visualizer</h1>
+        <p class="muted-text">Explore change-ringing patterns, permutation families, and symmetry structures</p>
+      </header>
+
+      <div class="visualizer-controls">
+        <div class="control-group">
+          <label for="structure-category">Structure Category</label>
+          <select id="structure-category">
+            <option value="">Select a category...</option>
+            <option value="curated">Curated Sequences (Community Alpha, Martigli, Symmetry)</option>
+            <option value="comprehensive">Comprehensive Music Structures</option>
+          </select>
+        </div>
+
+        <div class="control-group" id="structure-select-group" style="display: none;">
+          <label for="structure-select">Select Structure</label>
+          <select id="structure-select" disabled>
+            <option value="">Choose a structure...</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="stats-container"></div>
+      <div id="sequence-container"></div>
+      <div id="additional-data-container"></div>
+    </div>
+
+    <script type="module">
+      import { loadStructures, loadStructureCatalog, STRUCTURE_MANIFEST } from './scripts/structures-loader.js';
+
+      let currentData = null;
+      let currentStructures = null;
+
+      const categorySelect = document.getElementById('structure-category');
+      const structureSelectGroup = document.getElementById('structure-select-group');
+      const structureSelect = document.getElementById('structure-select');
+      const statsContainer = document.getElementById('stats-container');
+      const sequenceContainer = document.getElementById('sequence-container');
+      const additionalDataContainer = document.getElementById('additional-data-container');
+
+      // Color classes for visualization
+      const COLORS = [
+        'cell-0', 'cell-1', 'cell-2', 'cell-3', 'cell-4',
+        'cell-5', 'cell-6', 'cell-7', 'cell-8', 'cell-9'
+      ];
+
+      categorySelect.addEventListener('change', async (e) => {
+        const category = e.target.value;
+        structureSelect.innerHTML = '<option value="">Choose a structure...</option>';
+        structureSelectGroup.style.display = 'none';
+        clearVisualization();
+
+        if (!category) return;
+
+        if (category === 'curated') {
+          // Load curated structures
+          const curatedManifest = STRUCTURE_MANIFEST.filter(
+            entry => entry.id !== 'music-structures-comprehensive'
+          );
+          structureSelect.innerHTML = '<option value="">Choose a structure...</option>';
+          curatedManifest.forEach(entry => {
+            const option = document.createElement('option');
+            option.value = entry.id;
+            option.textContent = entry.label;
+            structureSelect.appendChild(option);
+          });
+          structureSelectGroup.style.display = 'block';
+          structureSelect.disabled = false;
+        } else if (category === 'comprehensive') {
+          // Load comprehensive structures
+          try {
+            const data = await loadStructures('data/structures/music-structures-comprehensive.json');
+            currentData = data;
+
+            structureSelect.innerHTML = '<option value="">Choose a structure...</option>';
+
+            if (data.sequences && data.sequences.length > 0) {
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = 'Change-Ringing Sequences';
+              data.sequences.forEach(seq => {
+                const option = document.createElement('option');
+                option.value = 'seq:' + seq.id;
+                option.textContent = `${seq.label} (${seq.orderDimension} bells, ${seq.rows?.length || 0} rows)`;
+                optgroup.appendChild(option);
+              });
+              structureSelect.appendChild(optgroup);
+            }
+
+            structureSelectGroup.style.display = 'block';
+            structureSelect.disabled = false;
+          } catch (err) {
+            console.error('Failed to load comprehensive structures:', err);
+            alert('Failed to load comprehensive structures. See console for details.');
+          }
+        }
+      });
+
+      structureSelect.addEventListener('change', async (e) => {
+        const value = e.target.value;
+        if (!value) {
+          clearVisualization();
+          return;
+        }
+
+        const category = categorySelect.value;
+
+        if (category === 'curated') {
+          // Load the specific curated structure
+          const entry = STRUCTURE_MANIFEST.find(m => m.id === value);
+          if (!entry) return;
+
+          try {
+            const data = await loadStructures(entry.url);
+            visualizeCuratedStructure(data);
+          } catch (err) {
+            console.error('Failed to load structure:', err);
+          }
+        } else if (category === 'comprehensive') {
+          if (value.startsWith('seq:')) {
+            const seqId = value.replace('seq:', '');
+            const sequence = currentData.sequences.find(s => s.id === seqId);
+            if (sequence) {
+              visualizeSequence(sequence, currentData);
+            }
+          }
+        }
+      });
+
+      function clearVisualization() {
+        statsContainer.innerHTML = '';
+        sequenceContainer.innerHTML = '';
+        additionalDataContainer.innerHTML = '';
+      }
+
+      function visualizeCuratedStructure(data) {
+        // Show stats
+        statsContainer.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Structure ID</div>
+              <div class="stat-value">${data.id || 'N/A'}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Sequences</div>
+              <div class="stat-value">${data.sequences?.length || 0}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Source</div>
+              <div class="stat-value">${data.source?.library || 'N/A'}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Generated</div>
+              <div class="stat-value">${data.source?.generated ? new Date(data.source.generated).toLocaleDateString() : 'N/A'}</div>
+            </div>
+          </div>
+        `;
+
+        // Show all sequences
+        let html = '';
+        data.sequences.forEach((seq, idx) => {
+          html += renderSequenceSection(seq, idx);
+        });
+        sequenceContainer.innerHTML = html;
+      }
+
+      function visualizeSequence(sequence, fullData) {
+        // Show stats
+        const stats = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Sequence ID</div>
+              <div class="stat-value">${sequence.id}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Stage (Bells)</div>
+              <div class="stat-value">${sequence.orderDimension}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Rows</div>
+              <div class="stat-value">${sequence.rows?.length || 0}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Loop</div>
+              <div class="stat-value">${sequence.loop ? 'Yes' : 'No'}</div>
+            </div>
+          </div>
+        `;
+        statsContainer.innerHTML = stats;
+
+        // Show sequence
+        sequenceContainer.innerHTML = renderSequenceSection(sequence, 0);
+
+        // Show additional data
+        if (fullData) {
+          let additionalHTML = '<details class="additional-data">';
+          additionalHTML += '<summary>Additional Data (Permutation Families, Symmetry Structures)</summary>';
+          additionalHTML += '<div class="data-section">';
+
+          if (fullData.permutationFamilies) {
+            additionalHTML += `<h4>Permutation Families (${fullData.permutationFamilies.length})</h4>`;
+            additionalHTML += '<pre>' + JSON.stringify(fullData.permutationFamilies.slice(0, 5), null, 2) + '</pre>';
+          }
+
+          if (fullData.symmetryStructures) {
+            additionalHTML += `<h4>Symmetry Structures (${fullData.symmetryStructures.length})</h4>`;
+            additionalHTML += '<pre>' + JSON.stringify(fullData.symmetryStructures, null, 2) + '</pre>';
+          }
+
+          if (fullData.symmetricGroups) {
+            additionalHTML += `<h4>Symmetric Groups (${fullData.symmetricGroups.length})</h4>`;
+            const groupsSummary = fullData.symmetricGroups.map(g => ({
+              stage: g.stage,
+              order: g.order,
+              parityCounts: g.parityCounts
+            }));
+            additionalHTML += '<pre>' + JSON.stringify(groupsSummary, null, 2) + '</pre>';
+          }
+
+          additionalHTML += '</div></details>';
+          additionalDataContainer.innerHTML = additionalHTML;
+        }
+      }
+
+      function renderSequenceSection(sequence, index) {
+        const rows = sequence.rowsZeroBased || sequence.rows || [];
+        const dimension = sequence.orderDimension;
+
+        let html = '<div class="sequence-container">';
+        html += '<div class="sequence-header">';
+        html += `<h3>${sequence.label || sequence.id}</h3>`;
+        if (sequence.metadata) {
+          html += `<p class="muted-text">${JSON.stringify(sequence.metadata)}</p>`;
+        }
+        html += '</div>';
+
+        if (rows.length === 0) {
+          html += '<div class="empty-state">No sequence data available</div>';
+        } else {
+          html += '<div class="sequence-viz">';
+
+          rows.forEach((row, rowIdx) => {
+            html += '<div class="row-line">';
+            html += `<span class="row-index">${rowIdx}</span>`;
+            html += '<div class="row-cells">';
+
+            row.forEach(val => {
+              const colorClass = COLORS[val % COLORS.length];
+              html += `<span class="cell ${colorClass}">${val}</span>`;
+            });
+
+            html += '</div></div>';
+          });
+
+          html += '</div>';
+
+          // Add legend
+          html += '<div class="legend">';
+          html += '<div class="legend-title">Element Colors (0-based)</div>';
+          html += '<div class="legend-items">';
+          for (let i = 0; i < Math.min(dimension, 10); i++) {
+            const colorClass = COLORS[i];
+            html += `<div class="legend-item">`;
+            html += `<span class="legend-color ${colorClass}"></span>`;
+            html += `<span>Element ${i}</span>`;
+            html += `</div>`;
+          }
+          html += '</div></div>';
+        }
+
+        html += '</div>';
+        return html;
+      }
+
+      // Show empty state initially
+      sequenceContainer.innerHTML = '<div class="empty-state">Select a category and structure to visualize</div>';
+    </script>
+  </body>
+</html>

@@ -16,6 +16,12 @@ export const STRUCTURE_MANIFEST = [
     label: "Symmetry Lines",
     url: "data/structures/symmetry-lines.json",
   },
+  {
+    id: "music-structures-comprehensive",
+    label: "Comprehensive Music Structures",
+    url: "data/structures/music-structures-comprehensive.json",
+    description: "Full change-ringing library, permutation families, and symmetric group catalog",
+  },
 ];
 
 async function fetchJson(url) {
@@ -29,6 +35,31 @@ function toZeroBased(rows) {
 }
 
 function normalizeStructure(data, overrides = {}) {
+  // Handle comprehensive music structures format (from export_structures.py)
+  if (data.changeRinging || data.permutationFamilies || data.symmetryStructures) {
+    return {
+      ...data,
+      ...overrides,
+      // Change-ringing entries already use 0-based permutations
+      sequences: (data.changeRinging ?? []).map((entry) => ({
+        id: entry.id,
+        label: entry.title,
+        orderDimension: entry.stage,
+        rows: entry.permutations,  // Already 0-based
+        rowsZeroBased: entry.permutations,
+        loop: true,
+        metadata: entry.metadata,
+        family: entry.family,
+      })),
+      // Preserve additional data for advanced features
+      additionalPlainChanges: data.additionalPlainChanges,
+      permutationFamilies: data.permutationFamilies,
+      symmetryStructures: data.symmetryStructures,
+      symmetricGroups: data.symmetricGroups,
+    };
+  }
+
+  // Handle simple curated format (1-based rows)
   return {
     ...data,
     ...overrides,

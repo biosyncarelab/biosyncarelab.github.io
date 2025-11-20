@@ -1,4 +1,4 @@
-.PHONY := up aup serve seed-prod seed-local firebase-login deploy-firestore-rules test test-structures
+.PHONY := up aup serve seed-prod seed-local firebase-login deploy-firestore-rules test test-structures web-sync-music-data
 
 BSC_FIREBASE_PROJECT ?= bsc-lab
 
@@ -36,6 +36,12 @@ test:
 
 test-structures:
 	npm run test:structures
+
+web-sync-music-data:
+	@echo "Syncing comprehensive music structures to frontend..."
+	@cp external/biosyncare/scripts/music/output/musicStructures.compact.json data/structures/music-structures-comprehensive.json
+	@echo "✓ Copied musicStructures.compact.json → data/structures/music-structures-comprehensive.json"
+	@echo "  Size: $$(du -h data/structures/music-structures-comprehensive.json | cut -f1)"
 
 ifneq ($(strip $(RAW_ARGS)),)
 .PHONY += $(RAW_ARGS)

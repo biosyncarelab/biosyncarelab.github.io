@@ -1,0 +1,110 @@
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<https://biosyncarelab.github.io/ont/modules/martigli/1.0.0> a owl:Ontology ;
+  owl:versionIRI <https://biosyncarelab.github.io/ont/modules/martigli/1.0.0> ;
+  owl:versionInfo "1.0.0" ;
+  dct:title "NSO Martigli Breathing Module" ;
+  dct:alternative "NSO Martigli"@en ;
+  dct:creator "BioSynCare Lab" ;
+  dct:contributor "Claude Sonnet 4.5 (AI Assistant)" ;
+  dct:description "Semantic definitions for Martigli breathing oscillations, waveforms, and parameters. Defines the structure of breathing tracks used in BioSynCare sessions." ;
+  dct:created "2025-11-20"^^xsd:date ;
+  dct:issued "2025-11-20"^^xsd:date ;
+  dct:modified "2025-11-20"^^xsd:date ;
+  dct:hasVersion "1.0.0" ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+  owl:imports <https://biosyncarelab.github.io/ont/1.0.0> .
+
+# ============================================================================
+# CLASSES
+# ============================================================================
+
+bsc:MartigliOscillation a owl:Class ;
+  rdfs:subClassOf bsc:Technique ;
+  rdfs:label "Martigli Oscillation" ;
+  rdfs:comment "A specific configuration of the Martigli breathing technique, defined by a waveform, period trajectory, and inhale/exhale ratio." ;
+  rdfs:seeAlso bsc:MartigliBreathingCue .
+
+bsc:Waveform a owl:Class ;
+  rdfs:label "Waveform" ;
+  rdfs:comment "The shape of the oscillation signal over time." .
+
+# ============================================================================
+# WAVEFORM INDIVIDUALS
+# ============================================================================
+
+bsc:SineWave a bsc:Waveform ;
+  rdfs:label "Sine Wave" ;
+  rdfs:comment "A smooth, periodic oscillation. In Martigli context, it may be skewed by the inhale ratio." .
+
+bsc:TriangleWave a bsc:Waveform ;
+  rdfs:label "Triangle Wave" ;
+  rdfs:comment "A linear rise and fall. In Martigli context, the peak position is determined by the inhale ratio." .
+
+bsc:SquareWave a bsc:Waveform ;
+  rdfs:label "Square Wave" ;
+  rdfs:comment "An abrupt switch between high and low states. Useful for 'box breathing' or hold-based patterns." .
+
+bsc:SawtoothWave a bsc:Waveform ;
+  rdfs:label "Sawtooth Wave" ;
+  rdfs:comment "A linear rise followed by an instant drop (or vice versa)." .
+
+bsc:BreathWave a bsc:Waveform ;
+  rdfs:label "Breath Wave" ;
+  rdfs:comment "A specialized asymmetric curve designed to mimic natural respiratory flow, with a rounded inhale and a relaxed exhale." ;
+  owl:sameAs bsc:MartigliWave .
+
+# ============================================================================
+# PROPERTIES
+# ============================================================================
+
+bsc:waveform a owl:ObjectProperty ;
+  rdfs:label "waveform" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range bsc:Waveform .
+
+bsc:amplitude a owl:DatatypeProperty ;
+  rdfs:label "amplitude" ;
+  rdfs:comment "The magnitude of the oscillation (0.0 to 1.5)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:inhaleRatio a owl:DatatypeProperty ;
+  rdfs:label "inhale ratio" ;
+  rdfs:comment "The proportion of the period spent in the inhalation phase (0.0 to 1.0)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:startPeriod a owl:DatatypeProperty ;
+  rdfs:label "start period" ;
+  rdfs:comment "The duration of one full cycle at the beginning of the session (seconds)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:endPeriod a owl:DatatypeProperty ;
+  rdfs:label "end period" ;
+  rdfs:comment "The duration of one full cycle at the end of the transition (seconds)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:transitionDuration a owl:DatatypeProperty ;
+  rdfs:label "transition duration" ;
+  rdfs:comment "The time it takes to ramp from the start period to the end period (seconds)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:phaseOffset a owl:DatatypeProperty ;
+  rdfs:label "phase offset" ;
+  rdfs:comment "The starting phase of the oscillation (0.0 to 1.0)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:startOffset a owl:DatatypeProperty ;
+  rdfs:label "start offset" ;
+  rdfs:comment "Delay before the oscillation begins (seconds)." ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
