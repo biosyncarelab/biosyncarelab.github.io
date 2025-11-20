@@ -81,6 +81,52 @@ export class AudioEngine {
   }
 
   /**
+   * Applies automation to an AudioParam, handling both foreground (smooth pursuit)
+   * and background (scheduled trajectory) modes.
+   * @param {AudioParam} audioParam - The Web Audio param to automate
+   * @param {Function} valueFn - Function (time) => value
+   * @param {number} currentTime - Current absolute time
+   */
+  _applyParamAutomation(audioParam, valueFn, currentTime) {
+    if (!audioParam) return;
+    const ctxTime = this.ctx.currentTime;
+
+    if (document.hidden) {
+      // Background mode: Schedule trajectory ahead to survive throttling
+      // Throttle scheduling to ~2Hz to avoid event spam
+      const now = Date.now();
+      if (audioParam._lastBackgroundUpdate && (now - audioParam._lastBackgroundUpdate < 500)) {
+        return;
+      }
+      audioParam._lastBackgroundUpdate = now;
+
+      try {
+        // Cancel future events and anchor current value
+        audioParam.cancelScheduledValues(ctxTime);
+        audioParam.setValueAtTime(audioParam.value, ctxTime);
+
+        const lookahead = 2.0; // Schedule 2 seconds ahead
+        const step = 0.1;      // 100ms resolution
+
+        for (let t = step; t <= lookahead; t += step) {
+          const val = valueFn(currentTime + t);
+          if (isFinite(val)) {
+            audioParam.linearRampToValueAtTime(val, ctxTime + t);
+          }
+        }
+      } catch (e) {
+        console.warn("Automation error", e);
+      }
+    } else {
+      // Foreground mode: Smooth pursuit for responsiveness
+      const val = valueFn(currentTime);
+      if (isFinite(val)) {
+        audioParam.setTargetAtTime(val, ctxTime, 0.05);
+      }
+    }
+  }
+
+  /**
    * Update loop called by the kernel or animation frame
    * @param {number} time - Current time in seconds
    */
@@ -252,57 +298,73 @@ export class AudioEngine {
     if (!nodes || nodes.isFadingOut) return;
 
     // Generic Gain
-    const gainVal = track.getParameter('gain')?.getValue(time) ?? 0.5;
-    nodes.output.gain.setTargetAtTime(gainVal, this.ctx.currentTime, 0.05);
+    this._applyParamAutomation(
+      nodes.output.gain,
+      (t) => track.getParameter('gain')?.getValue(t) ?? 0.5,
+      time
+    );
 
     // Generic Pan
-    const panVal = track.getParameter('pan')?.getValue(time) ?? 0;
-    // console.log(`Track ${track.id} Pan: ${panVal}`); // Debug
-    nodes.panner.pan.setTargetAtTime(panVal, this.ctx.currentTime, 0.05);
+    this._applyParamAutomation(
+      nodes.panner.pan,
+      (t) => track.getParameter('pan')?.getValue(t) ?? 0,
+      time
+    );
 
     if (track.constructor.name === 'SineTrack') {
-      const freq = track.getParameter('frequency')?.getValue(time) ?? 440;
-      nodes.osc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
+      this._applyParamAutomation(
+        nodes.osc.frequency,
+        (t) => track.getParameter('frequency')?.getValue(t) ?? 440,
+        time
+      );
     } else if (track.constructor.name === 'BinauralBeatTrack') {
-      const carrier = track.getParameter('carrier')?.getValue(time) ?? 200;
-      const beat = track.getParameter('beat')?.getValue(time) ?? 10;
+      const carrierParam = track.getParameter('carrier');
+      const beatParam = track.getParameter('beat');
       const waveType = track.getParameter('waveType')?.base ?? 'sine';
 
-      nodes.leftOsc.frequency.setTargetAtTime(carrier, this.ctx.currentTime, 0.05);
-      nodes.rightOsc.frequency.setTargetAtTime(carrier + beat, this.ctx.currentTime, 0.05);
+      this._applyParamAutomation(
+        nodes.leftOsc.frequency,
+        (t) => carrierParam?.getValue(t) ?? 200,
+        time
+      );
+
+      this._applyParamAutomation(
+        nodes.rightOsc.frequency,
+        (t) => (carrierParam?.getValue(t) ?? 200) + (beatParam?.getValue(t) ?? 10),
+        time
+      );
 
       if (nodes.leftOsc.type !== waveType) {
-        // console.log(`Changing waveType to ${waveType}`); // Debug
         nodes.leftOsc.type = waveType;
         nodes.rightOsc.type = waveType;
       }
     } else if (track.constructor.name === 'IsochronicTrack') {
-      const freq = track.getParameter('frequency')?.getValue(time) ?? 200;
-      const rate = track.getParameter('pulseRate')?.getValue(time) ?? 10;
-      const dutyCycle = track.getParameter('dutyCycle')?.getValue(time) ?? 0.5;
       const waveform = track.getParameter('waveform')?.base ?? 'sine';
 
-      nodes.osc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
+      this._applyParamAutomation(
+        nodes.osc.frequency,
+        (t) => track.getParameter('frequency')?.getValue(t) ?? 200,
+        time
+      );
+
       if (nodes.osc.type !== waveform) nodes.osc.type = waveform;
 
-      nodes.lfo.frequency.setTargetAtTime(rate, this.ctx.currentTime, 0.05);
+      this._applyParamAutomation(
+        nodes.lfo.frequency,
+        (t) => track.getParameter('pulseRate')?.getValue(t) ?? 10,
+        time
+      );
 
       // Update WaveShaper curve for Duty Cycle (PWM)
-      // Sawtooth goes -1 to 1. We want output 0 or 1 based on threshold.
-      // Threshold = 1 - 2 * dutyCycle (approx)
-      // If duty is 0.5, threshold is 0. Saw > 0 -> 1, Saw < 0 -> 0.
-      // We need to update the curve only if duty cycle changes significantly to save CPU
-      // For now, let's just update it.
+      const dutyCycle = track.getParameter('dutyCycle')?.getValue(time) ?? 0.5;
 
       if (Math.abs((nodes.lastDuty ?? -1) - dutyCycle) > 0.01) {
         nodes.lastDuty = dutyCycle;
         const curve = new Float32Array(256);
         const threshold = 1 - (2 * dutyCycle);
         for (let i = 0; i < 256; i++) {
-          // Input x is -1 to 1
           const x = (i / 255) * 2 - 1;
-          curve[i] = x > threshold ? 1 : 0; // Simple square pulse
-          // For softer "ADSR" like feel, we could smooth this transition
+          curve[i] = x > threshold ? 1 : 0;
         }
         nodes.shaper.curve = curve;
       }
