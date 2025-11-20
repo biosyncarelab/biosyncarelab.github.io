@@ -1397,7 +1397,7 @@ const handleError = (error) => {
 onAuthChange((user) => {
   updateAuthState(user);
   if (user) {
-    setMessage(`Welcome back, ${user.email ?? "friend"}!`, "success");
+    // setMessage(`Welcome back, ${user.email ?? "friend"}!`, "success");
   } else if (!appState.snapshot().isBusy) {
     setMessage("Signed out", "info");
   }

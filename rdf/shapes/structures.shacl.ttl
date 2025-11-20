@@ -1,0 +1,120 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix bsc:  <https://biosyncarelab.github.io/ont#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix bsh:  <https://biosyncarelab.github.io/shapes#> .
+
+bsh:StructureDatasetShape a sh:NodeShape ;
+  sh:targetClass bsc:StructureDataset ;
+  sh:property [
+    sh:path bsc:hasSequence ;
+    sh:minCount 1 ;
+    sh:node bsh:PermutationSequenceShape ;
+    sh:message "A structure dataset must have at least one permutation sequence." ;
+  ] .
+
+bsh:PermutationSequenceShape a sh:NodeShape ;
+  sh:targetClass bsc:PermutationSequence ;
+  sh:property [
+    sh:path bsc:orderDimension ;
+    sh:datatype xsd:integer ;
+    sh:minCount 1 ;
+    sh:message "Permutation sequences need an orderDimension (number of elements)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:hasRow ;
+    sh:minCount 2 ;
+    sh:node bsh:SequenceRowShape ;
+    sh:message "Permutation sequences should contain at least two rows." ;
+  ] ;
+  sh:property [
+    sh:path bsc:loop ;
+    sh:datatype xsd:boolean ;
+    sh:message "Loop should be boolean when present." ;
+  ] .
+
+bsh:SequenceRowShape a sh:NodeShape ;
+  sh:targetClass bsc:SequenceRow ;
+  sh:property [
+    sh:path bsc:rowIndex ;
+    sh:datatype xsd:integer ;
+    sh:minCount 1 ;
+    sh:message "Row index must be an integer." ;
+  ] ;
+  sh:property [
+    sh:path bsc:rowValues ;
+    sh:datatype xsd:integer ;
+    sh:minCount 1 ;
+    sh:message "Row values should be integers (zero-based positions)." ;
+  ] .
+
+bsh:MartigliOscillationShape a sh:NodeShape ;
+  sh:targetClass bsc:MartigliOscillation ;
+  sh:property [
+    sh:path bsc:waveform ;
+    sh:minCount 1 ;
+    sh:message "Waveform must be provided (e.g., bsc:SineWave)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:startPeriod ;
+    sh:datatype xsd:decimal ;
+    sh:minCount 1 ;
+    sh:message "Start period (seconds) is required." ;
+  ] ;
+  sh:property [
+    sh:path bsc:endPeriod ;
+    sh:datatype xsd:decimal ;
+    sh:minCount 1 ;
+    sh:message "End period (seconds) is required." ;
+  ] ;
+  sh:property [
+    sh:path bsc:transitionDuration ;
+    sh:datatype xsd:decimal ;
+    sh:minCount 1 ;
+    sh:message "Transition duration (seconds) is required." ;
+  ] ;
+  sh:property [
+    sh:path bsc:inhaleRatio ;
+    sh:datatype xsd:decimal ;
+    sh:message "Inhale ratio should be a decimal between 0 and 1." ;
+  ] ;
+  sh:property [
+    sh:path bsc:amplitude ;
+    sh:datatype xsd:decimal ;
+    sh:message "Amplitude should be a decimal value." ;
+  ] .
+
+bsh:TrackShape a sh:NodeShape ;
+  sh:targetClass bsc:Track ;
+  sh:property [
+    sh:path bsc:hasParameter ;
+    sh:minCount 1 ;
+    sh:node bsh:ParameterShape ;
+    sh:message "Tracks must have at least one parameter." ;
+  ] ;
+  sh:property [
+    sh:path bsc:usesSequence ;
+    sh:message "Tracks may reference a permutation sequence for ordering/modulation." ;
+  ] .
+
+bsh:ParameterShape a sh:NodeShape ;
+  sh:targetClass bsc:Parameter ;
+  sh:property [
+    sh:path bsc:parameterName ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:message "Parameter name is required." ;
+  ] ;
+  sh:property [
+    sh:path bsc:baseValue ;
+    sh:datatype xsd:decimal ;
+    sh:message "Base value should be a decimal when present." ;
+  ] ;
+  sh:property [
+    sh:path bsc:depth ;
+    sh:datatype xsd:decimal ;
+    sh:message "Depth should be a decimal when present." ;
+  ] ;
+  sh:property [
+    sh:path bsc:modulator ;
+    sh:message "Modulator should point to an oscillator or modulation source." ;
+  ] .

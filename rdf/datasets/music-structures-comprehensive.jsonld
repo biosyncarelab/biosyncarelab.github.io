@@ -1,0 +1,3375 @@
+{
+  "@context": "https://biosyncarelab.github.io/context/structures.jsonld",
+  "@id": "https://biosyncarelab.github.io/id/structure/music-structures-comprehensive",
+  "@type": "bsc:StructureDataset",
+  "label": "Comprehensive Music Structures",
+  "description": "Full change-ringing library, permutation families, and symmetric group catalog",
+  "hasSequence": [
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Changes on 3 Bells",
+      "orderDimension": 3,
+      "loop": true,
+      "family": "plain_changes",
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            2,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_3/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            0,
+            2,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Changes on 4 Bells",
+      "orderDimension": 4,
+      "loop": true,
+      "family": "plain_changes",
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            2,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            1,
+            2,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            2,
+            1,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            2,
+            1,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            2,
+            0,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            0,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            0,
+            2,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/9",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 9,
+          "rowValues": [
+            2,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/10",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 10,
+          "rowValues": [
+            2,
+            3,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/11",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 11,
+          "rowValues": [
+            2,
+            3,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/12",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 12,
+          "rowValues": [
+            3,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/13",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 13,
+          "rowValues": [
+            3,
+            2,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/14",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 14,
+          "rowValues": [
+            3,
+            0,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/15",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 15,
+          "rowValues": [
+            0,
+            3,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/16",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 16,
+          "rowValues": [
+            0,
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/17",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 17,
+          "rowValues": [
+            3,
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/18",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 18,
+          "rowValues": [
+            3,
+            1,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/19",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 19,
+          "rowValues": [
+            3,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/20",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 20,
+          "rowValues": [
+            1,
+            3,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/21",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 21,
+          "rowValues": [
+            1,
+            3,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/22",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 22,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_4/row/23",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 23,
+          "rowValues": [
+            0,
+            1,
+            3,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Changes on 5 Bells",
+      "orderDimension": 5,
+      "loop": true,
+      "family": "plain_changes",
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            2,
+            0,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            1,
+            2,
+            3,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            1,
+            2,
+            3,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            2,
+            1,
+            3,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            2,
+            1,
+            3,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            2,
+            1,
+            0,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            2,
+            0,
+            1,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/9",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 9,
+          "rowValues": [
+            0,
+            2,
+            1,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/10",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 10,
+          "rowValues": [
+            0,
+            2,
+            3,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/11",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 11,
+          "rowValues": [
+            2,
+            0,
+            3,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/12",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 12,
+          "rowValues": [
+            2,
+            3,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/13",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 13,
+          "rowValues": [
+            2,
+            3,
+            1,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/14",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 14,
+          "rowValues": [
+            2,
+            3,
+            1,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/15",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 15,
+          "rowValues": [
+            2,
+            3,
+            4,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/16",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 16,
+          "rowValues": [
+            2,
+            3,
+            4,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/17",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 17,
+          "rowValues": [
+            2,
+            3,
+            0,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/18",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 18,
+          "rowValues": [
+            2,
+            0,
+            3,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/19",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 19,
+          "rowValues": [
+            0,
+            2,
+            3,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/20",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 20,
+          "rowValues": [
+            0,
+            3,
+            2,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/21",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 21,
+          "rowValues": [
+            3,
+            0,
+            2,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/22",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 22,
+          "rowValues": [
+            3,
+            2,
+            0,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/23",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 23,
+          "rowValues": [
+            3,
+            2,
+            4,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/24",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 24,
+          "rowValues": [
+            3,
+            2,
+            4,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/25",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 25,
+          "rowValues": [
+            3,
+            2,
+            1,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/26",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 26,
+          "rowValues": [
+            3,
+            2,
+            1,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/27",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 27,
+          "rowValues": [
+            3,
+            2,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/28",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 28,
+          "rowValues": [
+            3,
+            0,
+            2,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/29",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 29,
+          "rowValues": [
+            0,
+            3,
+            2,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/30",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 30,
+          "rowValues": [
+            0,
+            3,
+            1,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/31",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 31,
+          "rowValues": [
+            3,
+            0,
+            1,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/32",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 32,
+          "rowValues": [
+            3,
+            1,
+            0,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/33",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 33,
+          "rowValues": [
+            3,
+            1,
+            2,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/34",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 34,
+          "rowValues": [
+            3,
+            1,
+            2,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/35",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 35,
+          "rowValues": [
+            1,
+            3,
+            2,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/36",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 36,
+          "rowValues": [
+            1,
+            3,
+            2,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/37",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 37,
+          "rowValues": [
+            1,
+            3,
+            0,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/38",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 38,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/39",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 39,
+          "rowValues": [
+            0,
+            1,
+            3,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/40",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 40,
+          "rowValues": [
+            0,
+            1,
+            3,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/41",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 41,
+          "rowValues": [
+            1,
+            0,
+            3,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/42",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 42,
+          "rowValues": [
+            1,
+            3,
+            0,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/43",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 43,
+          "rowValues": [
+            1,
+            3,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/44",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 44,
+          "rowValues": [
+            1,
+            3,
+            4,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/45",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 45,
+          "rowValues": [
+            3,
+            1,
+            4,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/46",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 46,
+          "rowValues": [
+            3,
+            1,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/47",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 47,
+          "rowValues": [
+            3,
+            1,
+            0,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/48",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 48,
+          "rowValues": [
+            3,
+            0,
+            1,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/49",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 49,
+          "rowValues": [
+            0,
+            3,
+            1,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/50",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 50,
+          "rowValues": [
+            0,
+            3,
+            4,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/51",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 51,
+          "rowValues": [
+            3,
+            0,
+            4,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/52",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 52,
+          "rowValues": [
+            3,
+            4,
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/53",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 53,
+          "rowValues": [
+            3,
+            4,
+            1,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/54",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 54,
+          "rowValues": [
+            3,
+            4,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/55",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 55,
+          "rowValues": [
+            3,
+            4,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/56",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 56,
+          "rowValues": [
+            3,
+            4,
+            2,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/57",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 57,
+          "rowValues": [
+            3,
+            4,
+            0,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/58",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 58,
+          "rowValues": [
+            3,
+            0,
+            4,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/59",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 59,
+          "rowValues": [
+            0,
+            3,
+            4,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/60",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 60,
+          "rowValues": [
+            0,
+            4,
+            3,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/61",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 61,
+          "rowValues": [
+            4,
+            0,
+            3,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/62",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 62,
+          "rowValues": [
+            4,
+            3,
+            0,
+            2,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/63",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 63,
+          "rowValues": [
+            4,
+            3,
+            2,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/64",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 64,
+          "rowValues": [
+            4,
+            3,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/65",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 65,
+          "rowValues": [
+            4,
+            3,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/66",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 66,
+          "rowValues": [
+            4,
+            3,
+            1,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/67",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 67,
+          "rowValues": [
+            4,
+            3,
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/68",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 68,
+          "rowValues": [
+            4,
+            0,
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/69",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 69,
+          "rowValues": [
+            0,
+            4,
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/70",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 70,
+          "rowValues": [
+            0,
+            4,
+            1,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/71",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 71,
+          "rowValues": [
+            4,
+            0,
+            1,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/72",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 72,
+          "rowValues": [
+            4,
+            1,
+            0,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/73",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 73,
+          "rowValues": [
+            4,
+            1,
+            3,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/74",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 74,
+          "rowValues": [
+            4,
+            1,
+            3,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/75",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 75,
+          "rowValues": [
+            1,
+            4,
+            3,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/76",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 76,
+          "rowValues": [
+            1,
+            4,
+            3,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/77",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 77,
+          "rowValues": [
+            1,
+            4,
+            0,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/78",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 78,
+          "rowValues": [
+            1,
+            0,
+            4,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/79",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 79,
+          "rowValues": [
+            0,
+            1,
+            4,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/80",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 80,
+          "rowValues": [
+            0,
+            1,
+            4,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/81",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 81,
+          "rowValues": [
+            1,
+            0,
+            4,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/82",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 82,
+          "rowValues": [
+            1,
+            4,
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/83",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 83,
+          "rowValues": [
+            1,
+            4,
+            2,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/84",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 84,
+          "rowValues": [
+            1,
+            4,
+            2,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/85",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 85,
+          "rowValues": [
+            4,
+            1,
+            2,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/86",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 86,
+          "rowValues": [
+            4,
+            1,
+            2,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/87",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 87,
+          "rowValues": [
+            4,
+            1,
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/88",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 88,
+          "rowValues": [
+            4,
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/89",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 89,
+          "rowValues": [
+            0,
+            4,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/90",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 90,
+          "rowValues": [
+            0,
+            4,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/91",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 91,
+          "rowValues": [
+            4,
+            0,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/92",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 92,
+          "rowValues": [
+            4,
+            2,
+            0,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/93",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 93,
+          "rowValues": [
+            4,
+            2,
+            1,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/94",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 94,
+          "rowValues": [
+            4,
+            2,
+            1,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/95",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 95,
+          "rowValues": [
+            4,
+            2,
+            3,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/96",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 96,
+          "rowValues": [
+            4,
+            2,
+            3,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/97",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 97,
+          "rowValues": [
+            4,
+            2,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/98",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 98,
+          "rowValues": [
+            4,
+            0,
+            2,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/99",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 99,
+          "rowValues": [
+            0,
+            4,
+            2,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/100",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 100,
+          "rowValues": [
+            0,
+            2,
+            4,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/101",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 101,
+          "rowValues": [
+            2,
+            0,
+            4,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/102",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 102,
+          "rowValues": [
+            2,
+            4,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/103",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 103,
+          "rowValues": [
+            2,
+            4,
+            3,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/104",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 104,
+          "rowValues": [
+            2,
+            4,
+            3,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/105",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 105,
+          "rowValues": [
+            2,
+            4,
+            1,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/106",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 106,
+          "rowValues": [
+            2,
+            4,
+            1,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/107",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 107,
+          "rowValues": [
+            2,
+            4,
+            0,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/108",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 108,
+          "rowValues": [
+            2,
+            0,
+            4,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/109",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 109,
+          "rowValues": [
+            0,
+            2,
+            4,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/110",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 110,
+          "rowValues": [
+            0,
+            2,
+            1,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/111",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 111,
+          "rowValues": [
+            2,
+            0,
+            1,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/112",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 112,
+          "rowValues": [
+            2,
+            1,
+            0,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/113",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 113,
+          "rowValues": [
+            2,
+            1,
+            4,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/114",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 114,
+          "rowValues": [
+            2,
+            1,
+            4,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/115",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 115,
+          "rowValues": [
+            1,
+            2,
+            4,
+            3,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/116",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 116,
+          "rowValues": [
+            1,
+            2,
+            4,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/117",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 117,
+          "rowValues": [
+            1,
+            2,
+            0,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/118",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 118,
+          "rowValues": [
+            1,
+            0,
+            2,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_5/row/119",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 119,
+          "rowValues": [
+            0,
+            1,
+            2,
+            4,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Changes on 6 Bells",
+      "orderDimension": 6,
+      "loop": true,
+      "family": "plain_changes",
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            2,
+            0,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            1,
+            2,
+            3,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            1,
+            2,
+            3,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            2,
+            1,
+            3,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            2,
+            1,
+            3,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            2,
+            1,
+            3,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/9",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 9,
+          "rowValues": [
+            2,
+            1,
+            0,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/10",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 10,
+          "rowValues": [
+            2,
+            0,
+            1,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/11",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 11,
+          "rowValues": [
+            0,
+            2,
+            1,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/12",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 12,
+          "rowValues": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/13",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 13,
+          "rowValues": [
+            2,
+            0,
+            3,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/14",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 14,
+          "rowValues": [
+            2,
+            3,
+            0,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/15",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 15,
+          "rowValues": [
+            2,
+            3,
+            1,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/16",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 16,
+          "rowValues": [
+            2,
+            3,
+            1,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/17",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 17,
+          "rowValues": [
+            2,
+            3,
+            1,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/18",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 18,
+          "rowValues": [
+            2,
+            3,
+            4,
+            1,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/19",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 19,
+          "rowValues": [
+            2,
+            3,
+            4,
+            1,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/20",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 20,
+          "rowValues": [
+            2,
+            3,
+            4,
+            0,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/21",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 21,
+          "rowValues": [
+            2,
+            3,
+            0,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/22",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 22,
+          "rowValues": [
+            2,
+            0,
+            3,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/23",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 23,
+          "rowValues": [
+            0,
+            2,
+            3,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/24",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 24,
+          "rowValues": [
+            0,
+            2,
+            3,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/25",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 25,
+          "rowValues": [
+            2,
+            0,
+            3,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/26",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 26,
+          "rowValues": [
+            2,
+            3,
+            0,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/27",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 27,
+          "rowValues": [
+            2,
+            3,
+            4,
+            0,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/28",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 28,
+          "rowValues": [
+            2,
+            3,
+            4,
+            5,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/29",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 29,
+          "rowValues": [
+            2,
+            3,
+            4,
+            5,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/30",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 30,
+          "rowValues": [
+            3,
+            2,
+            4,
+            5,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/31",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 31,
+          "rowValues": [
+            3,
+            2,
+            4,
+            5,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/32",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 32,
+          "rowValues": [
+            3,
+            2,
+            4,
+            0,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/33",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 33,
+          "rowValues": [
+            3,
+            2,
+            0,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/34",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 34,
+          "rowValues": [
+            3,
+            0,
+            2,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/35",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 35,
+          "rowValues": [
+            0,
+            3,
+            2,
+            4,
+            5,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/36",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 36,
+          "rowValues": [
+            0,
+            3,
+            2,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/37",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 37,
+          "rowValues": [
+            3,
+            0,
+            2,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/38",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 38,
+          "rowValues": [
+            3,
+            2,
+            0,
+            4,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/39",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 39,
+          "rowValues": [
+            3,
+            2,
+            4,
+            0,
+            1,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/40",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 40,
+          "rowValues": [
+            3,
+            2,
+            4,
+            1,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/41",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 41,
+          "rowValues": [
+            3,
+            2,
+            4,
+            1,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/42",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 42,
+          "rowValues": [
+            3,
+            2,
+            1,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/43",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 43,
+          "rowValues": [
+            3,
+            2,
+            1,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/44",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 44,
+          "rowValues": [
+            3,
+            2,
+            1,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/45",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 45,
+          "rowValues": [
+            3,
+            2,
+            0,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/46",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 46,
+          "rowValues": [
+            3,
+            0,
+            2,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/47",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 47,
+          "rowValues": [
+            0,
+            3,
+            2,
+            1,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/48",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 48,
+          "rowValues": [
+            0,
+            3,
+            1,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/49",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 49,
+          "rowValues": [
+            3,
+            0,
+            1,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/50",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 50,
+          "rowValues": [
+            3,
+            1,
+            0,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/51",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 51,
+          "rowValues": [
+            3,
+            1,
+            2,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/52",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 52,
+          "rowValues": [
+            3,
+            1,
+            2,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/53",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 53,
+          "rowValues": [
+            3,
+            1,
+            2,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/54",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 54,
+          "rowValues": [
+            1,
+            3,
+            2,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/55",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 55,
+          "rowValues": [
+            1,
+            3,
+            2,
+            4,
+            0,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/56",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 56,
+          "rowValues": [
+            1,
+            3,
+            2,
+            0,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/57",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 57,
+          "rowValues": [
+            1,
+            3,
+            0,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/58",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 58,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/59",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 59,
+          "rowValues": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/60",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 60,
+          "rowValues": [
+            0,
+            1,
+            3,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/61",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 61,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/62",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 62,
+          "rowValues": [
+            1,
+            3,
+            0,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/63",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 63,
+          "rowValues": [
+            1,
+            3,
+            2,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/64",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 64,
+          "rowValues": [
+            1,
+            3,
+            2,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/65",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 65,
+          "rowValues": [
+            1,
+            3,
+            2,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/66",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 66,
+          "rowValues": [
+            3,
+            1,
+            2,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/67",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 67,
+          "rowValues": [
+            3,
+            1,
+            2,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/68",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 68,
+          "rowValues": [
+            3,
+            1,
+            2,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/69",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 69,
+          "rowValues": [
+            3,
+            1,
+            0,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/70",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 70,
+          "rowValues": [
+            3,
+            0,
+            1,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/71",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 71,
+          "rowValues": [
+            0,
+            3,
+            1,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/72",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 72,
+          "rowValues": [
+            0,
+            3,
+            2,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/73",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 73,
+          "rowValues": [
+            3,
+            0,
+            2,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/74",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 74,
+          "rowValues": [
+            3,
+            2,
+            0,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/75",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 75,
+          "rowValues": [
+            3,
+            2,
+            1,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/76",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 76,
+          "rowValues": [
+            3,
+            2,
+            1,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/77",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 77,
+          "rowValues": [
+            3,
+            2,
+            1,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/78",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 78,
+          "rowValues": [
+            3,
+            2,
+            5,
+            1,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/79",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 79,
+          "rowValues": [
+            3,
+            2,
+            5,
+            1,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/80",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 80,
+          "rowValues": [
+            3,
+            2,
+            5,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/81",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 81,
+          "rowValues": [
+            3,
+            2,
+            0,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/82",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 82,
+          "rowValues": [
+            3,
+            0,
+            2,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/83",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 83,
+          "rowValues": [
+            0,
+            3,
+            2,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/84",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 84,
+          "rowValues": [
+            0,
+            3,
+            2,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/85",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 85,
+          "rowValues": [
+            3,
+            0,
+            2,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/86",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 86,
+          "rowValues": [
+            3,
+            2,
+            0,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/87",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 87,
+          "rowValues": [
+            3,
+            2,
+            5,
+            0,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/88",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 88,
+          "rowValues": [
+            3,
+            2,
+            5,
+            4,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/89",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 89,
+          "rowValues": [
+            3,
+            2,
+            5,
+            4,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/90",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 90,
+          "rowValues": [
+            2,
+            3,
+            5,
+            4,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/91",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 91,
+          "rowValues": [
+            2,
+            3,
+            5,
+            4,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/92",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 92,
+          "rowValues": [
+            2,
+            3,
+            5,
+            0,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/93",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 93,
+          "rowValues": [
+            2,
+            3,
+            0,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/94",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 94,
+          "rowValues": [
+            2,
+            0,
+            3,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/95",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 95,
+          "rowValues": [
+            0,
+            2,
+            3,
+            5,
+            4,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/96",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 96,
+          "rowValues": [
+            0,
+            2,
+            3,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/97",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 97,
+          "rowValues": [
+            2,
+            0,
+            3,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/98",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 98,
+          "rowValues": [
+            2,
+            3,
+            0,
+            5,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/99",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 99,
+          "rowValues": [
+            2,
+            3,
+            5,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/100",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 100,
+          "rowValues": [
+            2,
+            3,
+            5,
+            1,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/101",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 101,
+          "rowValues": [
+            2,
+            3,
+            5,
+            1,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/102",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 102,
+          "rowValues": [
+            2,
+            3,
+            1,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/103",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 103,
+          "rowValues": [
+            2,
+            3,
+            1,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/104",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 104,
+          "rowValues": [
+            2,
+            3,
+            1,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/105",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 105,
+          "rowValues": [
+            2,
+            3,
+            0,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/106",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 106,
+          "rowValues": [
+            2,
+            0,
+            3,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/107",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 107,
+          "rowValues": [
+            0,
+            2,
+            3,
+            1,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/108",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 108,
+          "rowValues": [
+            0,
+            2,
+            1,
+            3,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/109",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 109,
+          "rowValues": [
+            2,
+            0,
+            1,
+            3,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/110",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 110,
+          "rowValues": [
+            2,
+            1,
+            0,
+            3,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/111",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 111,
+          "rowValues": [
+            2,
+            1,
+            3,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/112",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 112,
+          "rowValues": [
+            2,
+            1,
+            3,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/113",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 113,
+          "rowValues": [
+            2,
+            1,
+            3,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/114",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 114,
+          "rowValues": [
+            1,
+            2,
+            3,
+            5,
+            4,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/115",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 115,
+          "rowValues": [
+            1,
+            2,
+            3,
+            5,
+            0,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/116",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 116,
+          "rowValues": [
+            1,
+            2,
+            3,
+            0,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/117",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 117,
+          "rowValues": [
+            1,
+            2,
+            0,
+            3,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/118",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 118,
+          "rowValues": [
+            1,
+            0,
+            2,
+            3,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/music-structures-comprehensive/plain_changes_6/row/119",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 119,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            5,
+            4
+          ]
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2025-11-20T18:30:42.665852+00:00",
+  "source": "scripts/music/export_structures.py"
+}

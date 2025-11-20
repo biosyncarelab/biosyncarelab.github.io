@@ -36,7 +36,7 @@ function toZeroBased(rows) {
   return rows.map((row) => row.map((v) => v - 1));
 }
 
-function normalizeStructure(data, overrides = {}) {
+export function normalizeStructure(data, overrides = {}) {
   // Handle comprehensive music structures format (from export_structures.py)
   if (data.changeRinging || data.permutationFamilies || data.symmetryStructures) {
     return {

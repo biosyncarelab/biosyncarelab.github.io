@@ -1791,3 +1791,51 @@ select {
   border-radius: var(--radius-sm);
   overflow-x: auto;
 }
+
+/* Usage Examples Section */
+.usage-examples {
+  margin-top: 1.5rem;
+}
+
+.usage-example {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.usage-example:last-child {
+  margin-bottom: 0;
+}
+
+.usage-example-header {
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.usage-example-details {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.usage-example-details dt {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.usage-example-details dt:first-child {
+  margin-top: 0;
+}
+
+.usage-example-details dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding-left: 1rem;
+}

@@ -1,10 +1,12 @@
 /* NSO Navigator specific styles */
 
-.nso-body {
+.nso-wrapper {
   padding: 0;
   background: #020617;
-  align-items: stretch;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140px); /* Adjust for header/tabs */
+  overflow: hidden;
 }
 
 .nso-header {

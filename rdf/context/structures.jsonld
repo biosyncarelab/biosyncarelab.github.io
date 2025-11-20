@@ -1,0 +1,118 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "bsc": "https://biosyncarelab.github.io/ont#",
+    "id": "https://biosyncarelab.github.io/id/",
+    "dct": "http://purl.org/dc/terms/",
+    "schema": "http://schema.org/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "prov": "http://www.w3.org/ns/prov#",
+
+    "StructureDataset": "bsc:StructureDataset",
+    "PermutationSequence": "bsc:PermutationSequence",
+    "SequenceRow": "bsc:SequenceRow",
+    "PermutationFamily": "bsc:PermutationFamily",
+    "SymmetricGroup": "bsc:SymmetricGroup",
+    "SymmetryStructure": "bsc:SymmetryStructure",
+    "MartigliOscillation": "bsc:MartigliOscillation",
+    "Track": "bsc:Track",
+    "AudioTrack": "bsc:AudioTrack",
+    "VisualTrack": "bsc:VisualTrack",
+    "HapticTrack": "bsc:HapticTrack",
+    "Parameter": "bsc:Parameter",
+
+    "label": "rdfs:label",
+    "description": "dct:description",
+    "comment": "schema:comment",
+    "generatedAt": {
+      "@id": "dct:created",
+      "@type": "xsd:dateTime"
+    },
+    "modifiedAt": {
+      "@id": "dct:modified",
+      "@type": "xsd:dateTime"
+    },
+    "source": "dct:source",
+    "family": "bsc:family",
+
+    "hasSequence": "bsc:hasSequence",
+    "hasRow": "bsc:hasRow",
+    "rowIndex": {
+      "@id": "bsc:rowIndex",
+      "@type": "xsd:integer"
+    },
+    "rowValues": "bsc:rowValues",
+    "orderDimension": {
+      "@id": "bsc:orderDimension",
+      "@type": "xsd:integer"
+    },
+    "stage": {
+      "@id": "bsc:stage",
+      "@type": "xsd:integer"
+    },
+    "loop": {
+      "@id": "bsc:loop",
+      "@type": "xsd:boolean"
+    },
+
+    "cycleSignature": "bsc:cycleSignature",
+    "parity": "bsc:parity",
+    "sign": {
+      "@id": "bsc:sign",
+      "@type": "xsd:integer"
+    },
+    "adjacentOnly": {
+      "@id": "bsc:adjacentOnly",
+      "@type": "xsd:boolean"
+    },
+    "hasGenerator": "bsc:hasGenerator",
+    "rotations": "bsc:rotations",
+    "mirrors": "bsc:mirrors",
+    "dihedral": "bsc:dihedral",
+
+    "usesSequence": "bsc:usesSequence",
+    "hasParameter": "bsc:hasParameter",
+    "parameterName": "bsc:parameterName",
+    "baseValue": {
+      "@id": "bsc:baseValue",
+      "@type": "xsd:decimal"
+    },
+    "depth": {
+      "@id": "bsc:depth",
+      "@type": "xsd:decimal"
+    },
+    "modulator": "bsc:modulator",
+
+    "waveform": "bsc:waveform",
+    "startPeriod": {
+      "@id": "bsc:startPeriod",
+      "@type": "xsd:decimal"
+    },
+    "endPeriod": {
+      "@id": "bsc:endPeriod",
+      "@type": "xsd:decimal"
+    },
+    "transitionDuration": {
+      "@id": "bsc:transitionDuration",
+      "@type": "xsd:decimal"
+    },
+    "inhaleRatio": {
+      "@id": "bsc:inhaleRatio",
+      "@type": "xsd:decimal"
+    },
+    "amplitude": {
+      "@id": "bsc:amplitude",
+      "@type": "xsd:decimal"
+    },
+    "phaseOffset": {
+      "@id": "bsc:phaseOffset",
+      "@type": "xsd:decimal"
+    },
+    "startOffset": {
+      "@id": "bsc:startOffset",
+      "@type": "xsd:decimal"
+    },
+    "trajectory": "bsc:trajectory"
+  }
+}

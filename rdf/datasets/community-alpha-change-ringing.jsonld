@@ -1,0 +1,305 @@
+{
+  "@context": "https://biosyncarelab.github.io/context/structures.jsonld",
+  "@id": "https://biosyncarelab.github.io/id/structure/community-alpha-change-ringing",
+  "@type": "bsc:StructureDataset",
+  "label": "Community Alpha · Change Ringing",
+  "description": "Plain hunt cycles for ordering tracks/parameters; rows are 1-based and wrap to rounds.",
+  "hasSequence": [
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Hunt on 6",
+      "description": "Six-element plain hunt pattern. Starting from rounds (1,2,3,4,5,6), adjacent pairs swap alternately through 12 changes before returning. With 6 bells, you can modulate up to 6 simultaneous track parameters in a coordinated cyclical pattern. Common in traditional bell ringing as 'Plain Bob Minor'.",
+      "orderDimension": 6,
+      "loop": true,
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            3,
+            0,
+            5,
+            2,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            3,
+            1,
+            5,
+            0,
+            4,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            3,
+            5,
+            1,
+            4,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            5,
+            3,
+            4,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            5,
+            4,
+            3,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            4,
+            5,
+            2,
+            3,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            4,
+            2,
+            5,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/9",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 9,
+          "rowValues": [
+            2,
+            4,
+            0,
+            5,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/10",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 10,
+          "rowValues": [
+            2,
+            0,
+            4,
+            1,
+            5,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/11",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 11,
+          "rowValues": [
+            0,
+            2,
+            1,
+            4,
+            3,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-6/row/12",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 12,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4",
+      "@type": "bsc:PermutationSequence",
+      "label": "Plain Hunt on 4",
+      "description": "Four-element plain hunt pattern. Cycles through 8 distinct permutations before returning to rounds. Ideal for modulating a quartet of parameters (e.g., four audio tracks or two stereo pairs). Known in bell ringing as 'Plain Bob Minimus'. The smaller dimension creates faster cycling suitable for shorter sessions.",
+      "orderDimension": 4,
+      "loop": true,
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            1,
+            3,
+            0,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            3,
+            1,
+            2,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            3,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            2,
+            3,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            2,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            0,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/community-alpha-change-ringing/plain-hunt-4/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2025-11-17T00:00:00Z",
+  "source": {
+    "method": "plain_hunt",
+    "library": "music (first-party)",
+    "generator": "Python Structures pod",
+    "generated": "2025-11-17T00:00:00Z",
+    "notes": "Deterministic plain-hunt permutations; convert to 0-based indices for arrays."
+  }
+}

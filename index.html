@@ -7,6 +7,8 @@
     <link rel="icon" href="external/biosyncare/icons/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/nso-navigator.css" />
+    <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -80,9 +82,13 @@
         <button type="button" id="tab-dashboard" class="lab-tab active" role="tab" aria-selected="true" aria-controls="panel-dashboard">
           Dashboard
         </button>
-        <button type="button" id="tab-structures" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-structures">
+                <button type="button" id="tab-structures" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-structures">
           Structure Explorer
         </button>
+        <button type="button" id="tab-nso" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-nso">
+          NSO Navigator
+        </button>
+      </nav>
         <button type="button" id="tab-nso" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-nso">
           NSO Navigator
         </button>
@@ -215,24 +221,298 @@
       </div>
 
       <div id="panel-nso" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-nso">
-        <div class="visualizer-container">
-          <header class="visualizer-header">
-            <h2>NSO Navigator</h2>
-            <p class="muted-text">Explore the Neurosensory Stimulation Ontology and semantic structures</p>
-          </header>
+        <div class="nso-wrapper">
+            <header class="nso-header">
+              <div class="nso-header-content">
+                <h2>NSO Navigator</h2>
+                <p class="muted-text">Neurosensory Stimulation Ontology Browser</p>
+              </div>
+              <div class="nso-header-controls">
+                <select id="ontology-selector" class="ontology-selector" title="Select an ontology to visualize">
+                  <optgroup label="━━━ Main Ontologies ━━━">
+                    <option value="bsc-consolidated" data-description="Complete: 60+ classes across audio, visual, multimodal techniques and outcomes (evidence 0-5 scale)">
+                      NSO Consolidated v1.0
+                    </option>
+                    <option value="bsc-audio" data-description="6 audio techniques: binaural/monaural beats, isochronic, solfeggio (evidence 0.5-2.5)">
+                      Audio Techniques
+                    </option>
+                    <option value="bsc-visual" data-description="7 visual: flicker, color, entrainment, Ganzfeld (evidence 1.2-3.8, epilepsy warnings)">
+                      Visual Techniques
+                    </option>
+                    <option value="bsc-mixed" data-description="9 multimodal: audiovisual, vibroacoustic, VR, haptic (evidence 1.5-3.5)">
+                      Multimodal Techniques
+                    </option>
+                    <option value="bsc-martigli" data-description="Martigli oscillation parameters: waveforms, periods, inhale ratios, and configuration metadata">
+                      Martigli Breathing
+                    </option>
+                    <option value="bsc-outcomes" data-description="30+ outcomes: cognitive, emotional, physiological, behavioral with measurement standards" selected>
+                      Outcomes Taxonomy
+                    </option>
+                  </optgroup>
+                  <optgroup label="━━━ Core & Legacy ━━━">
+                    <option value="bsc-owl" data-description="Core classes (Project, Session, Technique, Outcome) + 11 safety/evidence properties">
+                      BSC Core (OWL)
+                    </option>
+                    <option value="bsc-skos" data-description="SKOS concept schemes for neurosensory stimulation">
+                      BSC Core (SKOS)
+                    </option>
+                    <option value="sso-ontology" data-description="External: Sensory Stimulation Ontology (legacy)">
+                      SSO Ontology (legacy)
+                    </option>
+                    <option value="sso-extended" data-description="External: Extended SSO (legacy)">
+                      SSO Extended (legacy)
+                    </option>
+                    <option value="sso-initial" data-description="External: SSO with hierarchies (legacy)">
+                      SSO Initial (legacy)
+                    </option>
+                    <option value="sso-updated" data-description="External: Updated SSO (legacy)">
+                      SSO Updated (legacy)
+                    </option>
+                    <option value="onc-ontology" data-description="External: Neurosensory Care Ontology (legacy)">
+                      ONC Ontology (legacy)
+                    </option>
+                    <option value="onc-attachment" data-description="External: ONC with hierarchies (legacy)">
+                      ONC Attachment (legacy)
+                    </option>
+                    <option value="harmonicare-sso" data-description="External: HarmoniCare SSO variant (legacy)">
+                      HarmoniCare SSO (legacy)
+                    </option>
+                    <option value="harmonicare-sso-alt" data-description="External: HarmoniCare SSO alt (legacy)">
+                      HarmoniCare SSO Alt (legacy)
+                    </option>
+                  </optgroup>
+                </select>
+                <div id="ontology-description" class="ontology-description" style="font-size: 0.85em; color: #666; margin-top: 4px; max-width: 600px;"></div>
+                <select id="layout-selector" class="layout-selector">
+                  <option value="cose">Force-Directed (COSE)</option>
+                  <option value="circle">Circle</option>
+                  <option value="concentric">Concentric</option>
+                  <option value="breadthfirst">Breadth-First Tree</option>
+                  <option value="grid">Grid</option>
+                  <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
+                </select>
+                <button type="button" id="reset-view" class="ghost small">Reset View</button>
+              </div>
+            </header>
 
-          <div class="nso-content">
-            <p class="muted-text">NSO Navigator integration coming soon. This will provide:</p>
-            <ul>
-              <li>Semantic graph visualization</li>
-              <li>Concept relationships and properties</li>
-              <li>RDF data browser</li>
-              <li>Links to musical structures and session concepts</li>
-            </ul>
-            <p class="muted-text" style="margin-top: 1rem;">
-              For now, visit <a href="nso-navigator.html" target="_blank">NSO Navigator</a> as a separate page.
-            </p>
-          </div>
+            <!-- Inline Semantic & Edge Filters Row -->
+            <div class="filter-row">
+              <div class="filter-block">
+                <div class="filter-label">📊 Evidence</div>
+                <div class="filter-control">
+                  <input type="range" id="evidence-level-slider" min="0" max="5" step="0.1" value="0" />
+                  <span class="filter-note"><span id="evidence-level-value">0.0+</span>/5</span>
+                </div>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">⚠️ Safety</div>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-serious-warnings" />
+                  <span>Hide SERIOUS</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-safe-only" />
+                  <span>Safe only</span>
+                </label>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">🎵 Modality</div>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-audio" checked />
+                  <span>Audio</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-visual" checked />
+                  <span>Visual</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-mixed" checked />
+                  <span>Mixed</span>
+                </label>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">🎯 Outcomes</div>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-cognitive" checked />
+                  <span>Cognitive</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-emotional" checked />
+                  <span>Emotional</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-physiological" checked />
+                  <span>Physiological</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-behavioral" checked />
+                  <span>Behavioral</span>
+                </label>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">🧭 Other Entities</div>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-protocol" checked />
+                  <span>Protocols/Sessions/Reports</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-group" checked />
+                  <span>Participant Groups</span>
+                </label>
+                <label class="filter-checkbox inline">
+                  <input type="checkbox" id="filter-other-meta" checked />
+                  <span>Other Admin/Meta</span>
+                </label>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">🕸️ Edges</div>
+                <div id="edge-filters" class="edge-inline">
+                  <label class="filter-checkbox inline">
+                    <input type="checkbox" id="filter-subclass" checked />
+                    <span>Subclass/Hierarchy</span>
+                  </label>
+                  <label class="filter-checkbox inline">
+                    <input type="checkbox" id="filter-object" checked />
+                    <span>Object Properties</span>
+                  </label>
+                  <label class="filter-checkbox inline">
+                    <input type="checkbox" id="filter-data" checked />
+                    <span>Data Properties</span>
+                  </label>
+                  <label class="filter-checkbox inline">
+                    <input type="checkbox" id="filter-skos" checked />
+                    <span>SKOS (broader/narrower/related)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="filter-block">
+                <div class="filter-label">⚙️ View</div>
+                <button type="button" id="toggle-properties" class="ghost small">
+                  <span id="properties-toggle-text">Hide Properties</span>
+                </button>
+                <button type="button" id="select-all-filters" class="ghost small">Select All</button>
+                <button type="button" id="invert-filters" class="ghost small">Invert</button>
+                <button type="button" id="reset-filters" class="ghost small">Reset Filters</button>
+              </div>
+            </div>
+            <div id="filter-status" class="filter-status" aria-live="polite"></div>
+
+            <div class="nso-container">
+              <aside id="uri-inspector" class="uri-inspector hidden">
+                <div class="inspector-header">
+                  <h2 id="inspector-title">URI Inspector</h2>
+                  <button type="button" id="close-inspector" class="ghost small" aria-label="Close inspector">×</button>
+                </div>
+
+                <div class="inspector-content">
+                  <section class="inspector-section">
+                    <h3>URI</h3>
+                    <code id="inspector-uri" class="uri-display"></code>
+                  </section>
+
+                  <section class="inspector-section">
+                    <h3>Type</h3>
+                    <p id="inspector-type" class="type-badge"></p>
+                  </section>
+
+                  <section class="inspector-section">
+                    <h3>Label</h3>
+                    <p id="inspector-label"></p>
+                  </section>
+
+                  <section class="inspector-section">
+                    <h3>Definition</h3>
+                    <p id="inspector-definition" class="muted-text"></p>
+                  </section>
+
+                  <section class="inspector-section">
+                    <h3>Properties</h3>
+                    <dl id="inspector-properties" class="property-list"></dl>
+                  </section>
+
+                  <section class="inspector-section">
+                    <h3>Comments</h3>
+                    <div id="inspector-comments" class="comments-list"></div>
+                    <button type="button" id="add-comment-btn" class="ghost small">+ Add Comment</button>
+
+                    <form id="comment-form" class="comment-form hidden">
+                      <textarea
+                        id="comment-input"
+                        placeholder="Add your comment or annotation..."
+                        rows="3"
+                        required
+                      ></textarea>
+                      <div class="form-actions">
+                        <button type="submit" class="primary small">Save</button>
+                        <button type="button" id="cancel-comment" class="ghost small">Cancel</button>
+                      </div>
+                    </form>
+                  </section>
+                </div>
+              </aside>
+
+              <main class="graph-container">
+                <div id="cy-canvas" class="cy-canvas"></div>
+
+                <div class="graph-legend">
+                  <h4>Legend</h4>
+                  <div class="legend-items">
+                    <div class="legend-section">
+                      <strong>Nodes</strong>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: #38bdf8"></span>
+                        <span>Class</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: #22d3ee"></span>
+                        <span>Concept</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: #a78bfa"></span>
+                        <span>Object Property</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: #fb923c"></span>
+                        <span>Data Property</span>
+                      </div>
+                    </div>
+                    <div class="legend-section">
+                      <strong>Edges</strong>
+                      <div class="legend-item">
+                        <span class="legend-arrow subclass"></span>
+                        <span>Subclass/Hierarchy</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-arrow domain"></span>
+                        <span>Domain</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-arrow range"></span>
+                        <span>Range</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-arrow related"></span>
+                        <span>Related/Other</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="loading-indicator" class="loading-indicator">
+                  <p>Loading ontology...</p>
+                </div>
+
+                <div id="error-message" class="error-message hidden">
+                  <p id="error-text"></p>
+                </div>
+              </main>
+            </div>
         </div>
       </div>
     </div>
@@ -343,5 +623,6 @@
     </section>
 
     <script type="module" src="scripts/auth.js"></script>
+    <script type="module" src="scripts/nso-navigator.js"></script>
   </body>
 </html>

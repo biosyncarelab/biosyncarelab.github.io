@@ -30,6 +30,26 @@
       "id": "phase-6-4-4-2",
       "label": "6-step · 4-4-2 emphasis",
       "explanation": "Six-element sequence with 4-4-2 phase emphasis (4 steps inhale, 4 hold, 2 exhale). This ratio creates a relaxed breathing pattern with extended inhale and hold phases. Elements rotate through positions with emphasis matching breath intensity. Ideal for calming, meditative sessions.",
+      "usageExamples": [
+        {
+          "scenario": "Evening meditation with 6 binaural beats",
+          "breathing": "Set Martigli oscillator to 5 breaths/minute (12-second cycle: 4.8s inhale, 4.8s hold, 2.4s exhale)",
+          "trackMapping": "Map 6 binaural beat tracks (40Hz→8Hz gradient) to sequence positions. During inhale (rows 0-3), higher-frequency tracks gain prominence. During hold (rows 4-7), mid-range frequencies stabilize. During exhale (rows 8-9), lowest frequencies dominate.",
+          "outcome": "Gradual descent from alert gamma waves to meditative theta, synchronized with breath for deep relaxation."
+        },
+        {
+          "scenario": "Sleep preparation with spatial audio",
+          "breathing": "Ultra-slow breathing at 4 breaths/minute (15-second cycle: 6s inhale, 6s hold, 3s exhale)",
+          "trackMapping": "Assign 6 audio tracks with different spatial positions (front-left, front-center, front-right, back-left, back-center, back-right). Each row shifts which position is emphasized, creating a clockwise rotation of sound emphasis that follows breathing rhythm.",
+          "outcome": "Spatial audio 'breathes' around the listener, creating immersive entrainment effect conducive to sleep onset."
+        },
+        {
+          "scenario": "Six-layer visual mandala animation",
+          "breathing": "Moderate pace at 6 breaths/minute (10-second cycle)",
+          "trackMapping": "Control opacity/scale of 6 concentric mandala layers. Inhale phase expands outer rings, hold phase maintains equilibrium, exhale phase contracts to center. Sequence ordering creates wave-like pulsation from periphery to core.",
+          "outcome": "Hypnotic visual rhythm synchronized with breath, supporting concentration and meditative focus."
+        }
+      ],
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -47,6 +67,32 @@
       "id": "phase-4-3-3-2",
       "label": "4-step · 3-3-2 emphasis",
       "explanation": "Four-element sequence with 3-3-2 phase emphasis (3 steps inhale, 3 hold, 2 exhale). Balanced breathing ratio suitable for focus and concentration. The shorter exhale promotes alertness. Works well with four-track configurations or paired stereo channels.",
+      "usageExamples": [
+        {
+          "scenario": "Focus session with quad-stereo isochronic tones",
+          "breathing": "Active breathing at 8 breaths/minute (7.5-second cycle: 2.8s inhale, 2.8s hold, 1.9s exhale)",
+          "trackMapping": "4 isochronic tone tracks at different frequencies (14Hz beta for focus, 10Hz alpha for relaxed alertness, 6Hz theta for creativity, 18Hz high-beta for processing). Rows 0-2 (inhale): beta frequencies rise to foreground. Rows 3-5 (hold): alpha maintains steady presence. Row 6+ (exhale): brief theta dip before cycling. The short exhale prevents drowsiness.",
+          "outcome": "Maintains alert concentration state, ideal for coding, writing, or analytical work. Breath-sync prevents mental fatigue."
+        },
+        {
+          "scenario": "Stereo pair panning for study music",
+          "breathing": "Moderate pace at 7 breaths/minute (8.5-second cycle)",
+          "trackMapping": "Two stereo pairs: (1) ambient pad left/right, (2) melody left/right. Sequence alternates which pair dominates. Row changes shift stereo field emphasis, creating subtle spatial movement that maintains engagement without distraction. Position [1,2,3,4] might map to [ambient-L, melody-L, ambient-R, melody-R].",
+          "outcome": "Stereo image 'breathes' gently, preventing auditory habituation while maintaining conducive atmosphere for studying."
+        },
+        {
+          "scenario": "Pomodoro timer with 4-color visual cues",
+          "breathing": "Box breathing variant at 6 breaths/minute (10-second cycle: 3.75s inhale, 3.75s hold, 2.5s exhale)",
+          "trackMapping": "4 colored overlay tracks (blue for calm, green for growth, yellow for energy, red for urgency). During 25-minute work block: inhale phase emphasizes blue/green (calm focus), hold phase maintains green/yellow (sustained energy), exhale phase briefly touches yellow/red (alertness reminder). Sequence creates color-breathing effect.",
+          "outcome": "Visual environment subtly shifts with breath, preventing monotony during Pomodoro work intervals. Color-breath coupling enhances time perception."
+        },
+        {
+          "scenario": "Four-voice harmonic breathing",
+          "breathing": "Slow at 5 breaths/minute (12-second cycle: 4.5s inhale, 4.5s hold, 3s exhale)",
+          "trackMapping": "4 sine waves forming a chord (e.g., C major: C3, E3, G3, C4). Each row emphasizes different chord tones by modulating amplitude. Creates harmonic 'breathing' where chord voicing shifts with respiratory phases. Inhale: root rises, hold: third/fifth balance, exhale: brief return to root.",
+          "outcome": "Harmonic structure follows breath, creating deeply integrative experience between sonic and somatic awareness. Used in sound healing and vocal training."
+        }
+      ],
       "orderDimension": 4,
       "rows": [
         [1, 2, 3, 4],

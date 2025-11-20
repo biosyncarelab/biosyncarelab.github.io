@@ -1,12 +1,8 @@
-import { firebaseConfig } from "./firebase-config.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { app, auth, db } from "./auth/firebase-init.js";
 import {
-  getAuth,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import {
-  getFirestore,
-  connectFirestoreEmulator,
   collection,
   addDoc,
   query,
@@ -16,18 +12,18 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase (handled by firebase-init.js)
+// const app = initializeApp(firebaseConfig);
+// const auth = getAuth(app);
+// const db = getFirestore(app);
 
-const isLocalhost =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+// const isLocalhost =
+//   typeof window !== "undefined" &&
+//   ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
-if (isLocalhost) {
-  connectFirestoreEmulator(db, "127.0.0.1", 8085);
-}
+// if (isLocalhost) {
+//   connectFirestoreEmulator(db, "127.0.0.1", 8085);
+// }
 
 // Ontology file mappings with metadata
 const ontologyFiles = {
@@ -138,6 +134,13 @@ const requestedView = {
 let currentUser = null;
 let currentURI = null;
 let cy = null;
+
+// Handle window resize (including tab switches)
+window.addEventListener('resize', () => {
+  if (cy) {
+    cy.resize();
+  }
+});
 let currentOntology =
   requestedOntology && ontologyFiles[requestedOntology] ? requestedOntology : "bsc-outcomes";
 let currentLayout = requestedLayout || "cose";

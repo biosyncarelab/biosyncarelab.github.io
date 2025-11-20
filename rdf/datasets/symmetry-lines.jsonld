@@ -1,0 +1,271 @@
+{
+  "@context": "https://biosyncarelab.github.io/context/structures.jsonld",
+  "@id": "https://biosyncarelab.github.io/id/structure/symmetry-lines",
+  "@type": "bsc:StructureDataset",
+  "label": "Symmetry Lines",
+  "description": "Deterministic symmetric orderings for swapping or rotating parameters; rows are 1-based and return to start.",
+  "hasSequence": [
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6",
+      "@type": "bsc:PermutationSequence",
+      "label": "Mirror Sweep on 6",
+      "description": "Palindromic six-element pattern. Sweeps from starting position (1,2,3,4,5,6) through increasingly inverted states, reaching full reversal (6,5,4,3,2,1) at the midpoint, then mirrors back. Creates smooth crescendo-decrescendo parameter envelopes. The 10-step cycle provides gentle, symmetric modulation.",
+      "orderDimension": 6,
+      "loop": true,
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            2,
+            1,
+            0,
+            5,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            3,
+            2,
+            5,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            4,
+            5,
+            2,
+            1,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            5,
+            4,
+            3,
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            4,
+            5,
+            2,
+            1,
+            0,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/7",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 7,
+          "rowValues": [
+            3,
+            2,
+            5,
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/8",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 8,
+          "rowValues": [
+            2,
+            1,
+            0,
+            5,
+            4,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/9",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 9,
+          "rowValues": [
+            1,
+            0,
+            3,
+            2,
+            5,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/mirror-sweep-6/row/10",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 10,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6",
+      "@type": "bsc:PermutationSequence",
+      "label": "Rotating Crossfade on 6",
+      "description": "Pure cyclic rotation of six elements. Each step shifts all elements one position clockwise: (1,2,3,4,5,6) → (2,3,4,5,6,1) → ... Each element visits every position exactly once before returning. Perfect for round-robin parameter distribution or creating circular panning effects. The 6-step cycle ensures equal time at each position.",
+      "orderDimension": 6,
+      "loop": true,
+      "hasRow": [
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/0",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 0,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/1",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 1,
+          "rowValues": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            0
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/2",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 2,
+          "rowValues": [
+            2,
+            3,
+            4,
+            5,
+            0,
+            1
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/3",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 3,
+          "rowValues": [
+            3,
+            4,
+            5,
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/4",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 4,
+          "rowValues": [
+            4,
+            5,
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/5",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 5,
+          "rowValues": [
+            5,
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "@id": "https://biosyncarelab.github.io/id/sequence/symmetry-lines/rotating-crossfade-6/row/6",
+          "@type": "bsc:SequenceRow",
+          "rowIndex": 6,
+          "rowValues": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2025-11-17T00:00:00Z",
+  "source": {
+    "method": "constructed_symmetry_cycles",
+    "library": "music (first-party)",
+    "generator": "Python Structures pod",
+    "generated": "2025-11-17T00:00:00Z",
+    "notes": "Palindromic and rotational sweeps for 6 elements; convert to 0-based indices in UI."
+  }
+}
