@@ -1056,6 +1056,9 @@ const renderMartigliDashboardList = (snapshot) => {
     onTrajectoryRemove: (index, id) => {
       const osc = martigliState._oscillations.get(id);
       if (osc) osc.removeTrajectoryPoint(index);
+    },
+    onDelete: (id) => {
+      handleMartigliDelete(id);
     }
   });
 };
@@ -1536,9 +1539,9 @@ const handleMartigliRename = () => {
   setMessage(`Oscillation renamed to ${trimmed}.`, "success");
 };
 
-const handleMartigliDelete = () => {
+const handleMartigliDelete = (targetId) => {
   if (!ensureSessionModalVisible()) return;
-  const oscillatorId = getSelectedOscillationId();
+  const oscillatorId = (typeof targetId === 'string' && targetId) ? targetId : getSelectedOscillationId();
   if (!oscillatorId) return;
   const snapshot = martigliState.snapshot();
   const label = getOscillationLabel(snapshot, oscillatorId) ?? "Martigli Oscillation";
@@ -1548,7 +1551,7 @@ const handleMartigliDelete = () => {
   }
   const confirmed = window.confirm(`Delete "${label}"? This cannot be undone.`);
   if (!confirmed) return;
-  martigliState.removeOscillation(oscillatorId);
+  martigliState.removeOscillator(oscillatorId);
   const afterRemoval = martigliState.snapshot();
   if (!afterRemoval.oscillations?.length) {
     martigliState.addOscillator();
