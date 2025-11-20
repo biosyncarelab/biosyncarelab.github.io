@@ -263,7 +263,7 @@ export class MartigliOscillator {
     if (this.session.paused) {
       return this.config.prestartValue;
     }
-    
+
     // Robustness against time jitter/multiple callers
     if (this._lastTime !== null) {
         const diff = timeSec - this._lastTime;
@@ -289,11 +289,11 @@ export class MartigliOscillator {
     }
     const dt = this._lastTime === null ? 0 : timeSec - this._lastTime;
     const avgPeriod = this._lastPeriod ? (this._lastPeriod + period) / 2 : period;
-    
+
     if (dt >= 0 && avgPeriod > 0) {
       this._phase = (this._phase + (dt / avgPeriod)) % 1;
     }
-    
+
     this._lastTime = timeSec;
     this._lastPeriod = period;
     const envelope = this._sessionEnvelope(timeSec, startTime);

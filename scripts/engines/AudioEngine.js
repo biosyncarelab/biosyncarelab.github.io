@@ -45,7 +45,14 @@ export class AudioEngine {
     if (!this.isRunning) return;
     requestAnimationFrame(() => this._loop());
 
-    const time = this.ctx ? this.ctx.currentTime : Date.now() / 1000;
+    // Use absolute time for parameter modulation to match MartigliOscillator
+    let time;
+    if (typeof performance !== "undefined" && typeof performance.now === "function" && typeof performance.timeOrigin === "number") {
+      time = (performance.timeOrigin + performance.now()) / 1000;
+    } else {
+      time = Date.now() / 1000;
+    }
+    
     this.update(time);
   }
 

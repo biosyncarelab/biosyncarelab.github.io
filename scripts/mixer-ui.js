@@ -55,6 +55,13 @@ export function initMixerUI() {
     });
   }
 
+  // Resume audio context on visibility change (tab switch)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && kernel.audio) {
+      kernel.audio.resume();
+    }
+  });
+
   // Subscribe to track changes
   const updateLists = () => {
     const tracks = kernel.tracks.getAll();
@@ -284,14 +291,8 @@ function renderTrackList(tracks, container, kernel) {
             if (osc) {
               const modulator = {
                 getValue: (time) => {
-                  // Use performance.now() based time if available to match structures.js
-                  let now;
-                  if (typeof performance !== "undefined" && typeof performance.now === "function" && typeof performance.timeOrigin === "number") {
-                    now = (performance.timeOrigin + performance.now()) / 1000;
-                  } else {
-                    now = Date.now() / 1000;
-                  }
-                  return typeof osc.valueAt === 'function' ? osc.valueAt(now) : 0;
+                  // AudioEngine now passes absolute time, so we can use it directly
+                  return typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0;
                 }
               };
               
