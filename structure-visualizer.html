@@ -93,6 +93,39 @@
         border-radius: 8px;
         padding: 1.5rem;
         overflow-x: auto;
+        margin-bottom: 1.5rem;
+      }
+
+      .explanation-container {
+        background: var(--surface-1, #fafafa);
+        border: 1px solid var(--border, #ddd);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      .explanation-container h3 {
+        margin: 0 0 1rem 0;
+        color: var(--text-primary, #333);
+        font-size: 1.25rem;
+      }
+
+      .explanation-container p {
+        margin-bottom: 1rem;
+      }
+
+      .explanation-container p:last-child {
+        margin-bottom: 0;
+      }
+
+      .explanation-container ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+        padding: 0;
+      }
+
+      .explanation-container li {
+        margin-bottom: 0.25rem;
       }
 
       .sequence-header {
@@ -102,8 +135,17 @@
       }
 
       .sequence-header h3 {
-        margin: 0;
+        margin: 0 0 0.5rem 0;
         color: var(--text-primary, #333);
+      }
+
+      .sequence-explanation {
+        margin: 0.75rem 0 0 0;
+        padding: 1rem;
+        background: var(--surface-1, #fafafa);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        line-height: 1.6;
       }
 
       .sequence-viz {
@@ -406,6 +448,11 @@
           </div>
         `;
 
+        // Show explanation if available
+        if (data.explanation) {
+          statsContainer.innerHTML += renderExplanation(data.explanation);
+        }
+
         // Show all sequences
         let html = '';
         data.sequences.forEach((seq, idx) => {
@@ -472,6 +519,44 @@
         }
       }
 
+      function renderExplanation(explanation) {
+        let html = '<div class="explanation-container">';
+        html += '<h3>📖 About This Structure</h3>';
+
+        if (explanation.overview) {
+          html += `<p><strong>Overview:</strong> ${explanation.overview}</p>`;
+        }
+
+        if (explanation.mechanism) {
+          html += `<p><strong>How It Works:</strong> ${explanation.mechanism}</p>`;
+        }
+
+        if (explanation.properties && explanation.properties.length > 0) {
+          html += '<p><strong>Key Properties:</strong></p>';
+          html += '<ul>';
+          explanation.properties.forEach(prop => {
+            html += `<li>${prop}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        if (explanation.applications) {
+          html += `<p><strong>Applications:</strong> ${explanation.applications}</p>`;
+        }
+
+        if (explanation.references && explanation.references.length > 0) {
+          html += '<p><strong>References:</strong></p>';
+          html += '<ul style="font-size: 0.9rem; color: var(--text-secondary, #666);">';
+          explanation.references.forEach(ref => {
+            html += `<li>${ref}</li>`;
+          });
+          html += '</ul>';
+        }
+
+        html += '</div>';
+        return html;
+      }
+
       function renderSequenceSection(sequence, index) {
         const rows = sequence.rowsZeroBased || sequence.rows || [];
         const dimension = sequence.orderDimension;
@@ -479,10 +564,14 @@
         let html = '<div class="sequence-container">';
         html += '<div class="sequence-header">';
         html += `<h3>${sequence.label || sequence.id}</h3>`;
-        if (sequence.metadata) {
-          html += `<p class="muted-text">${JSON.stringify(sequence.metadata)}</p>`;
-        }
         html += '</div>';
+
+        // Show explanation in a styled box if available
+        if (sequence.explanation) {
+          html += `<div class="sequence-explanation">${sequence.explanation}</div>`;
+        } else if (sequence.metadata) {
+          html += `<div class="sequence-explanation">${JSON.stringify(sequence.metadata)}</div>`;
+        }
 
         if (rows.length === 0) {
           html += '<div class="empty-state">No sequence data available</div>';

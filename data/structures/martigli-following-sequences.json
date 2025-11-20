@@ -2,6 +2,22 @@
   "id": "martigli-following-sequences",
   "label": "Martigli-Following Sequences",
   "description": "Orderings aligned to inhale/hold/exhale phases; rows are 1-based and wrap to rounds.",
+  "explanation": {
+    "overview": "Martigli-following sequences are specifically designed to synchronize with breathing patterns. Named after the Martigli oscillator (a breathing-synchronized waveform), these sequences align parameter changes with respiratory phases.",
+    "mechanism": "Each sequence is structured around breath cycle phases: inhale, hold, exhale. The orderings emphasize different elements during each phase, creating natural-feeling modulation that follows physiological rhythms. The phase ratios (e.g., 4-4-2) indicate relative durations.",
+    "properties": [
+      "Phase-aligned: Transitions correspond to breathing phases",
+      "Emphasis patterns: Certain elements prioritized during specific phases",
+      "Cyclical: Returns to starting state after complete breath cycle",
+      "Physiologically-informed: Designed for human respiratory synchronization"
+    ],
+    "applications": "These sequences excel when binding track parameters to Martigli oscillators. As breathing rate changes, parameter orderings adapt in phase, creating coherent audiovisual experiences that feel naturally synchronized with the user's breath.",
+    "references": [
+      "Martigli oscillator: Breathing-wave generator in BioSynCare",
+      "Respiratory entrainment: Synchronizing stimuli with breath",
+      "Autonomic nervous system: Breath-linked physiological changes"
+    ]
+  },
   "source": {
     "method": "constructed_phase_cycles",
     "library": "music (first-party)",
@@ -13,6 +29,7 @@
     {
       "id": "phase-6-4-4-2",
       "label": "6-step · 4-4-2 emphasis",
+      "explanation": "Six-element sequence with 4-4-2 phase emphasis (4 steps inhale, 4 hold, 2 exhale). This ratio creates a relaxed breathing pattern with extended inhale and hold phases. Elements rotate through positions with emphasis matching breath intensity. Ideal for calming, meditative sessions.",
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -29,6 +46,7 @@
     {
       "id": "phase-4-3-3-2",
       "label": "4-step · 3-3-2 emphasis",
+      "explanation": "Four-element sequence with 3-3-2 phase emphasis (3 steps inhale, 3 hold, 2 exhale). Balanced breathing ratio suitable for focus and concentration. The shorter exhale promotes alertness. Works well with four-track configurations or paired stereo channels.",
       "orderDimension": 4,
       "rows": [
         [1, 2, 3, 4],

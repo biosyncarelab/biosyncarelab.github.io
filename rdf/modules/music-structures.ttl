@@ -1,0 +1,174 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix bsc: <https://w3id.org/biosyncare/ontology#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# Music Structures Ontology Module
+# Semantic descriptions of change-ringing patterns, Martigli sequences, and symmetry structures
+
+# ===== Classes =====
+
+bsc:MusicStructure a owl:Class ;
+    rdfs:label "Music Structure" ;
+    rdfs:comment "A mathematical sequence pattern for parameter modulation" ;
+    rdfs:subClassOf bsc:DataStructure .
+
+bsc:ChangeRingingPattern a owl:Class ;
+    rdfs:label "Change Ringing Pattern" ;
+    rdfs:comment "Permutation sequence from campanology, where adjacent elements swap positions" ;
+    rdfs:subClassOf bsc:MusicStructure ;
+    skos:altLabel "Plain Hunt Pattern", "Bell-Ringing Sequence" .
+
+bsc:MartigliFollowingSequence a owl:Class ;
+    rdfs:label "Martigli-Following Sequence" ;
+    rdfs:comment "Parameter ordering synchronized with breathing phases (inhale/hold/exhale)" ;
+    rdfs:subClassOf bsc:MusicStructure .
+
+bsc:SymmetryLineSequence a owl:Class ;
+    rdfs:label "Symmetry Line Sequence" ;
+    rdfs:comment "Palindromic or rotationally symmetric parameter ordering" ;
+    rdfs:subClassOf bsc:MusicStructure .
+
+# ===== Properties =====
+
+bsc:hasOrderDimension a owl:DatatypeProperty ;
+    rdfs:label "has order dimension" ;
+    rdfs:comment "Number of elements in the permutation (e.g., bells, tracks)" ;
+    rdfs:domain bsc:MusicStructure ;
+    rdfs:range xsd:positiveInteger .
+
+bsc:hasRowCount a owl:DatatypeProperty ;
+    rdfs:label "has row count" ;
+    rdfs:comment "Total number of permutation rows in the sequence" ;
+    rdfs:domain bsc:MusicStructure ;
+    rdfs:range xsd:positiveInteger .
+
+bsc:isLooping a owl:DatatypeProperty ;
+    rdfs:label "is looping" ;
+    rdfs:comment "Whether sequence returns to starting position" ;
+    rdfs:domain bsc:MusicStructure ;
+    rdfs:range xsd:boolean .
+
+bsc:hasPhaseRatio a owl:DatatypeProperty ;
+    rdfs:label "has phase ratio" ;
+    rdfs:comment "Breathing phase emphasis ratio (e.g., '4-4-2' for inhale-hold-exhale)" ;
+    rdfs:domain bsc:MartigliFollowingSequence ;
+    rdfs:range xsd:string .
+
+bsc:hasSymmetryType a owl:DatatypeProperty ;
+    rdfs:label "has symmetry type" ;
+    rdfs:comment "Type of symmetry: mirror (palindromic) or rotation (cyclic)" ;
+    rdfs:domain bsc:SymmetryLineSequence ;
+    rdfs:range xsd:string .
+
+bsc:modulatesParameter a owl:ObjectProperty ;
+    rdfs:label "modulates parameter" ;
+    rdfs:comment "Track parameter that this sequence can modulate" ;
+    rdfs:domain bsc:MusicStructure ;
+    rdfs:range bsc:TrackParameter .
+
+# ===== Individuals: Change Ringing =====
+
+bsc:PlainHunt6 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Hunt on 6" ;
+    dcterms:identifier "plain-hunt-6" ;
+    rdfs:comment "Six-element plain hunt pattern, also known as 'Plain Bob Minor' in campanology" ;
+    skos:definition """Starting from rounds (1,2,3,4,5,6), adjacent pairs swap alternately
+    through 12 changes before returning. Common in traditional bell ringing.""" ;
+    bsc:hasOrderDimension 6 ;
+    bsc:hasRowCount 13 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:example "Use for modulating up to 6 simultaneous track parameters in coordinated cyclical pattern" .
+
+bsc:PlainHunt4 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Hunt on 4" ;
+    dcterms:identifier "plain-hunt-4" ;
+    rdfs:comment "Four-element plain hunt pattern, known as 'Plain Bob Minimus'" ;
+    skos:definition """Cycles through 8 distinct permutations before returning to rounds.
+    Ideal for modulating quartet of parameters (e.g., four audio tracks or two stereo pairs).""" ;
+    bsc:hasOrderDimension 4 ;
+    bsc:hasRowCount 9 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:example "Faster cycling suitable for shorter sessions due to smaller dimension" .
+
+# ===== Individuals: Martigli-Following =====
+
+bsc:MartigliPhase6_4_4_2 a bsc:MartigliFollowingSequence ;
+    rdfs:label "Martigli Phase 6-4-4-2" ;
+    dcterms:identifier "phase-6-4-4-2" ;
+    rdfs:comment "Six-element sequence with 4-4-2 breathing phase emphasis" ;
+    skos:definition """4 steps inhale, 4 hold, 2 exhale. Creates relaxed breathing pattern
+    with extended inhale and hold phases. Elements rotate with emphasis matching breath intensity.""" ;
+    bsc:hasOrderDimension 6 ;
+    bsc:hasRowCount 8 ;
+    bsc:isLooping true ;
+    bsc:hasPhaseRatio "4-4-2" ;
+    skos:scopeNote "Ideal for calming, meditative sessions" ;
+    dcterms:relation bsc:MartigliOscillator .
+
+bsc:MartigliPhase4_3_3_2 a bsc:MartigliFollowingSequence ;
+    rdfs:label "Martigli Phase 4-3-3-2" ;
+    dcterms:identifier "phase-4-3-3-2" ;
+    rdfs:comment "Four-element sequence with 3-3-2 breathing phase emphasis" ;
+    skos:definition """3 steps inhale, 3 hold, 2 exhale. Balanced breathing ratio
+    suitable for focus and concentration. Shorter exhale promotes alertness.""" ;
+    bsc:hasOrderDimension 4 ;
+    bsc:hasRowCount 6 ;
+    bsc:isLooping true ;
+    bsc:hasPhaseRatio "3-3-2" ;
+    skos:scopeNote "Works well with four-track configurations or paired stereo channels" ;
+    dcterms:relation bsc:MartigliOscillator .
+
+# ===== Individuals: Symmetry Lines =====
+
+bsc:MirrorSweep6 a bsc:SymmetryLineSequence ;
+    rdfs:label "Mirror Sweep on 6" ;
+    dcterms:identifier "mirror-sweep-6" ;
+    rdfs:comment "Palindromic six-element pattern from dihedral group D6" ;
+    skos:definition """Sweeps from starting position through increasingly inverted states,
+    reaching full reversal (6,5,4,3,2,1) at midpoint, then mirrors back. Creates smooth
+    crescendo-decrescendo parameter envelopes.""" ;
+    bsc:hasOrderDimension 6 ;
+    bsc:hasRowCount 11 ;
+    bsc:isLooping true ;
+    bsc:hasSymmetryType "mirror" ;
+    dcterms:relation <http://en.wikipedia.org/wiki/Dihedral_group> ;
+    skos:example "Use for creating rise-and-fall envelope modulation on multiple parameters" .
+
+bsc:RotatingCrossfade6 a bsc:SymmetryLineSequence ;
+    rdfs:label "Rotating Crossfade on 6" ;
+    dcterms:identifier "rotating-crossfade-6" ;
+    rdfs:comment "Pure cyclic rotation from cyclic group C6" ;
+    skos:definition """Each step shifts all elements one position clockwise.
+    Each element visits every position exactly once before returning.
+    Perfect for round-robin parameter distribution.""" ;
+    bsc:hasOrderDimension 6 ;
+    bsc:hasRowCount 7 ;
+    bsc:isLooping true ;
+    bsc:hasSymmetryType "rotation" ;
+    dcterms:relation <http://en.wikipedia.org/wiki/Cyclic_group> ;
+    skos:example "Ideal for circular panning effects or distributing emphasis evenly across tracks" .
+
+# ===== Connections to BioSynCare concepts =====
+
+bsc:ChangeRingingPattern rdfs:seeAlso bsc:ParameterAutomation ;
+    skos:related bsc:AudioTrack, bsc:TrackParameter .
+
+bsc:MartigliFollowingSequence rdfs:seeAlso bsc:MartigliOscillator, bsc:BreathingEntrinment ;
+    skos:related bsc:RespiratoryPhase, bsc:AutonomiNeuronus System .
+
+bsc:SymmetryLineSequence rdfs:seeAlso bsc:ParameterSweep, bsc:CrossfadeModulation ;
+    skos:related bsc:DihedralGroup, bsc:CyclicGroup .
+
+# ===== Annotations =====
+
+bsc:MusicStructure
+    dcterms:created "2025-11-20"^^xsd:date ;
+    dcterms:creator "Python Structures Pod" ;
+    dcterms:source "Python music package (first-party)" ;
+    rdfs:seeAlso <https://github.com/ttm/music> .

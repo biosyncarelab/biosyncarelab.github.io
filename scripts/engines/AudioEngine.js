@@ -10,6 +10,7 @@ export class AudioEngine {
     this.backend = 'webaudio'; // Default
     this.nodes = new Map(); // Track ID -> AudioNode(s)
     this.masterGain = null;
+    this.isRunning = false;
   }
 
   async init() {
@@ -25,6 +26,27 @@ export class AudioEngine {
     if (this.ctx?.state === 'suspended') {
       this.ctx.resume();
     }
+    if (!this.isRunning) {
+      this.start();
+    }
+  }
+
+  start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this._loop();
+  }
+
+  stop() {
+    this.isRunning = false;
+  }
+
+  _loop() {
+    if (!this.isRunning) return;
+    requestAnimationFrame(() => this._loop());
+
+    const time = this.ctx ? this.ctx.currentTime : Date.now() / 1000;
+    this.update(time);
   }
 
   /**
@@ -106,6 +128,31 @@ export class AudioEngine {
 
       nodes.leftOsc = leftOsc;
       nodes.rightOsc = rightOsc;
+    } else if (track.constructor.name === 'IsochronicTrack') {
+      // Isochronic: Tone -> Pulse Gain -> Output
+      const pulseGain = this.ctx.createGain();
+      pulseGain.gain.value = 0.5; // Base gain for modulation
+      pulseGain.connect(gain);
+
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine'; // Carrier
+      osc.connect(pulseGain);
+      osc.start();
+
+      // LFO for pulsing (Square wave for sharp on/off)
+      const lfo = this.ctx.createOscillator();
+      lfo.type = 'square';
+
+      // LFO Gain to scale modulation depth (0 to 1 range)
+      const lfoGain = this.ctx.createGain();
+      lfoGain.gain.value = 0.5;
+
+      lfo.connect(lfoGain).connect(pulseGain.gain);
+      lfo.start();
+
+      nodes.osc = osc;
+      nodes.lfo = lfo;
+      nodes.pulseGain = pulseGain;
     }
 
     this.nodes.set(track.id, nodes);
@@ -128,6 +175,13 @@ export class AudioEngine {
 
       nodes.leftOsc.frequency.setTargetAtTime(carrier, this.ctx.currentTime, 0.05);
       nodes.rightOsc.frequency.setTargetAtTime(carrier + beat, this.ctx.currentTime, 0.05);
+    } else if (track.constructor.name === 'IsochronicTrack') {
+      const freq = track.getParameter('frequency')?.getValue(time) ?? 200;
+      const rate = track.getParameter('pulseRate')?.getValue(time) ?? 10;
+      // Duty cycle not fully implemented in this simple LFO model, defaulting to 50%
+
+      nodes.osc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
+      nodes.lfo.frequency.setTargetAtTime(rate, this.ctx.currentTime, 0.05);
     }
   }
 }

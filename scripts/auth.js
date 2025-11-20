@@ -67,6 +67,7 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 import { BSCLabKernel } from "./structures.js";
 import { STRUCTURE_MANIFEST } from "./structures-loader.js";
+import { initMixerUI } from "./mixer-ui.js";
 
 const ui = {
   state: document.getElementById("auth-state"),
@@ -174,6 +175,7 @@ const setMessage = (text, type = "") => {
 const kernel = new BSCLabKernel({ onInteraction: logInteraction });
 kernel.init();
 appState.setKernel(kernel);
+initMixerUI();
 
 // Wire up reactive UI via state subscriptions
 appState.subscribe((state) => {

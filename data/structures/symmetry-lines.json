@@ -2,6 +2,24 @@
   "id": "symmetry-lines",
   "label": "Symmetry Lines",
   "description": "Deterministic symmetric orderings for swapping or rotating parameters; rows are 1-based and return to start.",
+  "explanation": {
+    "overview": "Symmetry line sequences exploit mathematical symmetries from group theory. These include palindromic (mirror) patterns and cyclic rotations. Each sequence exhibits perfect symmetry: the second half mirrors or rotates the first half.",
+    "mechanism": "Two primary symmetry types: (1) Mirror symmetry - sequences reach a midpoint then reverse back to start, creating palindromic patterns. (2) Rotational symmetry - elements shift cyclically through positions. Both create predictable, aesthetically pleasing parameter sweeps.",
+    "properties": [
+      "Symmetric: Second half mirrors or rotates first half",
+      "Smooth sweeps: Elements transition gradually through positions",
+      "Dihedral group: Mirror patterns come from dihedral group D_n",
+      "Cyclic group: Rotations come from cyclic group C_n",
+      "Predictable: Users can anticipate pattern evolution"
+    ],
+    "applications": "Excellent for parameter crossfades and sweeps. Mirror sweeps create natural rise-and-fall envelopes. Rotations distribute emphasis evenly across tracks. Use for panning automation, filter sweeps, or visual element transitions.",
+    "references": [
+      "Dihedral group D_n: Symmetries of regular n-gon",
+      "Cyclic group C_n: Rotational symmetries",
+      "Group theory: Mathematical foundations of symmetry",
+      "Python music package: InterestingPermutations class"
+    ]
+  },
   "source": {
     "method": "constructed_symmetry_cycles",
     "library": "music (first-party)",
@@ -13,6 +31,7 @@
     {
       "id": "mirror-sweep-6",
       "label": "Mirror Sweep on 6",
+      "explanation": "Palindromic six-element pattern. Sweeps from starting position (1,2,3,4,5,6) through increasingly inverted states, reaching full reversal (6,5,4,3,2,1) at the midpoint, then mirrors back. Creates smooth crescendo-decrescendo parameter envelopes. The 10-step cycle provides gentle, symmetric modulation.",
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -32,6 +51,7 @@
     {
       "id": "rotating-crossfade-6",
       "label": "Rotating Crossfade on 6",
+      "explanation": "Pure cyclic rotation of six elements. Each step shifts all elements one position clockwise: (1,2,3,4,5,6) → (2,3,4,5,6,1) → ... Each element visits every position exactly once before returning. Perfect for round-robin parameter distribution or creating circular panning effects. The 6-step cycle ensures equal time at each position.",
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],

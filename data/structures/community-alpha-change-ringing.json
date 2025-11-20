@@ -2,6 +2,22 @@
   "id": "community-alpha-change-ringing",
   "label": "Community Alpha · Change Ringing",
   "description": "Plain hunt cycles for ordering tracks/parameters; rows are 1-based and wrap to rounds.",
+  "explanation": {
+    "overview": "Change ringing is a mathematical art form originating from English campanology (bell ringing). Each 'row' represents a permutation of elements where adjacent pairs swap positions in an alternating pattern.",
+    "mechanism": "Starting from 'rounds' (1,2,3,4,...,N), each transition swaps adjacent pairs. The pattern continues until returning to the starting position, forming a complete cycle. This creates a deterministic, periodic sequence ideal for parameter automation.",
+    "properties": [
+      "Cyclic: Always returns to starting position (rounds)",
+      "Minimal changes: Only adjacent elements swap between rows",
+      "Even parity: All permutations are even (determinant +1)",
+      "Smooth transitions: No element jumps more than one position at a time"
+    ],
+    "applications": "In BioSynCare, these sequences can modulate track parameters (frequency, gain, panning) creating smooth, cyclical variations. The predictable pattern provides structure while maintaining variety.",
+    "references": [
+      "Campanology: Traditional English bell ringing mathematics",
+      "Group theory: Symmetric group Sn and adjacent transpositions",
+      "Python music package: PlainChanges class"
+    ]
+  },
   "source": {
     "method": "plain_hunt",
     "library": "music (first-party)",
@@ -13,6 +29,7 @@
     {
       "id": "plain-hunt-6",
       "label": "Plain Hunt on 6",
+      "explanation": "Six-element plain hunt pattern. Starting from rounds (1,2,3,4,5,6), adjacent pairs swap alternately through 12 changes before returning. With 6 bells, you can modulate up to 6 simultaneous track parameters in a coordinated cyclical pattern. Common in traditional bell ringing as 'Plain Bob Minor'.",
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -34,6 +51,7 @@
     {
       "id": "plain-hunt-4",
       "label": "Plain Hunt on 4",
+      "explanation": "Four-element plain hunt pattern. Cycles through 8 distinct permutations before returning to rounds. Ideal for modulating a quartet of parameters (e.g., four audio tracks or two stereo pairs). Known in bell ringing as 'Plain Bob Minimus'. The smaller dimension creates faster cycling suitable for shorter sessions.",
       "orderDimension": 4,
       "rows": [
         [1, 2, 3, 4],
