@@ -628,87 +628,26 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   const body = document.createElement("div");
   body.className = "martigli-widget-body";
 
-  const visualColumn = document.createElement("div");
-  visualColumn.className = "martigli-widget-column martigli-widget-column--visual";
-  const visualizer = document.createElement("div");
-  visualizer.className = "martigli-visualizer";
-  // Removed redundant label
-  const visualSurface = document.createElement("div");
-  visualSurface.className = "martigli-visualizer-surface";
-  // Remove padding/margin that causes offset if present in CSS, or ensure full width here
-  visualSurface.style.margin = "0";
-  visualSurface.style.padding = "0";
+  // --- Section A: Waveform & Instantaneous State ---
+  const sectionA = document.createElement("div");
+  sectionA.className = "martigli-section martigli-section--waveform";
 
+  // 1. Waveform Chart
   const waveformChart = createMartigliWaveformChart({
     onRatioChange: (ratio) => callbacks.onInhaleRatioChange?.(ratio, widget.oscillationId)
   });
+  sectionA.appendChild(waveformChart.root);
 
-  const timelineChart = createMartigliTimelineChart({
-    onStartPeriodChange: (val) => callbacks.onStartPeriodChange?.(val, widget.oscillationId),
-    onEndPeriodChange: (val) => callbacks.onEndPeriodChange?.(val, widget.oscillationId)
-  });
-
-  visualSurface.appendChild(waveformChart.root);
-  visualSurface.appendChild(timelineChart.root);
-  visualizer.appendChild(visualSurface);
-  visualColumn.appendChild(visualizer);
-
+  // 2. Telemetry (Value, Phase, Period)
   const telemetry = createTelemetrySection();
   const telemetryShell = document.createElement("div");
   telemetryShell.className = "martigli-widget-telemetry";
   telemetryShell.appendChild(telemetry.container);
-  visualColumn.appendChild(telemetryShell);
+  sectionA.appendChild(telemetryShell);
 
-  const controlsColumn = document.createElement("div");
-  controlsColumn.className = "martigli-widget-column martigli-widget-column--controls";
-
-  const controlGrid = document.createElement("div");
-  controlGrid.className = "martigli-control-grid";
-
-  const startInput = document.createElement("input");
-  startInput.type = "range";
-  startInput.min = "4";
-  startInput.max = "20";
-  startInput.step = "1";
-  const startLabel = createRangeLabel("Start period (s)");
-  const startField = document.createElement("div");
-  startField.className = "range-field";
-  const startValue = document.createElement("span");
-  startValue.className = "range-value";
-  startValue.textContent = "0.0s";
-  startField.appendChild(startInput);
-  startField.appendChild(startValue);
-  startLabel.appendChild(startField);
-
-  const endInput = document.createElement("input");
-  endInput.type = "range";
-  endInput.min = "8";
-  endInput.max = "40";
-  endInput.step = "1";
-  const endLabel = createRangeLabel("End period (s)");
-  const endField = document.createElement("div");
-  endField.className = "range-field";
-  const endValue = document.createElement("span");
-  endValue.className = "range-value";
-  endValue.textContent = "0.0s";
-  endField.appendChild(endInput);
-  endField.appendChild(endValue);
-  endLabel.appendChild(endField);
-
-  const transitionInput = document.createElement("input");
-  transitionInput.type = "range";
-  transitionInput.min = "0";
-  transitionInput.max = "600";
-  transitionInput.step = "10";
-  const transitionLabel = createRangeLabel("Transition window (s)");
-  const transitionField = document.createElement("div");
-  transitionField.className = "range-field";
-  const transitionValue = document.createElement("span");
-  transitionValue.className = "range-value";
-  transitionValue.textContent = "0s";
-  transitionField.appendChild(transitionInput);
-  transitionField.appendChild(transitionValue);
-  transitionLabel.appendChild(transitionField);
+  // 3. Controls (Waveform, Inhale, Amplitude)
+  const controlsA = document.createElement("div");
+  controlsA.className = "martigli-control-grid";
 
   const waveformSelect = document.createElement("select");
   [
@@ -756,18 +695,30 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   amplitudeField.appendChild(amplitudeValue);
   amplitudeLabel.appendChild(amplitudeField);
 
-  controlGrid.appendChild(startLabel);
-  controlGrid.appendChild(endLabel);
-  controlGrid.appendChild(transitionLabel);
-  controlGrid.appendChild(waveformLabel);
-  controlGrid.appendChild(inhaleLabel);
-  controlGrid.appendChild(amplitudeLabel);
-  controlsColumn.appendChild(controlGrid);
+  controlsA.appendChild(waveformLabel);
+  controlsA.appendChild(inhaleLabel);
+  controlsA.appendChild(amplitudeLabel);
+  sectionA.appendChild(controlsA);
 
+
+  // --- Section B: Trajectory ---
+  const sectionB = document.createElement("div");
+  sectionB.className = "martigli-section martigli-section--trajectory";
+
+  // 1. Timeline Chart
+  const timelineChart = createMartigliTimelineChart({
+    onStartPeriodChange: (val) => callbacks.onStartPeriodChange?.(val, widget.oscillationId),
+    onEndPeriodChange: (val) => callbacks.onEndPeriodChange?.(val, widget.oscillationId)
+  });
+  sectionB.appendChild(timelineChart.root);
+
+  // 2. Trajectory List & Controls
   const trajectorySection = document.createElement("div");
   trajectorySection.className = "martigli-trajectory";
+
   const trajectoryHead = document.createElement("div");
   trajectoryHead.className = "martigli-trajectory-head";
+
   const trajectoryText = document.createElement("div");
   const trajectoryTitle = document.createElement("h6");
   trajectoryTitle.textContent = "Breathing Trajectory";
@@ -776,6 +727,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   trajectoryHint.textContent = "Stack period/duration points to sculpt the envelope.";
   trajectoryText.appendChild(trajectoryTitle);
   trajectoryText.appendChild(trajectoryHint);
+
   const addTrajectoryButton = document.createElement("button");
   addTrajectoryButton.type = "button";
   addTrajectoryButton.className = "martigli-pill martigli-pill--ghost";
@@ -783,17 +735,20 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   addTrajectoryButton.addEventListener("click", () => {
     callbacks.onAddTrajectoryPoint?.(widget.oscillationId);
   });
+
   trajectoryHead.appendChild(trajectoryText);
   trajectoryHead.appendChild(addTrajectoryButton);
+
   const trajectoryList = document.createElement("div");
   trajectoryList.className = "martigli-trajectory-list";
   trajectoryList.setAttribute("aria-live", "polite");
+
   trajectorySection.appendChild(trajectoryHead);
   trajectorySection.appendChild(trajectoryList);
-  controlsColumn.appendChild(trajectorySection);
+  sectionB.appendChild(trajectorySection);
 
-  body.appendChild(visualColumn);
-  body.appendChild(controlsColumn);
+  body.appendChild(sectionA);
+  body.appendChild(sectionB);
   root.appendChild(body);
 
   widget.root = root;
@@ -804,12 +759,6 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   widget.buttons = { start: startButton, stop: stopButton };
   widget.telemetryRefs = telemetry.refs;
   widget.controls = {
-    start: startInput,
-    startValue,
-    end: endInput,
-    endValue,
-    transition: transitionInput,
-    transitionValue,
     waveform: waveformSelect,
     inhale: inhaleInput,
     inhaleValue,
@@ -830,23 +779,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   startButton.addEventListener("click", () => callbacks.onStart?.(widget.oscillationId));
   stopButton.addEventListener("click", () => callbacks.onStop?.(widget.oscillationId));
 
-  startInput.addEventListener("input", (e) => {
-    const val = Number(e.target.value);
-    startValue.textContent = `${val.toFixed(1)}s`;
-    callbacks.onStartPeriodChange?.(val, widget.oscillationId);
-  });
-
-  endInput.addEventListener("input", (e) => {
-    const val = Number(e.target.value);
-    endValue.textContent = `${val.toFixed(1)}s`;
-    callbacks.onEndPeriodChange?.(val, widget.oscillationId);
-  });
-
-  transitionInput.addEventListener("input", (e) => {
-    const val = Number(e.target.value);
-    transitionValue.textContent = `${val}s`;
-    callbacks.onTransitionChange?.(val, widget.oscillationId);
-  });
+  // Removed start/end/transition input listeners as they are removed from UI
 
   waveformSelect.addEventListener("change", (e) => {
     callbacks.onWaveformChange?.(e.target.value, widget.oscillationId);
@@ -1094,9 +1027,7 @@ export const ensureMartigliTelemetryLoop = (martigliState, container) => {
 
         // Update control value displays (but not the inputs themselves to avoid fighting user)
         if (widget.controls) {
-          if (widget.controls.startValue) widget.controls.startValue.textContent = `${(osc.startPeriodSec ?? 10).toFixed(1)}s`;
-          if (widget.controls.endValue) widget.controls.endValue.textContent = `${(osc.endPeriodSec ?? 20).toFixed(1)}s`;
-          if (widget.controls.transitionValue) widget.controls.transitionValue.textContent = `${Math.round(osc.transitionSec ?? 0)}s`;
+          // Removed start/end/transition updates as controls are removed
           if (widget.controls.inhaleValue) widget.controls.inhaleValue.textContent = `${Math.round((osc.inhaleRatio ?? 0.5) * 100)}%`;
           if (widget.controls.amplitudeValue) widget.controls.amplitudeValue.textContent = `${(osc.amplitude ?? 1).toFixed(2)}×`;
         }

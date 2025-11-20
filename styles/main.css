@@ -1449,3 +1449,24 @@ select {
 .traj-spacer {
   width: 1.5rem; /* Approximate width of remove button */
 }
+
+/* Martigli Sections */
+.martigli-section {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+}
+
+.martigli-section--waveform {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.martigli-section--trajectory {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
