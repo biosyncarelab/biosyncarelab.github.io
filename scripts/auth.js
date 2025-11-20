@@ -42,7 +42,8 @@ import {
   describeTrackVisualizerSummary,
   renderModalTrackSections as renderTrackLists,
   closeTrackVisualizerModal,
-  refreshAllTrackBindings
+  refreshAllTrackBindings,
+  serializeTrackState
 } from "./auth/track-ui.js";
 import {
   renderSessionList,
@@ -1552,10 +1553,10 @@ const handleMartigliDelete = (targetId) => {
   const confirmed = window.confirm(`Delete "${label}"? This cannot be undone.`);
   if (!confirmed) return;
   martigliState.removeOscillator(oscillatorId);
-  const afterRemoval = martigliState.snapshot();
-  if (!afterRemoval.oscillations?.length) {
-    martigliState.addOscillator();
-  }
+  // const afterRemoval = martigliState.snapshot();
+  // if (!afterRemoval.oscillations?.length) {
+  //   martigliState.addOscillator();
+  // }
   kernel.recordInteraction("martigli.oscillation.delete", {
     oscillatorId,
     label,

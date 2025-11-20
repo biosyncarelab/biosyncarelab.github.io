@@ -33,7 +33,7 @@ let visualizerUI = {
 };
 
 // Helper to serialize track state for preview
-const serializeTrackState = (track) => {
+export const serializeTrackState = (track) => {
   const entry = trackBindingRegistry.get(track.id);
   const params = { ...(track.params ?? {}) };
   let bindings = [...(track.bindings ?? [])];

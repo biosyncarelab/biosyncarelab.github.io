@@ -97,6 +97,10 @@ export class MartigliOscillator {
     this._rebuildTrajectorySegments();
   }
 
+  get sessionActive() {
+    return !this.session.paused;
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -543,9 +547,9 @@ export class MartigliState {
       ? initial.oscillations
       : [initial];
     seeds.filter(Boolean).forEach((config) => this.addOscillator(config));
-    if (!this._oscillations.size) {
-      this.addOscillator();
-    }
+    // if (!this._oscillations.size) {
+    //   this.addOscillator();
+    // }
     if (initial.referenceId && this._oscillations.has(initial.referenceId)) {
       this.referenceId = initial.referenceId;
     }
