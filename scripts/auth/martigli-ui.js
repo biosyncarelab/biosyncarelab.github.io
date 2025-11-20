@@ -674,7 +674,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
     option.textContent = text;
     waveformSelect.appendChild(option);
   });
-  const waveformLabel = createRangeLabel("Waveform", "https://biosyncarelab.github.io/ont#waveform");
+  const waveformLabel = createRangeLabel("Waveform", "https://biosyncarelab.github.io/ont#Waveform");
   waveformLabel.appendChild(waveformSelect);
 
   const inhaleLabel = createRangeLabel("Inhale ratio", "https://biosyncarelab.github.io/ont#inhaleRatio");
