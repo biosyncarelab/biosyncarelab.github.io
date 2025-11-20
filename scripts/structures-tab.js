@@ -46,26 +46,6 @@ Object.entries(tabButtons).forEach(([name, button]) => {
   }
 });
 
-// Show tabs when user is signed in (when dashboard becomes visible)
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-      const dashboard = document.getElementById('panel-dashboard');
-      if (dashboard && !dashboard.classList.contains('hidden')) {
-        labTabs?.classList.remove('hidden');
-      } else {
-        labTabs?.classList.add('hidden');
-      }
-    }
-  });
-});
-
-// Observe the dashboard panel for visibility changes
-const dashboardPanel = document.getElementById('panel-dashboard');
-if (dashboardPanel) {
-  observer.observe(dashboardPanel, { attributes: true });
-}
-
 // Structure Visualizer Logic
 let currentData = null;
 
