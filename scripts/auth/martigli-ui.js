@@ -873,24 +873,24 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
 
 const renderTrajectoryList = (container, osc, callbacks) => {
   if (!container || !osc || !osc.trajectory) return;
-  
-  // We only re-render if the count changes to avoid losing focus, 
-  // or we need a smarter diffing mechanism. 
+
+  // We only re-render if the count changes to avoid losing focus,
+  // or we need a smarter diffing mechanism.
   // For now, let's clear and rebuild, but we might need to be careful about focus.
   // Actually, since this is called in updateMartigliWidget which might be called often,
   // we should check if we really need to re-render.
   // A simple check: compare length.
-  
+
   const currentCount = container.children.length;
   const targetCount = osc.trajectory.length;
-  
+
   // If counts match, we might just update values to avoid rebuilding DOM and killing focus.
   if (currentCount === targetCount) {
     Array.from(container.children).forEach((row, index) => {
       const point = osc.trajectory[index];
       const periodInput = row.querySelector(".traj-period");
       const durationInput = row.querySelector(".traj-duration");
-      
+
       // Only update if not focused to allow typing
       if (periodInput && document.activeElement !== periodInput) {
         periodInput.value = point.period;
@@ -906,7 +906,7 @@ const renderTrajectoryList = (container, osc, callbacks) => {
   osc.trajectory.forEach((point, index) => {
     const row = document.createElement("div");
     row.className = "martigli-trajectory-row";
-    
+
     const periodGroup = document.createElement("div");
     periodGroup.className = "traj-group";
     const periodLabel = document.createElement("label");

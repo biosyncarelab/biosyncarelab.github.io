@@ -101,6 +101,16 @@ export class MartigliOscillator {
     return !this.session.paused;
   }
 
+  get startPeriodSec() { return this.config.startPeriodSec; }
+  get endPeriodSec() { return this.config.endPeriodSec; }
+  get transitionSec() { return this.config.transitionSec; }
+  get waveform() { return this.config.waveform; }
+  get inhaleRatio() { return this.config.inhaleRatio; }
+  get amplitude() { return this.config.amplitude; }
+  get startOffsetSec() { return this.config.startOffsetSec; }
+  get phaseOffset() { return this.config.phaseOffset; }
+  get fadeOutSec() { return this.config.fadeOutSec; }
+
   toJSON() {
     return {
       id: this.id,
