@@ -6,8 +6,24 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 
+# ============================================================================
 # Music Structures Ontology Module
-# Semantic descriptions of change-ringing patterns, Martigli sequences, and symmetry structures
+# ============================================================================
+# Semantic descriptions of change-ringing patterns, Martigli sequences,
+# and symmetry structures for BioSynCare Lab
+#
+# IMPORTANT FOR AI PODS:
+# This RDF ontology is the PRIMARY SOURCE OF TRUTH for musical structures.
+# JSON files in data/structures/ are DERIVED from this RDF data.
+# All AI pods should:
+#   1. Read structure metadata and usage examples from RDF
+#   2. Use JSON only for runtime performance (permutation arrays)
+#   3. Validate JSON against RDF schemas using SHACL
+#   4. Link UI interactions to RDF URIs for semantic integration
+#
+# Usage examples are defined in: music-structures-usage-examples.ttl
+# Import or merge that file to access all 37 concrete application scenarios
+# ============================================================================
 
 # ===== Classes =====
 

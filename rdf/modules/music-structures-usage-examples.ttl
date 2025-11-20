@@ -102,5 +102,187 @@ bsc:PlainChanges6_Example4 a bsc:VisualUsageExample ;
 
 bsc:PlainChanges6 bsc:hasUsageExample bsc:PlainChanges6_Example1, bsc:PlainChanges6_Example2, bsc:PlainChanges6_Example3, bsc:PlainChanges6_Example4 .
 
-# Note: Additional usage examples for Plain Hunt, Martigli, and Symmetry structures
-# should be added following the same pattern
+## Plain Hunt on 6 - Usage Examples
+
+bsc:PlainHunt6_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Hexaphonic frequency sweep with 6 oscillators" ;
+    bsc:hasScenario "Hexaphonic frequency sweep with 6 oscillators" ;
+    bsc:hasBreathingPattern "Not breathing-synchronized (operates independently at own tempo)" ;
+    bsc:hasTrackMapping """6 sine wave oscillators at harmonic ratios (100Hz, 200Hz, 300Hz, 400Hz, 500Hz, 600Hz). Each row change swaps which frequencies are prominent. Creates a cyclical weaving pattern where harmonic relationships constantly shift. The 12-row cycle ensures each frequency visits multiple positions before returning to original order.""" ;
+    bsc:hasExpectedOutcome """Complex harmonic texture that evolves predictably yet remains engaging. The smooth transitions (only adjacent swaps) prevent jarring frequency jumps. Useful for ambient sound design or generative music compositions.""" .
+
+bsc:PlainHunt6_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Six-track stereo panorama orchestration" ;
+    bsc:hasScenario "Six-track stereo panorama orchestration" ;
+    bsc:hasBreathingPattern "Independent timing, typically 30-60 seconds per full cycle" ;
+    bsc:hasTrackMapping """6 instrumental tracks positioned across stereo field (far-left to far-right). Plain hunt determines which tracks occupy which spatial positions at each step. As positions exchange, the stereo image 'rings changes' like bells. Could map to: kick, snare, hi-hat, bass, synth, vocals.""" ;
+    bsc:hasExpectedOutcome """Constantly evolving spatial mix that maintains balance while preventing static positioning. The cyclical nature ensures all tracks experience all positions. Creates organic movement in stereo field without random chaos.""" .
+
+bsc:PlainHunt6_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "Video layer priority with 6 visual elements" ;
+    bsc:hasScenario "Video layer priority with 6 visual elements" ;
+    bsc:hasBreathingPattern "Frame-rate synchronized (e.g., change every 2-4 seconds)" ;
+    bsc:hasTrackMapping """6 video layers (background gradient, particle system, geometric shapes, text overlays, color filters, foreground elements). Row position determines z-index stacking order. Each change swaps adjacent layers, creating smooth depth transitions. Position 1 = bottom layer, position 6 = top layer.""" ;
+    bsc:hasExpectedOutcome """Mesmerizing visual composition where elements weave through depth planes. The 13-step cycle (12 changes + return to rounds) creates a complete narrative arc. Prevents any single element from dominating too long.""" .
+
+bsc:PlainHunt6_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Multi-parameter modulation for synthesizer" ;
+    bsc:hasScenario "Multi-parameter modulation for synthesizer" ;
+    bsc:hasBreathingPattern "LFO-driven at slow rate (0.05-0.2 Hz)" ;
+    bsc:hasTrackMapping """Control 6 synth parameters: filter cutoff, resonance, attack, decay, pulse width, detune. Each row assigns parameters to 6 modulation sources (6 LFOs with different waveforms). The hunt pattern ensures each parameter experiences each LFO shape over the full cycle, creating evolving timbral complexity.""" ;
+    bsc:hasExpectedOutcome """Richly evolving synthesizer patches that maintain coherence through deterministic modulation routing. The 'minimal changes' property ensures gradual timbral shifts rather than abrupt transformations. Ideal for evolving pad sounds or ambient textures.""" .
+
+bsc:PlainHunt6 bsc:hasUsageExample bsc:PlainHunt6_Example1, bsc:PlainHunt6_Example2, bsc:PlainHunt6_Example3, bsc:PlainHunt6_Example4 .
+
+## Plain Hunt on 4 - Usage Examples
+
+bsc:PlainHunt4_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Quadraphonic speaker rotation for immersive audio" ;
+    bsc:hasScenario "Quadraphonic speaker rotation for immersive audio" ;
+    bsc:hasBreathingPattern "Independent tempo, typically 15-30 seconds per full cycle" ;
+    bsc:hasTrackMapping """4 speakers in corners of room (front-left, front-right, rear-left, rear-right). Single audio source routes through speakers in plain hunt order, creating circular motion. Row position determines which speaker is active. The adjacent-swap property ensures smooth spatial transitions.""" ;
+    bsc:hasExpectedOutcome """Listener perceives sound source moving smoothly around the room in a deterministic pattern. The 8-change cycle is short enough to maintain engagement without becoming predictable. Excellent for spatial audio experiments or meditation spaces.""" .
+
+bsc:PlainHunt4_Example2 a bsc:VisualUsageExample ;
+    rdfs:label "RGBA color channel manipulation" ;
+    bsc:hasScenario "RGBA color channel manipulation" ;
+    bsc:hasBreathingPattern "Frame-synchronized for real-time video (30-60fps, change every 10-20 frames)" ;
+    bsc:hasTrackMapping """4 color channels: Red, Green, Blue, Alpha. Each row determines which source image contributes to which output channel. Creates evolving color distortions and channel-swapping effects. Position determines channel routing: [R→R, G→G, B→B, A→A] at rounds, then adjacent channels begin swapping.""" ;
+    bsc:hasExpectedOutcome """Psychedelic color-shifting effect that cycles through 8 distinct color transformations. Smooth transitions prevent jarring visual glitches. Useful for VJ performances, music videos, or experimental film.""" .
+
+bsc:PlainHunt4_Example3 a bsc:AudioUsageExample ;
+    rdfs:label "Four-voice canon with rhythmic displacement" ;
+    bsc:hasScenario "Four-voice canon with rhythmic displacement" ;
+    bsc:hasBreathingPattern "Musical tempo-locked (e.g., change every 2 bars in 4/4 time)" ;
+    bsc:hasTrackMapping """4 melodic voices playing the same phrase with different rhythmic emphasis. Row position determines each voice's dynamic level (1=quietest, 4=loudest). As pattern progresses, different voices take the lead, creating a woven contrapuntal texture. Works well with: soprano, alto, tenor, bass.""" ;
+    bsc:hasExpectedOutcome """Rich polyphonic texture where leadership constantly shifts between voices. The plain hunt ensures all voices get equal prominence over the 8-change cycle. Creates interesting call-and-response patterns inherent to change-ringing mathematics.""" .
+
+bsc:PlainHunt4_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Granular synthesis with 4 grain streams" ;
+    bsc:hasScenario "Granular synthesis with 4 grain streams" ;
+    bsc:hasBreathingPattern "Grain-rate modulation (changes every 100-500ms)" ;
+    bsc:hasTrackMapping """4 parallel grain generators with different parameters: grain size, pitch shift, density, spatial position. Row ordering determines which parameter set dominates the mix. Each row change swaps parameter priorities, creating morphing granular textures. Minimal changes ensure smooth timbral evolution.""" ;
+    bsc:hasExpectedOutcome """Continuously evolving granular cloud that cycles through 8 timbral states. The deterministic pattern provides structure to otherwise chaotic granular synthesis. Ideal for ambient soundscapes or experimental electroacoustic music.""" .
+
+bsc:PlainHunt4 bsc:hasUsageExample bsc:PlainHunt4_Example1, bsc:PlainHunt4_Example2, bsc:PlainHunt4_Example3, bsc:PlainHunt4_Example4 .
+
+## Martigli Phase 6-4-4-2 - Usage Examples
+
+bsc:MartigliPhase6_4_4_2_Example1 a bsc:MixedUsageExample ;
+    rdfs:label "Evening meditation with 6 binaural beats" ;
+    bsc:hasScenario "Evening meditation with 6 binaural beats" ;
+    bsc:hasBreathingPattern "Set Martigli oscillator to 5 breaths/minute (12-second cycle: 4.8s inhale, 4.8s hold, 2.4s exhale)" ;
+    bsc:hasTrackMapping """Map 6 binaural beat tracks (40Hz→8Hz gradient) to sequence positions. During inhale (rows 0-3), higher-frequency tracks gain prominence. During hold (rows 4-7), mid-range frequencies stabilize. During exhale (rows 8-9), lowest frequencies dominate.""" ;
+    bsc:hasExpectedOutcome """Gradual descent from alert gamma waves to meditative theta, synchronized with breath for deep relaxation.""" .
+
+bsc:MartigliPhase6_4_4_2_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Sleep preparation with spatial audio" ;
+    bsc:hasScenario "Sleep preparation with spatial audio" ;
+    bsc:hasBreathingPattern "Ultra-slow breathing at 4 breaths/minute (15-second cycle: 6s inhale, 6s hold, 3s exhale)" ;
+    bsc:hasTrackMapping """Assign 6 audio tracks with different spatial positions (front-left, front-center, front-right, back-left, back-center, back-right). Each row shifts which position is emphasized, creating a clockwise rotation of sound emphasis that follows breathing rhythm.""" ;
+    bsc:hasExpectedOutcome """Spatial audio 'breathes' around the listener, creating immersive entrainment effect conducive to sleep onset.""" .
+
+bsc:MartigliPhase6_4_4_2_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "Six-layer visual mandala animation" ;
+    bsc:hasScenario "Six-layer visual mandala animation" ;
+    bsc:hasBreathingPattern "Moderate pace at 6 breaths/minute (10-second cycle)" ;
+    bsc:hasTrackMapping """Control opacity/scale of 6 concentric mandala layers. Inhale phase expands outer rings, hold phase maintains equilibrium, exhale phase contracts to center. Sequence ordering creates wave-like pulsation from periphery to core.""" ;
+    bsc:hasExpectedOutcome """Hypnotic visual rhythm synchronized with breath, supporting concentration and meditative focus.""" .
+
+bsc:MartigliPhase6_4_4_2 bsc:hasUsageExample bsc:MartigliPhase6_4_4_2_Example1, bsc:MartigliPhase6_4_4_2_Example2, bsc:MartigliPhase6_4_4_2_Example3 .
+
+## Martigli Phase 4-3-3-2 - Usage Examples
+
+bsc:MartigliPhase4_3_3_2_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Focus session with quad-stereo isochronic tones" ;
+    bsc:hasScenario "Focus session with quad-stereo isochronic tones" ;
+    bsc:hasBreathingPattern "Active breathing at 8 breaths/minute (7.5-second cycle: 2.8s inhale, 2.8s hold, 1.9s exhale)" ;
+    bsc:hasTrackMapping """4 isochronic tone tracks at different frequencies (14Hz beta for focus, 10Hz alpha for relaxed alertness, 6Hz theta for creativity, 18Hz high-beta for processing). Rows 0-2 (inhale): beta frequencies rise to foreground. Rows 3-5 (hold): alpha maintains steady presence. Row 6+ (exhale): brief theta dip before cycling. The short exhale prevents drowsiness.""" ;
+    bsc:hasExpectedOutcome """Maintains alert concentration state, ideal for coding, writing, or analytical work. Breath-sync prevents mental fatigue.""" .
+
+bsc:MartigliPhase4_3_3_2_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Stereo pair panning for study music" ;
+    bsc:hasScenario "Stereo pair panning for study music" ;
+    bsc:hasBreathingPattern "Moderate pace at 7 breaths/minute (8.5-second cycle)" ;
+    bsc:hasTrackMapping """Two stereo pairs: (1) ambient pad left/right, (2) melody left/right. Sequence alternates which pair dominates. Row changes shift stereo field emphasis, creating subtle spatial movement that maintains engagement without distraction. Position [1,2,3,4] might map to [ambient-L, melody-L, ambient-R, melody-R].""" ;
+    bsc:hasExpectedOutcome """Stereo image 'breathes' gently, preventing auditory habituation while maintaining conducive atmosphere for studying.""" .
+
+bsc:MartigliPhase4_3_3_2_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "Pomodoro timer with 4-color visual cues" ;
+    bsc:hasScenario "Pomodoro timer with 4-color visual cues" ;
+    bsc:hasBreathingPattern "Box breathing variant at 6 breaths/minute (10-second cycle: 3.75s inhale, 3.75s hold, 2.5s exhale)" ;
+    bsc:hasTrackMapping """4 colored overlay tracks (blue for calm, green for growth, yellow for energy, red for urgency). During 25-minute work block: inhale phase emphasizes blue/green (calm focus), hold phase maintains green/yellow (sustained energy), exhale phase briefly touches yellow/red (alertness reminder). Sequence creates color-breathing effect.""" ;
+    bsc:hasExpectedOutcome """Visual environment subtly shifts with breath, preventing monotony during Pomodoro work intervals. Color-breath coupling enhances time perception.""" .
+
+bsc:MartigliPhase4_3_3_2_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Four-voice harmonic breathing" ;
+    bsc:hasScenario "Four-voice harmonic breathing" ;
+    bsc:hasBreathingPattern "Slow at 5 breaths/minute (12-second cycle: 4.5s inhale, 4.5s hold, 3s exhale)" ;
+    bsc:hasTrackMapping """4 sine waves forming a chord (e.g., C major: C3, E3, G3, C4). Each row emphasizes different chord tones by modulating amplitude. Creates harmonic 'breathing' where chord voicing shifts with respiratory phases. Inhale: root rises, hold: third/fifth balance, exhale: brief return to root.""" ;
+    bsc:hasExpectedOutcome """Harmonic structure follows breath, creating deeply integrative experience between sonic and somatic awareness. Used in sound healing and vocal training.""" .
+
+bsc:MartigliPhase4_3_3_2 bsc:hasUsageExample bsc:MartigliPhase4_3_3_2_Example1, bsc:MartigliPhase4_3_3_2_Example2, bsc:MartigliPhase4_3_3_2_Example3, bsc:MartigliPhase4_3_3_2_Example4 .
+
+## Mirror Sweep on 6 - Usage Examples
+
+bsc:MirrorSweep6_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Filter cutoff sweep with 6-band equalizer" ;
+    bsc:hasScenario "Filter cutoff sweep with 6-band equalizer" ;
+    bsc:hasBreathingPattern "Slow envelope (20-40 seconds per full cycle)" ;
+    bsc:hasTrackMapping """6 EQ bands (sub-bass 60Hz, bass 120Hz, low-mid 250Hz, mid 500Hz, high-mid 2kHz, treble 8kHz). Row position determines gain level for each band. The mirror pattern creates a frequency sweep that builds from lows to highs (rows 0-5), peaks at full reversal, then descends symmetrically back to the start. Position 1 = -12dB, position 6 = +6dB.""" ;
+    bsc:hasExpectedOutcome """Classic filter sweep effect with perfect symmetry. The palindromic nature ensures smooth rise-and-fall without abrupt transitions. The listener experiences a complete frequency journey that feels musically resolved. Ideal for progressive build-ups in electronic music or ambient soundscapes.""" .
+
+bsc:MirrorSweep6_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Symmetric gain envelope for layered pads" ;
+    bsc:hasScenario "Symmetric gain envelope for layered pads" ;
+    bsc:hasBreathingPattern "Musical phrase-locked (e.g., 16-bar cycle in 4/4 time)" ;
+    bsc:hasTrackMapping """6 synthesizer pad layers with different timbres (dark → bright spectrum). Mirror sweep controls relative volume levels. First half (rows 0-5): darker pads fade out as brighter pads fade in. Peak reversal: brightest timbral state. Second half (rows 6-10): symmetrical return to dark timbres. Creates wave-like timbral breathing.""" ;
+    bsc:hasExpectedOutcome """Hypnotic timbral morphing with inherent musicality from palindromic structure. The symmetric arc feels 'complete' and satisfying. No jarring transitions due to smooth position changes. Perfect for ambient, downtempo, or meditation music where gentle evolution is desired.""" .
+
+bsc:MirrorSweep6_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "Visual opacity cascade for UI animations" ;
+    bsc:hasScenario "Visual opacity cascade for UI animations" ;
+    bsc:hasBreathingPattern "Animation timeline (3-5 second duration)" ;
+    bsc:hasTrackMapping """6 UI elements or visual layers with staggered reveal/conceal. Row position determines opacity (1 = 0%, 6 = 100%). Elements gradually appear in sequence during ascent to midpoint, then symmetrically disappear. Creates elegant reveal-and-hide animation with mathematical precision.""" ;
+    bsc:hasExpectedOutcome """Polished UI animation with perfect symmetry. Users perceive smooth, choreographed motion. The palindrome ensures the animation can loop seamlessly or play once for transitions. Commonly used for loading screens, menu transitions, or attention-directing effects.""" .
+
+bsc:MirrorSweep6_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Modulation depth for 6 parallel LFOs" ;
+    bsc:hasScenario "Modulation depth for 6 parallel LFOs" ;
+    bsc:hasBreathingPattern "LFO meta-modulation (0.1-0.5 Hz carrier)" ;
+    bsc:hasTrackMapping """6 LFOs modulating different synth parameters. Mirror sweep controls modulation depth for each LFO. As sweep progresses, different LFOs become more/less intense, creating shifting emphasis in modulation complexity. Row position = modulation depth percentage (0-100%).""" ;
+    bsc:hasExpectedOutcome """Evolving modulation landscape where complexity builds to a peak then recedes. The symmetric pattern prevents modulation from becoming chaotic or static. Creates living, breathing synthesis patches where timbral movement has clear narrative arc. Used in experimental electronic music and sound design.""" .
+
+bsc:MirrorSweep6 bsc:hasUsageExample bsc:MirrorSweep6_Example1, bsc:MirrorSweep6_Example2, bsc:MirrorSweep6_Example3, bsc:MirrorSweep6_Example4 .
+
+## Rotating Crossfade on 6 - Usage Examples
+
+bsc:RotatingCrossfade6_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Circular panning for hexagonal speaker array" ;
+    bsc:hasScenario "Circular panning for hexagonal speaker array" ;
+    bsc:hasBreathingPattern "Moderate rotation (10-20 seconds per full revolution)" ;
+    bsc:hasTrackMapping """6 speakers arranged in hexagon around listener (positions 0°, 60°, 120°, 180°, 240°, 300°). Single audio source rotates clockwise through all positions. Each row shift moves sound to next speaker. Row position corresponds to speaker index. Creates smooth circular motion around the listener's head.""" ;
+    bsc:hasExpectedOutcome """Perfectly smooth circular panning effect. Sound appears to orbit the listener in predictable clockwise motion. The equal-time-at-each-position property ensures balanced spatial distribution. Excellent for immersive installations, planetarium soundtracks, or experimental spatial audio compositions.""" .
+
+bsc:RotatingCrossfade6_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Round-robin drum pattern variation" ;
+    bsc:hasScenario "Round-robin drum pattern variation" ;
+    bsc:hasBreathingPattern "Musical tempo (change every 4 or 8 bars)" ;
+    bsc:hasTrackMapping """6 drum pattern variations of the same groove. Each row determines which pattern is active. Rotation ensures each variation gets heard in sequence without repetition. Patterns could vary in: hi-hat complexity, kick placement, snare ghost notes, tom fills, ride cymbal, percussion layers.""" ;
+    bsc:hasExpectedOutcome """Constantly evolving drum groove that maintains core rhythm while preventing monotony. The cyclical rotation is predictable enough for DJs to mix, yet varied enough to sustain listener interest. Each pattern gets equal airtime. Used in electronic dance music, hip-hop production, and live performance.""" .
+
+bsc:RotatingCrossfade6_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "Color palette rotation for generative art" ;
+    bsc:hasScenario "Color palette rotation for generative art" ;
+    bsc:hasBreathingPattern "Slow visual evolution (30-60 seconds per cycle)" ;
+    bsc:hasTrackMapping """6 color schemes for generative graphics (warm, cool, pastel, vibrant, monochrome, analogous). Each row determines active palette. Rotation ensures all palettes appear in sequence. Position determines which color set is applied to visual elements. Creates kaleidoscopic color cycling.""" ;
+    bsc:hasExpectedOutcome """Mesmerizing color transformations with perfect fairness—each palette gets equal display time. The cyclic nature allows viewers to anticipate and appreciate each color scheme. No palette dominates or gets skipped. Ideal for digital art installations, VJ loops, or screensavers.""" .
+
+bsc:RotatingCrossfade6_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Harmonic series rotation for spectral composition" ;
+    bsc:hasScenario "Harmonic series rotation for spectral composition" ;
+    bsc:hasBreathingPattern "Long-form evolution (1-3 minutes per cycle)" ;
+    bsc:hasTrackMapping """6 harmonic partials or overtone clusters. Each row shifts which harmonic is emphasized in the mix. Rotates through harmonic spectrum: fundamental, 2nd harmonic, 3rd harmonic, etc. Row position determines amplitude of corresponding partial. Creates slowly evolving spectral texture.""" ;
+    bsc:hasExpectedOutcome """Rich harmonic tapestry that cycles through the overtone series. Each harmonic gets equal prominence over the full cycle. The rotation reveals the internal structure of the sound, making harmonics audible that would otherwise be masked. Used in spectral music, drone compositions, and acoustic research.""" .
+
+bsc:RotatingCrossfade6 bsc:hasUsageExample bsc:RotatingCrossfade6_Example1, bsc:RotatingCrossfade6_Example2, bsc:RotatingCrossfade6_Example3, bsc:RotatingCrossfade6_Example4 .
