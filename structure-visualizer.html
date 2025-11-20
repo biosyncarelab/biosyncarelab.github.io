@@ -569,8 +569,12 @@
         // Show explanation in a styled box if available
         if (sequence.explanation) {
           html += `<div class="sequence-explanation">${sequence.explanation}</div>`;
+        } else if (sequence.metadata?.comment) {
+          html += `<div class="sequence-explanation">${sequence.metadata.comment}</div>`;
         } else if (sequence.metadata) {
-          html += `<div class="sequence-explanation">${JSON.stringify(sequence.metadata)}</div>`;
+          // Show basic metadata if no comment
+          const metaText = `Stage: ${sequence.metadata.stage || 'N/A'}, Rows: ${sequence.metadata.rows || 'N/A'}`;
+          html += `<div class="sequence-explanation muted-text">${metaText}</div>`;
         }
 
         if (rows.length === 0) {

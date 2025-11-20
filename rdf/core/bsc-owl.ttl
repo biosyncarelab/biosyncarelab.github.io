@@ -123,3 +123,193 @@ bsc:usageCount        a owl:DatatypeProperty ;
 id:BioSynCareLab a bsc:Project ;
   rdfs:label "BioSynCare Lab" ;
   dct:description "Open, client-side neurosensory stimulation lab and transparency hub." .
+
+# Structure datasets and permutation sequences
+bsc:StructureDataset    a owl:Class ; rdfs:label "Structure Dataset" .
+bsc:PermutationSequence a owl:Class ; rdfs:label "Permutation Sequence" .
+bsc:SequenceRow         a owl:Class ; rdfs:label "Sequence Row" .
+bsc:PermutationFamily   a owl:Class ; rdfs:label "Permutation Family" .
+bsc:SymmetricGroup      a owl:Class ; rdfs:label "Symmetric Group" .
+bsc:SymmetryStructure   a owl:Class ; rdfs:label "Symmetry Structure" .
+
+bsc:hasSequence       a owl:ObjectProperty ;
+  rdfs:label "has sequence" ;
+  rdfs:domain bsc:StructureDataset ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:hasRow            a owl:ObjectProperty ;
+  rdfs:label "has row" ;
+  rdfs:domain bsc:PermutationSequence ;
+  rdfs:range bsc:SequenceRow .
+
+bsc:hasPermutation    a owl:ObjectProperty ;
+  rdfs:label "has permutation" ;
+  rdfs:domain bsc:PermutationFamily ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:hasGenerator      a owl:ObjectProperty ;
+  rdfs:label "has generator" ;
+  rdfs:domain bsc:SymmetricGroup ;
+  rdfs:range bsc:SequenceRow .
+
+bsc:rotations         a owl:ObjectProperty ;
+  rdfs:label "rotations" ;
+  rdfs:domain bsc:SymmetryStructure ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:mirrors           a owl:ObjectProperty ;
+  rdfs:label "mirrors" ;
+  rdfs:domain bsc:SymmetryStructure ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:dihedral          a owl:ObjectProperty ;
+  rdfs:label "dihedral" ;
+  rdfs:domain bsc:SymmetryStructure ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:family            a owl:DatatypeProperty ;
+  rdfs:label "family" ;
+  rdfs:comment "Grouping key for permutation families or musical structures" ;
+  rdfs:range xsd:string .
+
+bsc:orderDimension    a owl:DatatypeProperty ;
+  rdfs:label "order dimension" ;
+  rdfs:domain bsc:PermutationSequence ;
+  rdfs:range xsd:integer .
+
+bsc:rowIndex          a owl:DatatypeProperty ;
+  rdfs:label "row index" ;
+  rdfs:domain bsc:SequenceRow ;
+  rdfs:range xsd:integer .
+
+bsc:rowValues         a owl:DatatypeProperty ;
+  rdfs:label "row values" ;
+  rdfs:comment "Ordered list of zero-based indices representing a permutation row" ;
+  rdfs:domain bsc:SequenceRow ;
+  rdfs:range xsd:integer .
+
+bsc:stage             a owl:DatatypeProperty ;
+  rdfs:label "stage" ;
+  rdfs:comment "Number of elements in the symmetric group (e.g., bells)" ;
+  rdfs:range xsd:integer .
+
+bsc:cycleSignature    a owl:DatatypeProperty ;
+  rdfs:label "cycle signature" ;
+  rdfs:domain bsc:PermutationFamily ;
+  rdfs:range xsd:string .
+
+bsc:parity            a owl:DatatypeProperty ;
+  rdfs:label "parity" ;
+  rdfs:domain bsc:PermutationFamily ;
+  rdfs:range xsd:string .
+
+bsc:sign              a owl:DatatypeProperty ;
+  rdfs:label "sign" ;
+  rdfs:domain bsc:PermutationFamily ;
+  rdfs:range xsd:integer .
+
+bsc:adjacentOnly      a owl:DatatypeProperty ;
+  rdfs:label "adjacent only" ;
+  rdfs:domain bsc:PermutationFamily ;
+  rdfs:range xsd:boolean .
+
+bsc:loop              a owl:DatatypeProperty ;
+  rdfs:label "loop" ;
+  rdfs:domain bsc:PermutationSequence ;
+  rdfs:range xsd:boolean .
+
+# Tracks, parameters, and modulators
+bsc:Track        a owl:Class ; rdfs:label "Track" .
+bsc:AudioTrack   a owl:Class ; rdfs:label "Audio Track" ; rdfs:subClassOf bsc:Track .
+bsc:VisualTrack  a owl:Class ; rdfs:label "Visual Track" ; rdfs:subClassOf bsc:Track .
+bsc:HapticTrack  a owl:Class ; rdfs:label "Haptic Track" ; rdfs:subClassOf bsc:Track .
+bsc:Parameter    a owl:Class ; rdfs:label "Parameter" .
+
+bsc:hasParameter a owl:ObjectProperty ;
+  rdfs:label "has parameter" ;
+  rdfs:domain bsc:Track ;
+  rdfs:range bsc:Parameter .
+
+bsc:modulates    a owl:ObjectProperty ;
+  rdfs:label "modulates" ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range bsc:Track .
+
+bsc:modulator    a owl:ObjectProperty ;
+  rdfs:label "modulator" ;
+  rdfs:comment "Links a parameter to an oscillator or modulation source" ;
+  rdfs:domain bsc:Parameter .
+
+bsc:usesSequence a owl:ObjectProperty ;
+  rdfs:label "uses sequence" ;
+  rdfs:comment "Track or session references a permutation sequence for ordering" ;
+  rdfs:range bsc:PermutationSequence .
+
+bsc:parameterName a owl:DatatypeProperty ;
+  rdfs:label "parameter name" ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:string .
+
+bsc:baseValue     a owl:DatatypeProperty ;
+  rdfs:label "base value" ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:depth         a owl:DatatypeProperty ;
+  rdfs:label "depth" ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+# Martigli oscillator and waveform terms
+bsc:MartigliOscillation a owl:Class ; rdfs:label "Martigli Oscillation" .
+bsc:Waveform            a owl:Class ; rdfs:label "Waveform" .
+bsc:SineWave            a owl:Class ; rdfs:label "Sine Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:TriangleWave        a owl:Class ; rdfs:label "Triangle Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SquareWave          a owl:Class ; rdfs:label "Square Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SawWave             a owl:Class ; rdfs:label "Saw Wave" ; rdfs:subClassOf bsc:Waveform .
+
+bsc:waveform            a owl:ObjectProperty ;
+  rdfs:label "waveform" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range bsc:Waveform .
+
+bsc:startPeriod         a owl:DatatypeProperty ;
+  rdfs:label "start period (seconds)" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:endPeriod           a owl:DatatypeProperty ;
+  rdfs:label "end period (seconds)" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:transitionDuration  a owl:DatatypeProperty ;
+  rdfs:label "transition duration (seconds)" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:inhaleRatio         a owl:DatatypeProperty ;
+  rdfs:label "inhale ratio" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:amplitude           a owl:DatatypeProperty ;
+  rdfs:label "amplitude" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:phaseOffset         a owl:DatatypeProperty ;
+  rdfs:label "phase offset" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:startOffset         a owl:DatatypeProperty ;
+  rdfs:label "start offset (seconds)" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:decimal .
+
+bsc:trajectory          a owl:DatatypeProperty ;
+  rdfs:label "trajectory" ;
+  rdfs:comment "List of period/duration pairs describing modulation trajectory" ;
+  rdfs:domain bsc:MartigliOscillation ;
+  rdfs:range xsd:string .

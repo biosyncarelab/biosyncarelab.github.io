@@ -1,4 +1,6 @@
 const DEFAULT_URL = "data/structures/community-alpha-change-ringing.json";
+const ID_BASE = "https://biosyncarelab.github.io/id";
+const CONTEXT_URL = "https://biosyncarelab.github.io/context/structures.jsonld";
 
 export const STRUCTURE_MANIFEST = [
   {
@@ -87,4 +89,69 @@ export async function loadStructureCatalog(manifest = STRUCTURE_MANIFEST) {
 
 export function getSequence(structures, id) {
   return structures.sequences.find((seq) => seq.id === id);
+}
+
+const buildDatasetUri = (datasetId) => `${ID_BASE}/structure/${encodeURIComponent(datasetId)}`;
+const buildSequenceUri = (datasetId, sequenceId) => `${ID_BASE}/sequence/${encodeURIComponent(datasetId)}/${encodeURIComponent(sequenceId)}`;
+const buildRowUri = (datasetId, sequenceId, rowIndex) => `${buildSequenceUri(datasetId, sequenceId)}/row/${rowIndex}`;
+
+function normalizeRowsZeroBased(sequence) {
+  if (Array.isArray(sequence.rowsZeroBased) && sequence.rowsZeroBased.length) {
+    return sequence.rowsZeroBased;
+  }
+  if (Array.isArray(sequence.rows) && sequence.rows.length) {
+    return sequence.rows.map((row) => row.map((v) => (Number.isFinite(v) ? v - 1 : v)));
+  }
+  return [];
+}
+
+function sequenceToJsonLd(sequence = {}, datasetId) {
+  const rowsZeroBased = normalizeRowsZeroBased(sequence);
+  const rows = rowsZeroBased.map((row, index) => ({
+    "@id": buildRowUri(datasetId, sequence.id ?? index, index),
+    "@type": "bsc:SequenceRow",
+    rowIndex: index,
+    rowValues: row,
+  }));
+
+  const description = sequence.description
+    ?? (typeof sequence.explanation === "string" ? sequence.explanation : sequence.explanation?.overview);
+
+  return {
+    "@id": buildSequenceUri(datasetId, sequence.id ?? `seq-${rows.length}`),
+    "@type": "bsc:PermutationSequence",
+    label: sequence.label ?? sequence.id ?? "Sequence",
+    description,
+    orderDimension: sequence.orderDimension ?? rowsZeroBased[0]?.length ?? null,
+    loop: typeof sequence.loop === "boolean" ? sequence.loop : true,
+    family: sequence.family,
+    hasRow: rows,
+    source: sequence.source,
+  };
+}
+
+export function datasetToJsonLd(structure = {}, options = {}) {
+  const datasetId = options.datasetId ?? structure.id ?? "dataset";
+  const contextUrl = options.contextUrl ?? CONTEXT_URL;
+  const sequences = (structure.sequences ?? []).map((seq) => sequenceToJsonLd(seq, datasetId));
+
+  const payload = {
+    "@context": contextUrl,
+    "@id": buildDatasetUri(datasetId),
+    "@type": "bsc:StructureDataset",
+    label: structure.label ?? datasetId,
+    description: structure.description ?? structure.explanation?.overview,
+    hasSequence: sequences,
+  };
+
+  if (structure.generatedAt) {
+    payload.generatedAt = structure.generatedAt;
+  } else if (structure.source?.generated) {
+    payload.generatedAt = structure.source.generated;
+  }
+  if (structure.source) {
+    payload.source = structure.source;
+  }
+
+  return payload;
 }

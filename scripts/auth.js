@@ -68,6 +68,7 @@ import { firebaseConfig } from "./firebase-config.js";
 import { BSCLabKernel } from "./structures.js";
 import { STRUCTURE_MANIFEST } from "./structures-loader.js";
 import { initMixerUI } from "./mixer-ui.js";
+import "./structures-tab.js";
 
 const ui = {
   state: document.getElementById("auth-state"),
@@ -82,7 +83,8 @@ const ui = {
   messages: document.getElementById("messages"),
   authForms: document.getElementById("auth-forms"),
   authChip: document.getElementById("auth-chip"),
-  dashboard: document.getElementById("dashboard"),
+  dashboard: document.getElementById("panel-dashboard"),
+  tabs: document.getElementById("lab-tabs"),
   sessionList: document.getElementById("session-list"),
   sessionStatus: document.getElementById("session-status"),
   sessionNavigator: document.getElementById("session-navigator"),
@@ -192,6 +194,11 @@ appState.subscribe((state) => {
 
   // Update auth UI when user changes
   renderAuthState(ui, state.currentUser);
+
+  const isAuthenticated = !!state.currentUser;
+  toggleAuthPanels(ui.authForms, ui.dashboard, isAuthenticated);
+  if (ui.tabs) ui.tabs.classList.toggle(UI_CONFIG.CLASSES.HIDDEN, !isAuthenticated);
+  if (ui.authChip) ui.authChip.classList.toggle(UI_CONFIG.CLASSES.HIDDEN, !isAuthenticated);
 
   // Update controls based on busy/user state
   refreshControls();

@@ -12,6 +12,7 @@ export class TrackParameter {
     this._modulator = null; // Reference to a MartigliOscillator or similar
     this.min = options.min ?? -Infinity;
     this.max = options.max ?? Infinity;
+    this.options = options.options ?? null; // For dropdowns: ['sine', 'square']
   }
 
   get base() { return this._base; }

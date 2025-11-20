@@ -140,32 +140,55 @@ function renderTrackList(tracks, container, kernel) {
       pLabel.style.overflow = 'hidden';
       pLabel.style.textOverflow = 'ellipsis';
 
-      const input = document.createElement('input');
-      input.type = 'range';
-      input.min = param.min !== -Infinity ? param.min : 0;
-      input.max = param.max !== Infinity ? param.max : 1000;
-      input.step = (param.max - param.min) > 100 ? 1 : 0.1;
-      input.value = param.base;
-      input.style.width = '100%';
-      input.style.cursor = 'pointer';
+      let input;
+      if (param.options && Array.isArray(param.options)) {
+        input = document.createElement('select');
+        input.style.width = '100%';
+        input.style.cursor = 'pointer';
+        input.style.fontSize = '0.8rem';
+        input.style.padding = '0.1rem';
+
+        param.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt;
+          option.selected = opt === param.base;
+          input.appendChild(option);
+        });
+
+        input.onchange = (e) => {
+          param.base = e.target.value;
+          // No value display update needed for select
+        };
+      } else {
+        input = document.createElement('input');
+        input.type = 'range';
+        input.min = param.min !== -Infinity ? param.min : 0;
+        input.max = param.max !== Infinity ? param.max : 1000;
+        input.step = (param.max - param.min) > 100 ? 1 : 0.1;
+        input.value = param.base;
+        input.style.width = '100%';
+        input.style.cursor = 'pointer';
+
+        input.oninput = (e) => {
+          const val = parseFloat(e.target.value);
+          param.base = val;
+          valDisplay.textContent = val < 10 ? val.toFixed(1) : Math.round(val);
+        };
+      }
 
       const valDisplay = document.createElement('span');
-      valDisplay.textContent = param.base < 10 ? param.base.toFixed(1) : Math.round(param.base);
+      if (!param.options) {
+        valDisplay.textContent = param.base < 10 ? param.base.toFixed(1) : Math.round(param.base);
+      }
       valDisplay.style.textAlign = 'right';
       valDisplay.style.fontVariantNumeric = 'tabular-nums';
-
-      input.oninput = (e) => {
-        const val = parseFloat(e.target.value);
-        param.base = val;
-        valDisplay.textContent = val < 10 ? val.toFixed(1) : Math.round(val);
-      };
 
       row.appendChild(pLabel);
       row.appendChild(input);
       row.appendChild(valDisplay);
       paramsDiv.appendChild(row);
     });
-
     li.appendChild(paramsDiv);
     container.appendChild(li);
   });

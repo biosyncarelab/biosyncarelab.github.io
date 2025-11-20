@@ -17,7 +17,7 @@ export class BinauralBeatTrack extends AudioTrack {
     // Binaural specific parameters
     this.addParameter('carrier', 200, { min: 20, max: 1000 }); // Carrier frequency (Hz)
     this.addParameter('beat', 10, { min: 0.1, max: 40 });     // Beat frequency (Hz)
-    this.addParameter('waveType', 0); // 0: Sine, 1: Triangle, 2: Saw, 3: Square (mapped in renderer)
+    this.addParameter('waveType', 'sine', { options: ['sine', 'square', 'sawtooth', 'triangle'] });
   }
 }
 
@@ -27,7 +27,9 @@ export class IsochronicTrack extends AudioTrack {
 
     this.addParameter('frequency', 200, { min: 20, max: 1000 });
     this.addParameter('pulseRate', 10, { min: 0.1, max: 40 });
-    this.addParameter('dutyCycle', 0.5, { min: 0.1, max: 0.9 });
+    this.addParameter('waveform', 'sine', { options: ['sine', 'square', 'sawtooth', 'triangle'] });
+    // Duty cycle: 0.1 (sharp pulse) to 0.9 (almost continuous)
+    this.addParameter('dutyCycle', 0.5, { min: 0.05, max: 0.95 });
   }
 }
 

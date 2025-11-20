@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BioSynCare Lab</title>
+    <link rel="icon" href="external/biosyncare/icons/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles/main.css" />
     <script>
@@ -22,8 +23,7 @@
           <h1>BioSynCare Lab</h1>
           <p class="brand-tagline">Sync presets, sessions, tracks, and Martigli telemetry across devices.</p>
           <div style="margin-top: 1rem;">
-            <a href="structure-visualizer.html" class="ghost small" style="text-decoration: none;">🎵 Structure Visualizer</a>
-            <a href="nso-navigator.html" class="ghost small" style="text-decoration: none; margin-left: 0.5rem;">🔍 NSO Navigator</a>
+            <a href="nso-navigator.html" class="ghost small" style="text-decoration: none;">🔍 NSO Navigator</a>
           </div>
         </div>
         <div class="lab-auth" id="lab-auth">
@@ -76,7 +76,16 @@
 
       <div id="messages" class="lab-messages" aria-live="polite"></div>
 
-      <main id="dashboard" class="lab-main hidden" aria-live="polite">
+      <nav id="lab-tabs" class="lab-tabs hidden" role="tablist">
+        <button type="button" id="tab-dashboard" class="lab-tab active" role="tab" aria-selected="true" aria-controls="panel-dashboard">
+          Dashboard
+        </button>
+        <button type="button" id="tab-structures" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-structures">
+          Structure Explorer
+        </button>
+      </nav>
+
+      <main id="panel-dashboard" class="lab-main lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-dashboard" aria-live="polite">
         <section class="lab-panel sessions-panel" id="dashboard-session-card">
           <div class="panel-head">
             <div>
@@ -170,6 +179,37 @@
           </div>
         </section>
       </main>
+
+      <div id="panel-structures" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-structures">
+        <div class="visualizer-container">
+          <header class="visualizer-header">
+            <h2>Music Structure Visualizer</h2>
+            <p class="muted-text">Explore change-ringing patterns, permutation families, and symmetry structures</p>
+          </header>
+
+          <div class="visualizer-controls">
+            <div class="control-group">
+              <label for="structure-category">Structure Category</label>
+              <select id="structure-category">
+                <option value="">Select a category...</option>
+                <option value="curated">Curated Sequences (Community Alpha, Martigli, Symmetry)</option>
+                <option value="comprehensive">Comprehensive Music Structures</option>
+              </select>
+            </div>
+
+            <div class="control-group" id="structure-select-group" style="display: none;">
+              <label for="structure-select">Select Structure</label>
+              <select id="structure-select" disabled>
+                <option value="">Choose a structure...</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="stats-container"></div>
+          <div id="sequence-container"></div>
+          <div id="additional-data-container"></div>
+        </div>
+      </div>
     </div>
 
     <section id="detail-modal" class="modal hidden" aria-hidden="true">
