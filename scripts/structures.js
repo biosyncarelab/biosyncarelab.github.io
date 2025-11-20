@@ -1,4 +1,4 @@
-import { loadStructureCatalog, STRUCTURE_MANIFEST } from "./structures-loader.js";
+import { loadStructureCatalog, STRUCTURE_MANIFEST, datasetToJsonLd } from "./structures-loader.js";
 import { Track, TrackParameter } from "./tracks/Track.js";
 import { TrackManager } from "./tracks/TrackManager.js";
 import { AudioTrack, BinauralBeatTrack, IsochronicTrack, SineTrack } from "./tracks/AudioTrack.js";
@@ -24,6 +24,8 @@ const clamp = (value, min, max) => {
   return value;
 };
 const TWO_PI = Math.PI * 2;
+const ID_BASE = "https://biosyncarelab.github.io/id";
+const CONTEXT_URL = "https://biosyncarelab.github.io/context/structures.jsonld";
 
 const DEFAULT_MARTIGLI_CONFIG = {
   label: "Primary Martigli",
@@ -687,6 +689,15 @@ export class MartigliState {
     return this._oscillations.get(this.referenceId) ?? null;
   }
 
+  getOscillator(id) {
+    if (!id) return null;
+    return this._oscillations.get(id) ?? null;
+  }
+
+  listOscillations() {
+    return Array.from(this._oscillations.values());
+  }
+
   bindSessionWindow(windowConfig = {}) {
     this._oscillations.forEach((osc) => osc.bindSessionWindow(windowConfig));
     this._emit();
@@ -854,6 +865,88 @@ export class MartigliState {
   }
 }
 
+const waveformClassFor = (waveform = "sine") => {
+  const wf = waveform.toLowerCase();
+  switch (wf) {
+    case "triangle":
+    case "breath":
+    case "martigli":
+      return "bsc:TriangleWave";
+    case "square":
+      return "bsc:SquareWave";
+    case "saw":
+    case "sawtooth":
+      return "bsc:SawWave";
+    case "sine":
+    default:
+      return "bsc:SineWave";
+  }
+};
+
+const trackTypeClass = (trackType = "") => {
+  const t = (trackType || "").toLowerCase();
+  if (t === "audio") return "bsc:AudioTrack";
+  if (t === "visual") return "bsc:VisualTrack";
+  if (t === "haptic") return "bsc:HapticTrack";
+  return "bsc:Track";
+};
+
+const martigliToJsonLd = (osc, rdfLinker) => {
+  const trajectory = osc.getTrajectory();
+  const asUri = (id) => `${ID_BASE}/martigli/${encodeURIComponent(id)}`;
+  const links = rdfLinker?.get(osc.id) ?? [];
+  return {
+    "@id": asUri(osc.id),
+    "@type": "bsc:MartigliOscillation",
+    label: osc.label,
+    waveform: waveformClassFor(osc.config.waveform),
+    startPeriod: osc.config.startPeriodSec,
+    endPeriod: osc.config.endPeriodSec,
+    transitionDuration: osc.config.transitionSec,
+    inhaleRatio: osc.config.inhaleRatio,
+    amplitude: osc.config.amplitude,
+    phaseOffset: osc.config.phaseOffset,
+    startOffset: osc.config.startOffsetSec,
+    trajectory,
+    sessionStart: osc.session.startTime ?? null,
+    sessionEnd: osc.session.endTime ?? null,
+    sessionPaused: osc.session.paused ?? null,
+    conceptLinks: links.length ? links : undefined,
+  };
+};
+
+const parameterToJsonLd = (trackId, name, param, rdfLinker) => {
+  const paramId = `${ID_BASE}/track/${encodeURIComponent(trackId)}/param/${encodeURIComponent(name)}`;
+  const modulatorId = param?._modulator?.id
+    ? `${ID_BASE}/martigli/${encodeURIComponent(param._modulator.id)}`
+    : null;
+  const links = rdfLinker?.get(`${trackId}#${name}`) ?? [];
+  return {
+    "@id": paramId,
+    "@type": "bsc:Parameter",
+    parameterName: name,
+    baseValue: param?.base,
+    depth: param?.depth,
+    modulator: modulatorId,
+    conceptLinks: links.length ? links : undefined,
+  };
+};
+
+const trackToJsonLd = (track, rdfLinker) => {
+  const params = Array.from(track.parameters.entries()).map(([name, param]) =>
+    parameterToJsonLd(track.id, name, param, rdfLinker),
+  );
+  const links = rdfLinker?.get(track.id) ?? [];
+  return {
+    "@id": `${ID_BASE}/track/${encodeURIComponent(track.id)}`,
+    "@type": trackTypeClass(track.type),
+    label: track.label,
+    enabled: track.enabled,
+    parameters: params,
+    conceptLinks: links.length ? links : undefined,
+  };
+};
+
 
 
 export class RDFLinker {
@@ -901,6 +994,20 @@ export class BSCLabKernel {
       console.warn("Kernel structure load failed", err);
     }
     return this;
+  }
+
+  toJsonLdSnapshot() {
+    const structures = Array.from(this.structures.catalog.entries()).map(
+      ([datasetId, data]) => datasetToJsonLd(data, { datasetId, contextUrl: CONTEXT_URL }),
+    );
+    const martigli = this.martigli.listOscillations().map((osc) => martigliToJsonLd(osc, this.rdf));
+    const tracks = this.tracks.getAll().map((track) => trackToJsonLd(track, this.rdf));
+    return {
+      "@context": CONTEXT_URL,
+      structures,
+      martigli,
+      tracks,
+    };
   }
 
   recordInteraction(kind, payload = {}) {

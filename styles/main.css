@@ -36,6 +36,7 @@ body {
   max-width: 1440px;
   margin: 0 auto;
   padding: clamp(1.25rem, 2vw, 2.5rem);
+  padding-bottom: calc(clamp(1.25rem, 2vw, 2.5rem) + 80px);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -1480,10 +1481,16 @@ select {
 .lab-tabs {
   display: flex;
   gap: 0.5rem;
-  padding: 0 clamp(1.25rem, 1.8vw, 2rem);
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 0.5rem clamp(1.25rem, 1.8vw, 2rem);
+  border-top: 1px solid var(--border);
+  background: var(--card-strong);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  justify-content: center;
+  backdrop-filter: blur(12px);
 }
 
 .lab-tab {
@@ -1494,10 +1501,10 @@ select {
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-top: 2px solid transparent;
   transition: all 0.2s;
   position: relative;
-  top: 1px;
+  bottom: 1px;
 }
 
 .lab-tab:hover {
@@ -1507,7 +1514,7 @@ select {
 
 .lab-tab.active {
   color: var(--primary);
-  border-bottom-color: var(--primary);
+  border-top-color: var(--primary);
 }
 
 .lab-tab-panel {

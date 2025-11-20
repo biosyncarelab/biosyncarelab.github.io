@@ -1476,7 +1476,9 @@ ui.emailSignUp.addEventListener("click", async () => {
   }
 });
 
-setMessage(useAuthEmulator ? "Using local Auth emulator." : "Ready.", "info");
+if (useAuthEmulator) {
+  setMessage("Using local Auth emulator.", "info");
+}
 refreshControls();
 updateAuthModeHint();
 
