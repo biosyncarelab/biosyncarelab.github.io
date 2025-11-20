@@ -1,4 +1,4 @@
-.PHONY := up aup serve seed-prod seed-local firebase-login deploy-firestore-rules test test-structures web-sync-music-data
+.PHONY := up aup serve seed-prod seed-local firebase-login deploy-firestore-rules test test-structures web-sync-music-data export-structures-jsonld validate-structures-shacl shacl-deps
 
 BSC_FIREBASE_PROJECT ?= bsc-lab
 
@@ -42,6 +42,15 @@ web-sync-music-data:
 	@cp external/biosyncare/scripts/music/output/musicStructures.compact.json data/structures/music-structures-comprehensive.json
 	@echo "✓ Copied musicStructures.compact.json → data/structures/music-structures-comprehensive.json"
 	@echo "  Size: $$(du -h data/structures/music-structures-comprehensive.json | cut -f1)"
+
+export-structures-jsonld:
+	npm run export:structures:jsonld
+
+validate-structures-shacl: export-structures-jsonld
+	python3 scripts/validate_structures_shacl.py
+
+shacl-deps:
+	python3 -m pip install --user pyshacl rdflib rdflib-jsonld
 
 ifneq ($(strip $(RAW_ARGS)),)
 .PHONY += $(RAW_ARGS)

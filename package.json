@@ -16,7 +16,8 @@
     "seed:firestore": "node scripts/firestore-seed.mjs",
     "seed:firestore:prod": "node scripts/firestore-seed-prod.mjs",
     "deploy:firestore-rules": "firebase deploy --only firestore:rules --project bsc-lab",
-    "export:structures:jsonld": "node scripts/export-structures-jsonld.mjs"
+    "export:structures:jsonld": "node scripts/export-structures-jsonld.mjs",
+    "validate:structures:shacl": "python3 scripts/validate_structures_shacl.py"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

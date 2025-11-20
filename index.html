@@ -83,6 +83,9 @@
         <button type="button" id="tab-structures" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-structures">
           Structure Explorer
         </button>
+        <button type="button" id="tab-nso" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-nso">
+          NSO Navigator
+        </button>
       </nav>
 
       <main id="panel-dashboard" class="lab-main lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-dashboard" aria-live="polite">
@@ -208,6 +211,28 @@
           <div id="stats-container"></div>
           <div id="sequence-container"></div>
           <div id="additional-data-container"></div>
+        </div>
+      </div>
+
+      <div id="panel-nso" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-nso">
+        <div class="visualizer-container">
+          <header class="visualizer-header">
+            <h2>NSO Navigator</h2>
+            <p class="muted-text">Explore the Neurosensory Stimulation Ontology and semantic structures</p>
+          </header>
+
+          <div class="nso-content">
+            <p class="muted-text">NSO Navigator integration coming soon. This will provide:</p>
+            <ul>
+              <li>Semantic graph visualization</li>
+              <li>Concept relationships and properties</li>
+              <li>RDF data browser</li>
+              <li>Links to musical structures and session concepts</li>
+            </ul>
+            <p class="muted-text" style="margin-top: 1rem;">
+              For now, visit <a href="nso-navigator.html" target="_blank">NSO Navigator</a> as a separate page.
+            </p>
+          </div>
         </div>
       </div>
     </div>
