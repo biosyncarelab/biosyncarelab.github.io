@@ -1036,6 +1036,11 @@ export const ensureMartigliTelemetryLoop = (martigliState, container) => {
           if (widget.charts.waveform) widget.charts.waveform.render(osc, metrics);
           if (widget.charts.timeline) widget.charts.timeline.render(osc, metrics);
         }
+
+        // Update trajectory list
+        if (widget.trajectory && widget.trajectory.list) {
+          renderTrajectoryList(widget.trajectory.list, osc, widget.callbacks);
+        }
       }
     });
 
