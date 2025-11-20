@@ -23,7 +23,7 @@ export class HapticEngine {
 
   _loop() {
     if (!this.isRunning) return;
-    
+
     // Simple update loop (e.g. 10Hz)
     this.update();
     this.interval = setTimeout(() => this._loop(), 100);
@@ -37,11 +37,11 @@ export class HapticEngine {
 
     tracks.forEach(track => {
       if (!track.enabled) return;
-      
+
       // For now, just support simple vibration if any track is active
       // We can't easily mix haptic signals like audio.
       // We'll take the max intensity.
-      
+
       // VibrationTrack usually has 'intensity' or 'pattern'
       // Let's check HapticTrack.js parameters.
       // Assuming 'strength' or similar.

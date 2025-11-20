@@ -77,7 +77,7 @@ export function initMixerUI() {
       const term = e.target.dataset.rdfTerm;
       tooltipTerm.textContent = term;
       tooltip.classList.remove('hidden');
-      
+
       const rect = e.target.getBoundingClientRect();
       tooltip.style.left = `${rect.left}px`;
       tooltip.style.top = `${rect.top}px`;
@@ -229,7 +229,7 @@ function renderTrackList(tracks, container, kernel) {
       modBtn.style.height = '24px';
       modBtn.style.opacity = param._modulator ? '1' : '0.3';
       modBtn.style.color = param._modulator ? 'var(--primary)' : 'var(--muted)';
-      
+
       modBtn.onclick = () => {
         if (param._modulator) {
           param.unbind();
@@ -241,7 +241,7 @@ function renderTrackList(tracks, container, kernel) {
             // Try to get the primary oscillator
             const oscId = kernel.martigli.referenceId;
             const osc = oscId ? kernel.martigli._oscillations.get(oscId) : null;
-            
+
             if (osc) {
               // MartigliOscillator has a valueAt(time) method?
               // Let's check structures.js MartigliOscillator class.
@@ -249,7 +249,7 @@ function renderTrackList(tracks, container, kernel) {
               // But for modulation we need a continuous signal.
               // Let's assume we can bind the oscillator object itself if TrackParameter supports it.
               // TrackParameter.getValue calls modulator.valueAt(time) or .getValue(time) or .value.
-              
+
               // We need to ensure MartigliOscillator has one of these.
               // If not, we can wrap it.
               const modulator = {
@@ -259,10 +259,10 @@ function renderTrackList(tracks, container, kernel) {
                   // It might be better to use the last computed value from the kernel loop if available.
                   // But kernel loop updates martigli state.
                   // Let's use a simple wrapper that asks the oscillator for its value at 'time'.
-                  return osc.valueAt(time); 
+                  return osc.valueAt(time);
                 }
               };
-              
+
               // Check if valueAt exists, if not we might need to implement it in MartigliOscillator
               if (typeof osc.valueAt === 'function') {
                  param.bind(osc);
@@ -271,7 +271,7 @@ function renderTrackList(tracks, container, kernel) {
                  console.warn("MartigliOscillator.valueAt not implemented");
                  param.bind({ getValue: () => 0 });
               }
-              
+
               modBtn.style.opacity = '1';
               modBtn.style.color = 'var(--primary)';
             } else {
@@ -298,14 +298,14 @@ function renderTrackList(tracks, container, kernel) {
         previewContainer.style.borderRadius = '4px';
         previewContainer.style.overflow = 'hidden';
         previewContainer.style.position = 'relative';
-        
+
         const canvas = document.createElement('canvas');
         canvas.width = 300;
         canvas.height = 100;
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         previewContainer.appendChild(canvas);
-        
+
         // Fullscreen button overlay
         const fsBtn = document.createElement('button');
         fsBtn.className = 'ghost tiny';
@@ -318,37 +318,37 @@ function renderTrackList(tracks, container, kernel) {
             if (canvas.requestFullscreen) canvas.requestFullscreen();
         };
         previewContainer.appendChild(fsBtn);
-        
+
         li.appendChild(previewContainer);
-        
+
         // Start a simple render loop for this preview
         // Note: This creates a loop per track. Efficient enough for a few tracks.
         const ctx = canvas.getContext('2d');
         const renderPreview = () => {
             if (!document.body.contains(canvas)) return; // Stop if removed
             requestAnimationFrame(renderPreview);
-            
+
             // Clear
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             // Use VideoEngine logic or simplified logic
             // We can try to reuse VideoEngine's render logic if we can access it
             // But VideoEngine is attached to the kernel.
             // Let's manually render for now based on track type to ensure it works immediately
             const time = Date.now() / 1000;
-            
+
             ctx.save();
             // Center
             ctx.translate(canvas.width/2, canvas.height/2);
             // Scale down slightly for preview
-            ctx.scale(0.5, 0.5); 
-            
+            ctx.scale(0.5, 0.5);
+
             const opacity = track.getParameter('opacity')?.getValue(time) ?? 1;
             const scale = track.getParameter('scale')?.getValue(time) ?? 1;
             ctx.globalAlpha = opacity;
             ctx.scale(scale, scale);
-            
+
             if (track.constructor.name === 'GeometryVisualTrack') {
                 const sides = Math.round(track.getParameter('sides')?.getValue(time) ?? 3);
                 const hue = track.getParameter('hue')?.getValue(time) ?? 200;
@@ -382,7 +382,7 @@ function renderTrackList(tracks, container, kernel) {
                     ctx.fillRect(x, y, 2, 2);
                 }
             }
-            
+
             ctx.restore();
         };
         requestAnimationFrame(renderPreview);
