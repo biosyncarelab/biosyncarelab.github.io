@@ -47,22 +47,32 @@ const martigliWaveValue = (phase, osc = {}) => {
   const normalized = ((phase + phaseOffset) % 1 + 1) % 1;
   switch (waveform) {
     case "triangle":
-      return normalized < 0.5 ? -1 + normalized * 4 : 3 - normalized * 4;
-    case "square":
-      return normalized < inhaleRatio ? 1 : -1;
-    case "saw":
-    case "sawtooth":
-      return normalized * 2 - 1;
     case "breath":
     case "martigli": {
+      // Asymmetric triangle respecting inhale ratio
       if (normalized < inhaleRatio) {
         return -1 + (normalized / inhaleRatio) * 2;
       }
       const exPhase = (normalized - inhaleRatio) / (1 - inhaleRatio || 1);
       return 1 - exPhase * 2;
     }
-    default:
-      return Math.sin(normalized * Math.PI * 2);
+    case "square":
+      return normalized < inhaleRatio ? 1 : -1;
+    case "saw":
+    case "sawtooth":
+      return normalized * 2 - 1;
+    case "sine":
+    default: {
+      // Skewed sine respecting inhale ratio
+      if (normalized < inhaleRatio) {
+        // Map [0, ratio] to [-PI, 0] -> cos goes -1 to 1
+        // -cos(pi * norm / ratio)
+        return -Math.cos(Math.PI * (normalized / inhaleRatio));
+      }
+      // Map [ratio, 1] to [0, PI] -> cos goes 1 to -1
+      const exPhase = (normalized - inhaleRatio) / (1 - inhaleRatio || 1);
+      return Math.cos(Math.PI * exPhase);
+    }
   }
 };
 

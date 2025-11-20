@@ -370,28 +370,32 @@ export class MartigliOscillator {
 
   _shapeValue(phase) {
     const wf = (this.config.waveform ?? "sine").toLowerCase();
-    const normalizedPhase = ((phase + this.config.phaseOffset) % 1 + 1) % 1;
+    const normalizedPhase = ((phase + (this.config.phaseOffset || 0)) % 1 + 1) % 1;
+    const inhale = this.config.inhaleRatio ?? 0.5;
+
     switch (wf) {
       case "triangle":
-        return normalizedPhase < 0.5
-          ? -1 + normalizedPhase * 4
-          : 3 - normalizedPhase * 4;
-      case "square":
-        return normalizedPhase < this.config.inhaleRatio ? 1 : -1;
-      case "saw":
-      case "sawtooth":
-        return normalizedPhase * 2 - 1;
       case "breath":
       case "martigli": {
-        const inhale = this.config.inhaleRatio;
         if (normalizedPhase < inhale) {
           return -1 + (normalizedPhase / inhale) * 2;
         }
         const exPhase = (normalizedPhase - inhale) / (1 - inhale || 1);
         return 1 - exPhase * 2;
       }
-      default:
-        return Math.sin(normalizedPhase * TWO_PI);
+      case "square":
+        return normalizedPhase < inhale ? 1 : -1;
+      case "saw":
+      case "sawtooth":
+        return normalizedPhase * 2 - 1;
+      case "sine":
+      default: {
+        if (normalizedPhase < inhale) {
+          return -Math.cos(Math.PI * (normalizedPhase / inhale));
+        }
+        const exPhase = (normalizedPhase - inhale) / (1 - inhale || 1);
+        return Math.cos(Math.PI * exPhase);
+      }
     }
   }
 
