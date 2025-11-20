@@ -30,6 +30,32 @@
       "id": "plain-hunt-6",
       "label": "Plain Hunt on 6",
       "explanation": "Six-element plain hunt pattern. Starting from rounds (1,2,3,4,5,6), adjacent pairs swap alternately through 12 changes before returning. With 6 bells, you can modulate up to 6 simultaneous track parameters in a coordinated cyclical pattern. Common in traditional bell ringing as 'Plain Bob Minor'.",
+      "usageExamples": [
+        {
+          "scenario": "Hexaphonic frequency sweep with 6 oscillators",
+          "breathing": "Not breathing-synchronized (operates independently at own tempo)",
+          "trackMapping": "6 sine wave oscillators at harmonic ratios (100Hz, 200Hz, 300Hz, 400Hz, 500Hz, 600Hz). Each row change swaps which frequencies are prominent. Creates a cyclical weaving pattern where harmonic relationships constantly shift. The 12-row cycle ensures each frequency visits multiple positions before returning to original order.",
+          "outcome": "Complex harmonic texture that evolves predictably yet remains engaging. The smooth transitions (only adjacent swaps) prevent jarring frequency jumps. Useful for ambient sound design or generative music compositions."
+        },
+        {
+          "scenario": "Six-track stereo panorama orchestration",
+          "breathing": "Independent timing, typically 30-60 seconds per full cycle",
+          "trackMapping": "6 instrumental tracks positioned across stereo field (far-left to far-right). Plain hunt determines which tracks occupy which spatial positions at each step. As positions exchange, the stereo image 'rings changes' like bells. Could map to: kick, snare, hi-hat, bass, synth, vocals.",
+          "outcome": "Constantly evolving spatial mix that maintains balance while preventing static positioning. The cyclical nature ensures all tracks experience all positions. Creates organic movement in stereo field without random chaos."
+        },
+        {
+          "scenario": "Video layer priority with 6 visual elements",
+          "breathing": "Frame-rate synchronized (e.g., change every 2-4 seconds)",
+          "trackMapping": "6 video layers (background gradient, particle system, geometric shapes, text overlays, color filters, foreground elements). Row position determines z-index stacking order. Each change swaps adjacent layers, creating smooth depth transitions. Position 1 = bottom layer, position 6 = top layer.",
+          "outcome": "Mesmerizing visual composition where elements weave through depth planes. The 13-step cycle (12 changes + return to rounds) creates a complete narrative arc. Prevents any single element from dominating too long."
+        },
+        {
+          "scenario": "Multi-parameter modulation for synthesizer",
+          "breathing": "LFO-driven at slow rate (0.05-0.2 Hz)",
+          "trackMapping": "Control 6 synth parameters: filter cutoff, resonance, attack, decay, pulse width, detune. Each row assigns parameters to 6 modulation sources (6 LFOs with different waveforms). The hunt pattern ensures each parameter experiences each LFO shape over the full cycle, creating evolving timbral complexity.",
+          "outcome": "Richly evolving synthesizer patches that maintain coherence through deterministic modulation routing. The 'minimal changes' property ensures gradual timbral shifts rather than abrupt transformations. Ideal for evolving pad sounds or ambient textures."
+        }
+      ],
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -52,6 +78,32 @@
       "id": "plain-hunt-4",
       "label": "Plain Hunt on 4",
       "explanation": "Four-element plain hunt pattern. Cycles through 8 distinct permutations before returning to rounds. Ideal for modulating a quartet of parameters (e.g., four audio tracks or two stereo pairs). Known in bell ringing as 'Plain Bob Minimus'. The smaller dimension creates faster cycling suitable for shorter sessions.",
+      "usageExamples": [
+        {
+          "scenario": "Quadraphonic speaker rotation for immersive audio",
+          "breathing": "Independent tempo, typically 15-30 seconds per full cycle",
+          "trackMapping": "4 speakers in corners of room (front-left, front-right, rear-left, rear-right). Single audio source routes through speakers in plain hunt order, creating circular motion. Row position determines which speaker is active. The adjacent-swap property ensures smooth spatial transitions.",
+          "outcome": "Listener perceives sound source moving smoothly around the room in a deterministic pattern. The 8-change cycle is short enough to maintain engagement without becoming predictable. Excellent for spatial audio experiments or meditation spaces."
+        },
+        {
+          "scenario": "RGBA color channel manipulation",
+          "breathing": "Frame-synchronized for real-time video (30-60fps, change every 10-20 frames)",
+          "trackMapping": "4 color channels: Red, Green, Blue, Alpha. Each row determines which source image contributes to which output channel. Creates evolving color distortions and channel-swapping effects. Position determines channel routing: [R→R, G→G, B→B, A→A] at rounds, then adjacent channels begin swapping.",
+          "outcome": "Psychedelic color-shifting effect that cycles through 8 distinct color transformations. Smooth transitions prevent jarring visual glitches. Useful for VJ performances, music videos, or experimental film."
+        },
+        {
+          "scenario": "Four-voice canon with rhythmic displacement",
+          "breathing": "Musical tempo-locked (e.g., change every 2 bars in 4/4 time)",
+          "trackMapping": "4 melodic voices playing the same phrase with different rhythmic emphasis. Row position determines each voice's dynamic level (1=quietest, 4=loudest). As pattern progresses, different voices take the lead, creating a woven contrapuntal texture. Works well with: soprano, alto, tenor, bass.",
+          "outcome": "Rich polyphonic texture where leadership constantly shifts between voices. The plain hunt ensures all voices get equal prominence over the 8-change cycle. Creates interesting call-and-response patterns inherent to change-ringing mathematics."
+        },
+        {
+          "scenario": "Granular synthesis with 4 grain streams",
+          "breathing": "Grain-rate modulation (changes every 100-500ms)",
+          "trackMapping": "4 parallel grain generators with different parameters: grain size, pitch shift, density, spatial position. Row ordering determines which parameter set dominates the mix. Each row change swaps parameter priorities, creating morphing granular textures. Minimal changes ensure smooth timbral evolution.",
+          "outcome": "Continuously evolving granular cloud that cycles through 8 timbral states. The deterministic pattern provides structure to otherwise chaotic granular synthesis. Ideal for ambient soundscapes or experimental electroacoustic music."
+        }
+      ],
       "orderDimension": 4,
       "rows": [
         [1, 2, 3, 4],

@@ -52,6 +52,10 @@ validate-structures-shacl: export-structures-jsonld
 shacl-deps:
 	python3 -m pip install --user pyshacl rdflib rdflib-jsonld
 
+export-runtime-jsonld:
+	@echo "Run this in browser console after kernel is active:"
+	@echo "await kernel.toJsonLdSnapshot()"
+
 ifneq ($(strip $(RAW_ARGS)),)
 .PHONY += $(RAW_ARGS)
 $(RAW_ARGS):

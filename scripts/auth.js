@@ -98,6 +98,7 @@ const ui = {
   sessionApply: document.getElementById("session-apply"),
   sessionSave: document.getElementById("session-save"),
   sessionShareLink: document.getElementById("session-share-link"),
+  snapshotDownload: document.getElementById("snapshot-download"),
   sessionShareIndicator: document.getElementById("session-share-indicator"),
   sessionHint: document.getElementById("session-card-hint"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
@@ -1505,6 +1506,32 @@ if (ui.sessionSave) {
 
 if (ui.sessionShareLink) {
   ui.sessionShareLink.addEventListener("click", handleSessionShareLink);
+}
+
+const downloadSnapshot = () => {
+  try {
+    const snapshot = kernel.toJsonLdSnapshot();
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `bsc-snapshot-${ts}.jsonld`;
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/ld+json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setMessage(`Snapshot downloaded (${filename}).`, "success");
+    kernel.recordInteraction("snapshot.export.jsonld", { filename, size: blob.size });
+  } catch (err) {
+    console.warn("Snapshot export failed", err);
+    setMessage("Snapshot export failed. See console for details.", "error");
+  }
+};
+
+if (ui.snapshotDownload) {
+  ui.snapshotDownload.addEventListener("click", downloadSnapshot);
 }
 
 if (ui.martigliOscillationSelect) {

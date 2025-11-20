@@ -6,6 +6,7 @@ import { VisualTrack, GeometryVisualTrack, ParticleVisualTrack } from "./tracks/
 import { HapticTrack, VibrationTrack } from "./tracks/HapticTrack.js";
 import { AudioEngine } from "./engines/AudioEngine.js";
 import { VideoEngine } from "./engines/VideoEngine.js";
+import { HapticEngine } from "./engines/HapticEngine.js";
 
 export {
   Track, TrackParameter,
@@ -13,7 +14,7 @@ export {
   AudioTrack, BinauralBeatTrack, IsochronicTrack, SineTrack,
   VisualTrack, GeometryVisualTrack, ParticleVisualTrack,
   HapticTrack, VibrationTrack,
-  AudioEngine, VideoEngine
+  AudioEngine, VideoEngine, HapticEngine
 };
 
 const noop = () => {};
@@ -979,6 +980,7 @@ export class BSCLabKernel {
     this.tracks = options.trackManager ?? new TrackManager(this);
     this.audio = options.audioEngine ?? new AudioEngine(this);
     this.video = options.videoEngine ?? new VideoEngine(this);
+    this.haptic = options.hapticEngine ?? new HapticEngine(this);
     this.rdf = options.rdfLinker ?? new RDFLinker(options.rdfLinks);
     this.onInteraction = typeof options.onInteraction === "function" ? options.onInteraction : null;
   }
@@ -988,6 +990,9 @@ export class BSCLabKernel {
       await this.structures.load();
       if (this.audio && typeof this.audio.init === 'function') {
         await this.audio.init();
+      }
+      if (this.haptic && typeof this.haptic.start === 'function') {
+        this.haptic.start();
       }
       // Video engine initializes on canvas attachment
     } catch (err) {

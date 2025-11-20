@@ -1037,6 +1037,38 @@ function initCytoscape(elements) {
   if (pendingConceptFocus) {
     setTimeout(focusConceptIfNeeded, 300);
   }
+
+  // Expose navigation function globally
+  window.biosyncare = window.biosyncare || {};
+  window.biosyncare.navigateToConcept = (term) => {
+    // Switch to NSO tab
+    const nsoTab = document.getElementById('tab-nso');
+    if (nsoTab) nsoTab.click();
+
+    // Find node by label or id
+    // Simple search for now
+    const nodes = cy.nodes();
+    const target = nodes.filter(n => {
+      const data = n.data();
+      return (data.label && data.label.toLowerCase().includes(term.toLowerCase())) ||
+             (data.id && data.id.toLowerCase().includes(term.toLowerCase()));
+    }).first();
+
+    if (target && target.length > 0) {
+      cy.animate({
+        fit: {
+          eles: target,
+          padding: 50
+        },
+        duration: 500
+      });
+      target.select();
+      // Trigger selection logic if any
+      target.emit('tap');
+    } else {
+      console.warn(`Concept not found: ${term}`);
+    }
+  };
 }
 
 function focusConceptIfNeeded() {

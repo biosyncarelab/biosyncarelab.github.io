@@ -75,6 +75,14 @@
 
       <div id="messages" class="lab-messages" aria-live="polite"></div>
 
+      <!-- RDF Tooltip -->
+      <div id="rdf-tooltip" class="rdf-tooltip hidden">
+        <div class="rdf-tooltip-content">
+          <strong id="rdf-tooltip-term">Term</strong>
+          <span class="rdf-tooltip-hint">Click to navigate</span>
+        </div>
+      </div>
+
       <nav id="lab-tabs" class="lab-tabs hidden" role="tablist">
         <button type="button" id="tab-dashboard" class="lab-tab active" role="tab" aria-selected="true" aria-controls="panel-dashboard">
           Dashboard
@@ -99,6 +107,7 @@
               <button type="button" id="session-apply" class="ghost tiny">Apply session</button>
               <button type="button" id="session-save" class="ghost tiny">Save current state</button>
               <button type="button" id="session-share-link" class="ghost tiny">Copy share link</button>
+              <button type="button" id="snapshot-download" class="ghost tiny">Download snapshot</button>
               <span id="session-share-indicator" class="badge tiny hidden" aria-live="polite">State in URL</span>
             </div>
           </div>

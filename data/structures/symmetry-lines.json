@@ -32,6 +32,32 @@
       "id": "mirror-sweep-6",
       "label": "Mirror Sweep on 6",
       "explanation": "Palindromic six-element pattern. Sweeps from starting position (1,2,3,4,5,6) through increasingly inverted states, reaching full reversal (6,5,4,3,2,1) at the midpoint, then mirrors back. Creates smooth crescendo-decrescendo parameter envelopes. The 10-step cycle provides gentle, symmetric modulation.",
+      "usageExamples": [
+        {
+          "scenario": "Filter cutoff sweep with 6-band equalizer",
+          "breathing": "Slow envelope (20-40 seconds per full cycle)",
+          "trackMapping": "6 EQ bands (sub-bass 60Hz, bass 120Hz, low-mid 250Hz, mid 500Hz, high-mid 2kHz, treble 8kHz). Row position determines gain level for each band. The mirror pattern creates a frequency sweep that builds from lows to highs (rows 0-5), peaks at full reversal, then descends symmetrically back to the start. Position 1 = -12dB, position 6 = +6dB.",
+          "outcome": "Classic filter sweep effect with perfect symmetry. The palindromic nature ensures smooth rise-and-fall without abrupt transitions. The listener experiences a complete frequency journey that feels musically resolved. Ideal for progressive build-ups in electronic music or ambient soundscapes."
+        },
+        {
+          "scenario": "Symmetric gain envelope for layered pads",
+          "breathing": "Musical phrase-locked (e.g., 16-bar cycle in 4/4 time)",
+          "trackMapping": "6 synthesizer pad layers with different timbres (dark → bright spectrum). Mirror sweep controls relative volume levels. First half (rows 0-5): darker pads fade out as brighter pads fade in. Peak reversal: brightest timbral state. Second half (rows 6-10): symmetrical return to dark timbres. Creates wave-like timbral breathing.",
+          "outcome": "Hypnotic timbral morphing with inherent musicality from palindromic structure. The symmetric arc feels 'complete' and satisfying. No jarring transitions due to smooth position changes. Perfect for ambient, downtempo, or meditation music where gentle evolution is desired."
+        },
+        {
+          "scenario": "Visual opacity cascade for UI animations",
+          "breathing": "Animation timeline (3-5 second duration)",
+          "trackMapping": "6 UI elements or visual layers with staggered reveal/conceal. Row position determines opacity (1 = 0%, 6 = 100%). Elements gradually appear in sequence during ascent to midpoint, then symmetrically disappear. Creates elegant reveal-and-hide animation with mathematical precision.",
+          "outcome": "Polished UI animation with perfect symmetry. Users perceive smooth, choreographed motion. The palindrome ensures the animation can loop seamlessly or play once for transitions. Commonly used for loading screens, menu transitions, or attention-directing effects."
+        },
+        {
+          "scenario": "Modulation depth for 6 parallel LFOs",
+          "breathing": "LFO meta-modulation (0.1-0.5 Hz carrier)",
+          "trackMapping": "6 LFOs modulating different synth parameters. Mirror sweep controls modulation depth for each LFO. As sweep progresses, different LFOs become more/less intense, creating shifting emphasis in modulation complexity. Row position = modulation depth percentage (0-100%).",
+          "outcome": "Evolving modulation landscape where complexity builds to a peak then recedes. The symmetric pattern prevents modulation from becoming chaotic or static. Creates living, breathing synthesis patches where timbral movement has clear narrative arc. Used in experimental electronic music and sound design."
+        }
+      ],
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],
@@ -52,6 +78,32 @@
       "id": "rotating-crossfade-6",
       "label": "Rotating Crossfade on 6",
       "explanation": "Pure cyclic rotation of six elements. Each step shifts all elements one position clockwise: (1,2,3,4,5,6) → (2,3,4,5,6,1) → ... Each element visits every position exactly once before returning. Perfect for round-robin parameter distribution or creating circular panning effects. The 6-step cycle ensures equal time at each position.",
+      "usageExamples": [
+        {
+          "scenario": "Circular panning for hexagonal speaker array",
+          "breathing": "Moderate rotation (10-20 seconds per full revolution)",
+          "trackMapping": "6 speakers arranged in hexagon around listener (positions 0°, 60°, 120°, 180°, 240°, 300°). Single audio source rotates clockwise through all positions. Each row shift moves sound to next speaker. Row position corresponds to speaker index. Creates smooth circular motion around the listener's head.",
+          "outcome": "Perfectly smooth circular panning effect. Sound appears to orbit the listener in predictable clockwise motion. The equal-time-at-each-position property ensures balanced spatial distribution. Excellent for immersive installations, planetarium soundtracks, or experimental spatial audio compositions."
+        },
+        {
+          "scenario": "Round-robin drum pattern variation",
+          "breathing": "Musical tempo (change every 4 or 8 bars)",
+          "trackMapping": "6 drum pattern variations of the same groove. Each row determines which pattern is active. Rotation ensures each variation gets heard in sequence without repetition. Patterns could vary in: hi-hat complexity, kick placement, snare ghost notes, tom fills, ride cymbal, percussion layers.",
+          "outcome": "Constantly evolving drum groove that maintains core rhythm while preventing monotony. The cyclical rotation is predictable enough for DJs to mix, yet varied enough to sustain listener interest. Each pattern gets equal airtime. Used in electronic dance music, hip-hop production, and live performance."
+        },
+        {
+          "scenario": "Color palette rotation for generative art",
+          "breathing": "Slow visual evolution (30-60 seconds per cycle)",
+          "trackMapping": "6 color schemes for generative graphics (warm, cool, pastel, vibrant, monochrome, analogous). Each row determines active palette. Rotation ensures all palettes appear in sequence. Position determines which color set is applied to visual elements. Creates kaleidoscopic color cycling.",
+          "outcome": "Mesmerizing color transformations with perfect fairness—each palette gets equal display time. The cyclic nature allows viewers to anticipate and appreciate each color scheme. No palette dominates or gets skipped. Ideal for digital art installations, VJ loops, or screensavers."
+        },
+        {
+          "scenario": "Harmonic series rotation for spectral composition",
+          "breathing": "Long-form evolution (1-3 minutes per cycle)",
+          "trackMapping": "6 harmonic partials or overtone clusters. Each row shifts which harmonic is emphasized in the mix. Rotates through harmonic spectrum: fundamental, 2nd harmonic, 3rd harmonic, etc. Row position determines amplitude of corresponding partial. Creates slowly evolving spectral texture.",
+          "outcome": "Rich harmonic tapestry that cycles through the overtone series. Each harmonic gets equal prominence over the full cycle. The rotation reveals the internal structure of the sound, making harmonics audible that would otherwise be masked. Used in spectral music, drone compositions, and acoustic research."
+        }
+      ],
       "orderDimension": 6,
       "rows": [
         [1, 2, 3, 4, 5, 6],

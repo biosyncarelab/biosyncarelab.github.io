@@ -93,6 +93,10 @@ The safety flag `BSC_ALLOW_PROD_SEED=1` is required to avoid accidental producti
 
 CI mirrors this flow via `.github/workflows/playwright.yml`, so every push and PR to `main` runs the emulator-backed smoke suite in GitHub Actions' Ubuntu runners.
 
+### Semantic export (runtime)
+- Use `kernel.toJsonLdSnapshot()` in the browser runtime (after tracks and Martigli modulators are set) to emit JSON-LD for structures, oscillators, and tracks with RDFLinker concept links. This lives on the browser side because `AudioEngine` is Web Audio–only; call it from UI/console as needed.
+- Make helper: `make export-runtime-jsonld` prints the one-liner to run in DevTools: `await kernel.toJsonLdSnapshot()`.
+
 Our software, BioSynCare Lab, or BSCLab, is a client-side web and PWA app to enable sensory stimulation
 in usual computers and mobile phones. It consists of a few core parts:
 1) A Web GUI which allows for the usage of sessions and track presets, and allow for the parametrization on the fly of the parameters involved, such as the frequency of the left channel of a binaural beat, or how much it oscillates with the breathing cue (which is an oscillation itself). The full specification of this software is in the next session.
