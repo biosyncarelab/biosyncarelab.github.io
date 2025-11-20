@@ -483,10 +483,27 @@ export const describeMartigliLiveSummary = (reference) => {
   return `${label} • ${[transitionText, inhaleText, amplitudeText].join(" • ")}`;
 };
 
-const createRangeLabel = (text) => {
+const createNSOLink = (uri, labelText, ontology = "bsc-martigli") => {
+  const link = document.createElement("a");
+  link.href = `nso-navigator.html?ontology=${ontology}&concept=${encodeURIComponent(uri)}`;
+  link.target = "_blank";
+  link.className = "nso-link";
+  link.title = "View in NSO Navigator";
+  link.textContent = labelText;
+  link.style.textDecoration = "none";
+  link.style.color = "inherit";
+  link.style.borderBottom = "1px dotted rgba(148, 163, 184, 0.5)";
+  return link;
+};
+
+const createRangeLabel = (text, uri = null, ontology = "bsc-martigli") => {
   const label = document.createElement("label");
   const title = document.createElement("span");
-  title.textContent = text;
+  if (uri) {
+    title.appendChild(createNSOLink(uri, text, ontology));
+  } else {
+    title.textContent = text;
+  }
   label.appendChild(title);
   return label;
 };
@@ -567,7 +584,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   heading.className = "martigli-widget-heading";
   const eyebrow = document.createElement("p");
   eyebrow.className = "martigli-widget-eyebrow";
-  eyebrow.textContent = "Martigli / Breathing";
+  eyebrow.appendChild(createNSOLink("https://biosyncarelab.github.io/ont#MartigliOscillation", "Martigli / Breathing"));
   heading.appendChild(eyebrow);
 
   const titleRow = document.createElement("div");
@@ -657,10 +674,10 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
     option.textContent = text;
     waveformSelect.appendChild(option);
   });
-  const waveformLabel = createRangeLabel("Waveform");
+  const waveformLabel = createRangeLabel("Waveform", "https://biosyncarelab.github.io/ont#waveform");
   waveformLabel.appendChild(waveformSelect);
 
-  const inhaleLabel = createRangeLabel("Inhale ratio");
+  const inhaleLabel = createRangeLabel("Inhale ratio", "https://biosyncarelab.github.io/ont#inhaleRatio");
   const inhaleField = document.createElement("div");
   inhaleField.className = "range-field";
   const inhaleInput = document.createElement("input");
@@ -675,7 +692,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   inhaleField.appendChild(inhaleValue);
   inhaleLabel.appendChild(inhaleField);
 
-  const amplitudeLabel = createRangeLabel("Amplitude");
+  const amplitudeLabel = createRangeLabel("Amplitude", "https://biosyncarelab.github.io/ont#amplitude");
   const amplitudeField = document.createElement("div");
   amplitudeField.className = "range-field";
   const amplitudeInput = document.createElement("input");
@@ -716,7 +733,7 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
 
   const trajectoryText = document.createElement("div");
   const trajectoryTitle = document.createElement("h6");
-  trajectoryTitle.textContent = "Breathing Trajectory";
+  trajectoryTitle.appendChild(createNSOLink("https://biosyncarelab.github.io/ont#MartigliBreathingCue", "Breathing Trajectory", "bsc-mixed"));
   const trajectoryHint = document.createElement("p");
   trajectoryHint.className = "muted-text small";
   trajectoryHint.textContent = "Stack period/duration points to sculpt the envelope.";

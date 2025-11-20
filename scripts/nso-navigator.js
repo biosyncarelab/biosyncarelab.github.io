@@ -61,6 +61,11 @@ const ontologyFiles = {
     label: "Multimodal Techniques",
     description: "9 mixed techniques: audiovisual entrainment, vibroacoustic, VR, haptic (evidence: 1.5-3.5)"
   },
+  "bsc-martigli": {
+    path: "rdf/modules/martigli.ttl",
+    label: "Martigli Breathing",
+    description: "Martigli oscillation parameters: waveforms, periods, inhale ratios, and configuration metadata"
+  },
   "bsc-outcomes": {
     path: "rdf/modules/outcomes.ttl",
     label: "Outcomes Taxonomy",

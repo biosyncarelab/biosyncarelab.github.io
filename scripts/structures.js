@@ -132,6 +132,30 @@ export class MartigliOscillator {
     };
   }
 
+  toRDF() {
+    const id = this.id;
+    const label = this.label || "Martigli Oscillation";
+    const waveform = this.config.waveform || "sine";
+    const waveformClass = `bsc:${waveform.charAt(0).toUpperCase() + waveform.slice(1)}Wave`;
+
+    return `
+@prefix bsc: <https://biosyncarelab.github.io/ont#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://biosyncarelab.github.io/id/${id}> a bsc:MartigliOscillation ;
+  rdfs:label "${label}" ;
+  bsc:waveform <https://biosyncarelab.github.io/ont#${waveformClass.replace('bsc:', '')}> ;
+  bsc:amplitude "${this.config.amplitude}"^^xsd:decimal ;
+  bsc:inhaleRatio "${this.config.inhaleRatio}"^^xsd:decimal ;
+  bsc:startPeriod "${this.config.startPeriodSec}"^^xsd:decimal ;
+  bsc:endPeriod "${this.config.endPeriodSec}"^^xsd:decimal ;
+  bsc:transitionDuration "${this.config.transitionSec}"^^xsd:decimal ;
+  bsc:phaseOffset "${this.config.phaseOffset}"^^xsd:decimal ;
+  bsc:startOffset "${this.config.startOffsetSec}"^^xsd:decimal .
+`.trim();
+  }
+
   setConceptUri(uri) {
     this.metadata.conceptUri = uri ?? null;
   }
