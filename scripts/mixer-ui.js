@@ -229,7 +229,7 @@ function renderTrackList(tracks, container, kernel) {
       modBtn.style.height = '24px';
       modBtn.style.opacity = param._modulator ? '1' : '0.3';
       modBtn.style.color = param._modulator ? 'var(--primary)' : 'var(--muted)';
-      
+
       // Container for modulation controls (hidden by default)
       const modControls = document.createElement('div');
       modControls.className = 'mod-controls';
@@ -246,7 +246,7 @@ function renderTrackList(tracks, container, kernel) {
       // Depth Slider
       const depthLabel = document.createElement('span');
       depthLabel.textContent = 'Depth:';
-      
+
       const depthInput = document.createElement('input');
       depthInput.type = 'range';
       depthInput.min = 0;
@@ -255,10 +255,10 @@ function renderTrackList(tracks, container, kernel) {
       depthInput.step = depthInput.max / 100;
       depthInput.value = param.depth;
       depthInput.style.width = '100%';
-      
+
       const depthVal = document.createElement('span');
       depthVal.textContent = param.depth.toFixed(1);
-      
+
       depthInput.oninput = (e) => {
         const val = parseFloat(e.target.value);
         param.depth = val;
@@ -280,14 +280,14 @@ function renderTrackList(tracks, container, kernel) {
           if (kernel.martigli) {
             const oscId = kernel.martigli.referenceId;
             const osc = oscId ? kernel.martigli._oscillations.get(oscId) : null;
-            
+
             if (osc) {
               const modulator = {
                 getValue: (time) => {
                   return typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0;
                 }
               };
-              
+
               param.bind(modulator);
               // Set default depth if 0
               if (param.depth === 0) {
@@ -296,7 +296,7 @@ function renderTrackList(tracks, container, kernel) {
                   depthInput.value = param.depth;
                   depthVal.textContent = param.depth.toFixed(1);
               }
-              
+
               modBtn.style.opacity = '1';
               modBtn.style.color = 'var(--primary)';
               modControls.style.display = 'grid';
@@ -429,7 +429,7 @@ function renderTrackList(tracks, container, kernel) {
         hapticPreview.style.color = 'var(--muted)';
         hapticPreview.style.fontSize = '0.8rem';
         hapticPreview.innerHTML = '<span style="display:inline-block">📳 Haptic Feedback Active</span>';
-        
+
         // Animation loop to shake the icon
         const icon = hapticPreview.querySelector('span');
         const animateHaptic = () => {
@@ -438,7 +438,7 @@ function renderTrackList(tracks, container, kernel) {
             if (track.enabled) {
                 const time = Date.now() / 100;
                 // Simple shake effect
-                const offset = Math.sin(time * 20) * 2; 
+                const offset = Math.sin(time * 20) * 2;
                 icon.style.transform = `translateX(${offset}px)`;
                 icon.style.color = 'var(--primary)';
                 hapticPreview.style.border = '1px solid var(--primary)';
@@ -449,7 +449,7 @@ function renderTrackList(tracks, container, kernel) {
             }
         };
         requestAnimationFrame(animateHaptic);
-        
+
         li.appendChild(hapticPreview);
     }
 

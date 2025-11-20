@@ -50,7 +50,7 @@ export class HapticEngine {
       // We can simulate intensity by pulsing? e.g. [10, 10] vs [50, 0]
       // For now, just continuous vibration.
       try {
-          navigator.vibrate(200); 
+          navigator.vibrate(200);
       } catch (e) {
           // Ignore errors
       }
