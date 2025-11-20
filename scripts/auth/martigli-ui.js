@@ -6,8 +6,8 @@ import { UI_CONFIG } from '../constants.js';
 // We should probably pass state/kernel to these functions or use the singleton appState if it has access.
 // For now, let's make these functions accept the state or callbacks.
 
-const MARTIGLI_WAVEFORM_PADDING = { top: 4, right: 0, bottom: 4, left: 0 };
-const MARTIGLI_TIMELINE_PADDING = { top: 4, right: 0, bottom: 4, left: 0 };
+const MARTIGLI_WAVEFORM_PADDING = { top: 8, right: 8, bottom: 8, left: 8 };
+const MARTIGLI_TIMELINE_PADDING = { top: 8, right: 8, bottom: 8, left: 8 };
 const MARTIGLI_TRAJECTORY_LIMIT = 16;
 
 const clampNumber = (value, min, max) => {
@@ -133,34 +133,19 @@ export const drawMartigliWaveform = (chart, osc = {}, metrics = null) => {
   ctx.fill();
   ctx.stroke();
   ctx.restore();
-
-  if (chart.caption) {
-    // Simplified caption to reduce redundancy
-    chart.caption.textContent = `Value ${describeWaveformValue(currentValue)}`;
-  }
 };
 
 export const createMartigliWaveformChart = (callbacks = {}) => {
   const root = document.createElement("div");
   root.className = "martigli-chart";
 
-  // Removed chart header to reduce clutter
-  // const head = document.createElement("div");
-  // head.className = "martigli-chart-head";
-  // ...
-
   const { canvas, ctx, width, height } = createChartCanvas(360, 150);
   root.appendChild(canvas);
-  const caption = document.createElement("p");
-  caption.className = "martigli-chart-caption";
-  caption.textContent = "Inhale 50% · Value 0.00 · 1.00× amp";
-  root.appendChild(caption);
 
   const state = {
     root,
     canvas,
     ctx,
-    caption,
     width,
     height,
     padding: MARTIGLI_WAVEFORM_PADDING,
@@ -267,7 +252,7 @@ export const drawMartigliTimeline = (chart, osc = {}, metrics = null) => {
 
   const { series, totalDuration } = buildTimelineSeries(osc);
   const durationMax = Math.max(totalDuration, 60);
-  const durationDomain = durationMax * 1.05;
+  const durationDomain = durationMax;
   const periods = series.map((point) => point.period ?? 0);
   const minPeriodRaw = Math.min(...periods, osc.startPeriodSec ?? 10, osc.endPeriodSec ?? 20);
   const maxPeriodRaw = Math.max(...periods, osc.startPeriodSec ?? 10, osc.endPeriodSec ?? 20);
