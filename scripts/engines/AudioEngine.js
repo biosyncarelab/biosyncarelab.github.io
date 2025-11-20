@@ -69,6 +69,16 @@ export class AudioEngine {
   _tick() {
     if (!this.isRunning) return;
 
+    // DEBUG: Monitor loop frequency and background state
+    const now = Date.now();
+    if (!this._lastTickTime) this._lastTickTime = now;
+    const delta = now - this._lastTickTime;
+    this._lastTickTime = now;
+
+    if (document.hidden && Math.random() < 0.05) { // Log 5% of ticks in background to avoid spam
+        console.log(`[AudioEngine] Background Tick | Delta: ${delta}ms | Hidden: ${document.hidden}`);
+    }
+
     // Use absolute time for parameter modulation to match MartigliOscillator
     let time;
     if (typeof performance !== "undefined" && typeof performance.now === "function" && typeof performance.timeOrigin === "number") {
@@ -92,6 +102,9 @@ export class AudioEngine {
     const ctxTime = this.ctx.currentTime;
 
     if (document.hidden) {
+      // DEBUG: Log automation attempts in background
+      // console.log(`[AudioEngine] Automating param in background. Time: ${currentTime.toFixed(2)}`);
+
       // Background mode: Schedule trajectory ahead to survive throttling
       // Throttle scheduling to ~2Hz to avoid event spam
       const now = Date.now();
