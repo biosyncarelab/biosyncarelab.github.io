@@ -82,17 +82,21 @@ function renderTrackList(tracks, container, kernel) {
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    header.style.marginBottom = '0.5rem';
+    header.style.marginBottom = '0.75rem';
 
     const label = document.createElement('span');
     label.textContent = track.label;
-    label.style.fontWeight = 'bold';
+    label.style.fontWeight = '600';
+    label.style.fontSize = '0.9rem';
 
     const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '0.25rem';
 
     const muteBtn = document.createElement('button');
     muteBtn.className = 'ghost tiny';
     muteBtn.textContent = track.enabled ? 'Mute' : 'Unmute';
+    muteBtn.title = track.enabled ? 'Mute track' : 'Unmute track';
     muteBtn.onclick = () => {
       track.enabled = !track.enabled;
       muteBtn.textContent = track.enabled ? 'Mute' : 'Unmute';
@@ -100,8 +104,12 @@ function renderTrackList(tracks, container, kernel) {
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'ghost tiny';
-    removeBtn.textContent = 'Remove';
+    removeBtn.textContent = '×';
+    removeBtn.title = 'Remove track';
     removeBtn.style.color = 'var(--text-error)';
+    removeBtn.style.fontSize = '1.2rem';
+    removeBtn.style.lineHeight = '1';
+    removeBtn.style.padding = '0 0.25rem';
     removeBtn.onclick = () => {
       kernel.tracks.removeTrack(track.id);
     };
@@ -117,17 +125,20 @@ function renderTrackList(tracks, container, kernel) {
     const paramsDiv = document.createElement('div');
     paramsDiv.style.display = 'grid';
     paramsDiv.style.gap = '0.5rem';
+    paramsDiv.style.fontSize = '0.8rem';
 
     track.parameters.forEach(param => {
       const row = document.createElement('div');
-      row.style.display = 'flex';
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '60px 1fr 35px';
       row.style.alignItems = 'center';
       row.style.gap = '0.5rem';
 
       const pLabel = document.createElement('label');
       pLabel.textContent = param.name;
-      pLabel.style.fontSize = '0.8rem';
-      pLabel.style.width = '80px';
+      pLabel.style.color = 'var(--text-muted)';
+      pLabel.style.overflow = 'hidden';
+      pLabel.style.textOverflow = 'ellipsis';
 
       const input = document.createElement('input');
       input.type = 'range';
@@ -135,18 +146,18 @@ function renderTrackList(tracks, container, kernel) {
       input.max = param.max !== Infinity ? param.max : 1000;
       input.step = (param.max - param.min) > 100 ? 1 : 0.1;
       input.value = param.base;
-      input.style.flex = '1';
+      input.style.width = '100%';
+      input.style.cursor = 'pointer';
 
       const valDisplay = document.createElement('span');
-      valDisplay.textContent = param.base.toFixed(1);
-      valDisplay.style.fontSize = '0.8rem';
-      valDisplay.style.width = '40px';
+      valDisplay.textContent = param.base < 10 ? param.base.toFixed(1) : Math.round(param.base);
       valDisplay.style.textAlign = 'right';
+      valDisplay.style.fontVariantNumeric = 'tabular-nums';
 
       input.oninput = (e) => {
         const val = parseFloat(e.target.value);
         param.base = val;
-        valDisplay.textContent = val.toFixed(1);
+        valDisplay.textContent = val < 10 ? val.toFixed(1) : Math.round(val);
       };
 
       row.appendChild(pLabel);

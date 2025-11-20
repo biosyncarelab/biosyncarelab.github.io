@@ -129,14 +129,14 @@
                 <h3>Audio tracks</h3>
                 <p id="audio-sensory-status" class="muted-text">Select a session to preview audio layers.</p>
               </div>
-              <div class="panel-actions" style="margin-bottom: 0.5rem;">
-                 <select id="audio-track-type" class="tiny" style="width: auto; display: inline-block;">
+              <div class="panel-actions" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                 <select id="audio-track-type" class="tiny" style="width: auto; flex: 1;">
                    <option value="BinauralBeatTrack">Binaural Beat</option>
                    <option value="IsochronicTrack">Isochronic Tone</option>
                    <option value="SineTrack">Sine Wave</option>
                  </select>
                  <button type="button" id="audio-add-track" class="primary tiny">Add</button>
-                 <button type="button" id="audio-resume" class="ghost tiny">Resume</button>
+                 <button type="button" id="audio-resume" class="ghost tiny" title="Resume Audio Context">▶</button>
               </div>
               <ul id="audio-sensory-list" class="sensory-list"></ul>
             </section>
@@ -145,8 +145,8 @@
                 <h3>Visual tracks</h3>
                 <p id="visual-sensory-status" class="muted-text">Waiting for a session with video cues.</p>
               </div>
-              <div class="panel-actions" style="margin-bottom: 0.5rem;">
-                 <select id="visual-track-type" class="tiny" style="width: auto; display: inline-block;">
+              <div class="panel-actions" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                 <select id="visual-track-type" class="tiny" style="width: auto; flex: 1;">
                    <option value="GeometryVisualTrack">Geometry</option>
                    <option value="ParticleVisualTrack">Particles</option>
                  </select>
@@ -159,8 +159,8 @@
                 <h3>Haptic tracks</h3>
                 <p id="haptic-sensory-status" class="muted-text">Waiting for a session with haptic cues.</p>
               </div>
-              <div class="panel-actions" style="margin-bottom: 0.5rem;">
-                 <select id="haptic-track-type" class="tiny" style="width: auto; display: inline-block;">
+              <div class="panel-actions" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                 <select id="haptic-track-type" class="tiny" style="width: auto; flex: 1;">
                    <option value="VibrationTrack">Vibration</option>
                  </select>
                  <button type="button" id="haptic-add-track" class="primary tiny">Add</button>

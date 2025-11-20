@@ -893,6 +893,10 @@ export class BSCLabKernel {
   async init() {
     try {
       await this.structures.load();
+      if (this.audio && typeof this.audio.init === 'function') {
+        await this.audio.init();
+      }
+      // Video engine initializes on canvas attachment
     } catch (err) {
       console.warn("Kernel structure load failed", err);
     }
