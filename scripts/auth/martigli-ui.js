@@ -6,8 +6,8 @@ import { UI_CONFIG } from '../constants.js';
 // We should probably pass state/kernel to these functions or use the singleton appState if it has access.
 // For now, let's make these functions accept the state or callbacks.
 
-const MARTIGLI_WAVEFORM_PADDING = { top: 12, right: 16, bottom: 22, left: 36 };
-const MARTIGLI_TIMELINE_PADDING = { top: 18, right: 32, bottom: 36, left: 58 };
+const MARTIGLI_WAVEFORM_PADDING = { top: 4, right: 0, bottom: 4, left: 0 };
+const MARTIGLI_TIMELINE_PADDING = { top: 4, right: 0, bottom: 4, left: 0 };
 const MARTIGLI_TRAJECTORY_LIMIT = 16;
 
 const clampNumber = (value, min, max) => {
