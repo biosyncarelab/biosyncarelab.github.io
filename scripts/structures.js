@@ -173,6 +173,7 @@ export class MartigliOscillator {
     this.session.startTime = null;
     this._phase = 0;
     this._lastTime = null;
+    this._lastPeriod = null;
   }
 
   setStartPeriod(value) {
