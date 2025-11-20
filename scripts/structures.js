@@ -264,43 +264,82 @@ export class MartigliOscillator {
       return this.config.prestartValue;
     }
 
-    // Robustness against time jitter/multiple callers
-    if (this._lastTime !== null) {
-        const diff = timeSec - this._lastTime;
-        // If called with same time (or very close), return cached value
-        if (Math.abs(diff) < 0.0001 && this._lastValue !== undefined) {
-            return this._lastValue;
-        }
-        // If time moved backwards significantly, assume jitter and return last value
-        // (unless it's a reset, which should be handled by startSession)
-        if (diff < 0) {
-            return this._lastValue ?? this.config.prestartValue;
-        }
-    }
-
     const startTime = (this.session.startTime ?? this._anchor) + this.config.startOffsetSec;
     const elapsed = timeSec - startTime;
+    
     if (elapsed < 0) {
       return this.config.prestartValue;
     }
-    const period = this._periodAt(elapsed);
-    if (!period || period <= 0) {
-      return 0;
-    }
-    const dt = this._lastTime === null ? 0 : timeSec - this._lastTime;
-    const avgPeriod = this._lastPeriod ? (this._lastPeriod + period) / 2 : period;
 
-    if (dt >= 0 && avgPeriod > 0) {
-      this._phase = (this._phase + (dt / avgPeriod)) % 1;
-    }
-
+    // Stateless phase calculation
+    const phase = this._phaseAt(elapsed);
+    
+    // Update internal state for metrics/debugging only
+    this._phase = phase % 1;
     this._lastTime = timeSec;
-    this._lastPeriod = period;
+    this._lastPeriod = this._periodAt(elapsed);
+
     const envelope = this._sessionEnvelope(timeSec, startTime);
-    const shaped = this._shapeValue(this._phase);
+    const shaped = this._shapeValue(phase);
     const result = shaped * this.config.amplitude * envelope;
     this._lastValue = result;
     return result;
+  }
+
+  _phaseAt(elapsed) {
+    if (elapsed <= 0) return 0;
+    
+    let totalPhase = 0;
+    let remaining = elapsed;
+
+    for (const segment of this._segments) {
+      if (remaining <= 0) break;
+
+      const segDuration = segment.duration;
+      // Time spent in this segment
+      const t = Math.min(remaining, segDuration); 
+      
+      if (segDuration <= 0.001) {
+        continue;
+      }
+
+      const P_start = segment.from;
+      const P_end = segment.to;
+      
+      if (Math.abs(P_end - P_start) < 0.001) {
+        // Constant period: P(t) = P_start
+        // Integral (1/P) dt = t / P
+        if (P_start > 0) {
+          totalPhase += t / P_start;
+        }
+      } else {
+        // Linear period ramp: P(t) = P_start + m*t
+        // m = (P_end - P_start) / segDuration
+        // Integral (1 / (P_start + m*t)) dt = (1/m) * ln(P_start + m*t)
+        const m = (P_end - P_start) / segDuration;
+        // Avoid division by zero or log of non-positive
+        if (Math.abs(m) > 1e-9) {
+            const num = P_start + m * t;
+            if (num > 0 && P_start > 0) {
+                totalPhase += (Math.log(num / P_start) / m);
+            }
+        } else {
+             if (P_start > 0) totalPhase += t / P_start;
+        }
+      }
+
+      remaining -= t;
+    }
+
+    // If we are past the last segment, continue with final period
+    if (remaining > 0) {
+      const finalP = this._finalPeriod || this.config.endPeriodSec;
+      if (finalP > 0) {
+        totalPhase += remaining / finalP;
+      }
+    }
+
+    return totalPhase;
   }
 
   runtimeMetrics(timeSec = nowSeconds()) {
@@ -1019,14 +1058,23 @@ export class BSCLabKernel {
   }
 
   toJsonLdSnapshot() {
+    const manifestEntries = Array.isArray(this.structures.manifest) ? this.structures.manifest : [];
     const structureRefs = Array.from(this.structures.catalog.keys()).map(
       (datasetId) => `${ID_BASE}/structure/${encodeURIComponent(datasetId)}`,
     );
+    const structureManifest = manifestEntries.map((entry) => ({
+      id: entry.id,
+      label: entry.label,
+      url: entry.url ?? entry.href ?? null,
+      description: entry.description ?? null,
+      ref: entry.id ? `${ID_BASE}/structure/${encodeURIComponent(entry.id)}` : null,
+    }));
     const martigli = this.martigli.listOscillations().map((osc) => martigliToJsonLd(osc, this.rdf));
     const tracks = this.tracks.getAll().map((track) => trackToJsonLd(track, this.rdf));
     return {
       "@context": CONTEXT_URL,
       structureRefs,
+      structureManifest,
       martigli,
       tracks,
     };
