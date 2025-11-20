@@ -1632,6 +1632,10 @@ martigliState.subscribe((snapshot) => {
 updateMartigliPreview(martigliState.snapshot());
 updateMartigliOscillationStatus(martigliState.snapshot());
 
+const updateMartigliTelemetryForAll = () => {
+  ensureMartigliTelemetryLoop(martigliState, ui.martigliDashboardList);
+};
+
 if (ui.modalOverlay) {
   ui.modalOverlay.addEventListener("click", closeDetailModal);
 }
@@ -1661,9 +1665,14 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    audioEngine.stop();
+    // Do NOT stop the audio engine on visibility change.
+    // The engine now handles background throttling internally.
+    // audioEngine.stop(); 
   } else {
-    updateMartigliTelemetryForAll();
+    // Resume context if suspended
+    if (audioEngine && audioEngine.ctx && audioEngine.ctx.state === 'suspended') {
+      audioEngine.ctx.resume();
+    }
   }
 });
 
