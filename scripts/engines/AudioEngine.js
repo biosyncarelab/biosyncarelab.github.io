@@ -226,6 +226,7 @@ export class AudioEngine {
 
     // Generic Pan
     const panVal = track.getParameter('pan')?.getValue(time) ?? 0;
+    // console.log(`Track ${track.id} Pan: ${panVal}`); // Debug
     nodes.panner.pan.setTargetAtTime(panVal, this.ctx.currentTime, 0.05);
 
     if (track.constructor.name === 'SineTrack') {
@@ -240,6 +241,7 @@ export class AudioEngine {
       nodes.rightOsc.frequency.setTargetAtTime(carrier + beat, this.ctx.currentTime, 0.05);
 
       if (nodes.leftOsc.type !== waveType) {
+        // console.log(`Changing waveType to ${waveType}`); // Debug
         nodes.leftOsc.type = waveType;
         nodes.rightOsc.type = waveType;
       }

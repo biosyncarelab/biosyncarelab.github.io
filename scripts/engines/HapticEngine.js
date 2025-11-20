@@ -1,4 +1,3 @@
-
 export class HapticEngine {
   constructor(kernel) {
     this.kernel = kernel;
@@ -30,29 +29,35 @@ export class HapticEngine {
   }
 
   update() {
-    if (!navigator.vibrate) return;
+    if (typeof navigator === 'undefined' || !navigator.vibrate) return;
 
     const tracks = this.kernel.tracks.getByType('haptic');
     let active = false;
+    let maxIntensity = 0;
 
     tracks.forEach(track => {
       if (!track.enabled) return;
-
-      // For now, just support simple vibration if any track is active
-      // We can't easily mix haptic signals like audio.
-      // We'll take the max intensity.
-
-      // VibrationTrack usually has 'intensity' or 'pattern'
-      // Let's check HapticTrack.js parameters.
-      // Assuming 'strength' or similar.
       active = true;
+      // Get intensity if available
+      const intensity = track.getParameter('intensity')?.base ?? 0.5;
+      if (intensity > maxIntensity) maxIntensity = intensity;
     });
 
     if (active) {
       // Vibrate for 100ms
-      navigator.vibrate(100);
+      // Note: On many mobile browsers, vibrate is ignored if the user hasn't interacted with the page recently.
+      // Also, intensity is not supported by the standard vibrate API (it's just on/off or pattern).
+      // We can simulate intensity by pulsing? e.g. [10, 10] vs [50, 0]
+      // For now, just continuous vibration.
+      try {
+          navigator.vibrate(200); 
+      } catch (e) {
+          // Ignore errors
+      }
     } else {
-      navigator.vibrate(0);
+      try {
+        navigator.vibrate(0);
+      } catch (e) {}
     }
   }
 }
