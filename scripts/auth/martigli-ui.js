@@ -135,9 +135,8 @@ export const drawMartigliWaveform = (chart, osc = {}, metrics = null) => {
   ctx.restore();
 
   if (chart.caption) {
-    const inhalePct = Math.round(inhaleRatio * 100);
-    const amplitudeText = `${(amplitude ?? 1).toFixed(2)}× amp`;
-    chart.caption.textContent = `Inhale ${inhalePct}% · Value ${describeWaveformValue(currentValue)} · ${amplitudeText}`;
+    // Simplified caption to reduce redundancy
+    chart.caption.textContent = `Value ${describeWaveformValue(currentValue)}`;
   }
 };
 
@@ -145,17 +144,10 @@ export const createMartigliWaveformChart = (callbacks = {}) => {
   const root = document.createElement("div");
   root.className = "martigli-chart";
 
-  const head = document.createElement("div");
-  head.className = "martigli-chart-head";
-  const title = document.createElement("p");
-  title.className = "martigli-chart-title";
-  title.textContent = "Breathing waveform";
-  const hint = document.createElement("span");
-  hint.className = "martigli-chart-hint";
-  hint.textContent = "Drag to rebalance inhale/exhale";
-  head.appendChild(title);
-  head.appendChild(hint);
-  root.appendChild(head);
+  // Removed chart header to reduce clutter
+  // const head = document.createElement("div");
+  // head.className = "martigli-chart-head";
+  // ...
 
   const { canvas, ctx, width, height } = createChartCanvas(360, 150);
   root.appendChild(canvas);
@@ -368,17 +360,9 @@ export const drawMartigliTimeline = (chart, osc = {}, metrics = null) => {
 export const createMartigliTimelineChart = (callbacks = {}) => {
   const root = document.createElement("div");
   root.className = "martigli-chart";
-  const head = document.createElement("div");
-  head.className = "martigli-chart-head";
-  const title = document.createElement("p");
-  title.className = "martigli-chart-title";
-  title.textContent = "Timeline trajectory";
-  const hint = document.createElement("span");
-  hint.className = "martigli-chart-hint";
-  hint.textContent = "Drag handles to retime";
-  head.appendChild(title);
-  head.appendChild(hint);
-  root.appendChild(head);
+  // Removed chart header to reduce clutter
+  // const head = document.createElement("div");
+  // ...
   const { canvas, ctx, width, height } = createChartCanvas(360, 160);
   root.appendChild(canvas);
 
@@ -648,11 +632,12 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   visualColumn.className = "martigli-widget-column martigli-widget-column--visual";
   const visualizer = document.createElement("div");
   visualizer.className = "martigli-visualizer";
-  const visualizerLabel = document.createElement("p");
-  visualizerLabel.className = "martigli-visualizer-label";
-  visualizerLabel.textContent = "Live envelope";
+  // Removed redundant label
   const visualSurface = document.createElement("div");
   visualSurface.className = "martigli-visualizer-surface";
+  // Remove padding/margin that causes offset if present in CSS, or ensure full width here
+  visualSurface.style.margin = "0";
+  visualSurface.style.padding = "0";
 
   const waveformChart = createMartigliWaveformChart({
     onRatioChange: (ratio) => callbacks.onInhaleRatioChange?.(ratio, widget.oscillationId)
@@ -665,7 +650,6 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
 
   visualSurface.appendChild(waveformChart.root);
   visualSurface.appendChild(timelineChart.root);
-  visualizer.appendChild(visualizerLabel);
   visualizer.appendChild(visualSurface);
   visualColumn.appendChild(visualizer);
 
@@ -796,6 +780,9 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
   addTrajectoryButton.type = "button";
   addTrajectoryButton.className = "martigli-pill martigli-pill--ghost";
   addTrajectoryButton.textContent = "+ Add point";
+  addTrajectoryButton.addEventListener("click", () => {
+    callbacks.onAddTrajectoryPoint?.(widget.oscillationId);
+  });
   trajectoryHead.appendChild(trajectoryText);
   trajectoryHead.appendChild(addTrajectoryButton);
   const trajectoryList = document.createElement("div");
@@ -837,16 +824,144 @@ export const createMartigliDashboardWidget = (osc, callbacks = {}) => {
     list: trajectoryList,
     addButton: addTrajectoryButton,
   };
+  widget.callbacks = callbacks;
 
   // Bind events
   startButton.addEventListener("click", () => callbacks.onStart?.(widget.oscillationId));
   stopButton.addEventListener("click", () => callbacks.onStop?.(widget.oscillationId));
+
+  startInput.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    startValue.textContent = `${val.toFixed(1)}s`;
+    callbacks.onStartPeriodChange?.(val, widget.oscillationId);
+  });
+
+  endInput.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    endValue.textContent = `${val.toFixed(1)}s`;
+    callbacks.onEndPeriodChange?.(val, widget.oscillationId);
+  });
+
+  transitionInput.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    transitionValue.textContent = `${val}s`;
+    callbacks.onTransitionChange?.(val, widget.oscillationId);
+  });
+
+  waveformSelect.addEventListener("change", (e) => {
+    callbacks.onWaveformChange?.(e.target.value, widget.oscillationId);
+  });
+
+  inhaleInput.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    inhaleValue.textContent = `${Math.round(val * 100)}%`;
+    callbacks.onInhaleRatioChange?.(val, widget.oscillationId);
+  });
+
+  amplitudeInput.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    amplitudeValue.textContent = `${val.toFixed(2)}×`;
+    callbacks.onAmplitudeChange?.(val, widget.oscillationId);
+  });
 
   deleteButton.addEventListener("click", () => {
     callbacks.onDelete?.(widget.oscillationId);
   });
 
   return widget;
+};
+
+const renderTrajectoryList = (container, osc, callbacks) => {
+  if (!container || !osc || !osc.trajectory) return;
+  
+  // We only re-render if the count changes to avoid losing focus, 
+  // or we need a smarter diffing mechanism. 
+  // For now, let's clear and rebuild, but we might need to be careful about focus.
+  // Actually, since this is called in updateMartigliWidget which might be called often,
+  // we should check if we really need to re-render.
+  // A simple check: compare length.
+  
+  const currentCount = container.children.length;
+  const targetCount = osc.trajectory.length;
+  
+  // If counts match, we might just update values to avoid rebuilding DOM and killing focus.
+  if (currentCount === targetCount) {
+    Array.from(container.children).forEach((row, index) => {
+      const point = osc.trajectory[index];
+      const periodInput = row.querySelector(".traj-period");
+      const durationInput = row.querySelector(".traj-duration");
+      
+      // Only update if not focused to allow typing
+      if (periodInput && document.activeElement !== periodInput) {
+        periodInput.value = point.period;
+      }
+      if (durationInput && document.activeElement !== durationInput) {
+        durationInput.value = point.duration;
+      }
+    });
+    return;
+  }
+
+  container.innerHTML = "";
+  osc.trajectory.forEach((point, index) => {
+    const row = document.createElement("div");
+    row.className = "martigli-trajectory-row";
+    
+    const periodGroup = document.createElement("div");
+    periodGroup.className = "traj-group";
+    const periodLabel = document.createElement("label");
+    periodLabel.textContent = "T(s)";
+    const periodInput = document.createElement("input");
+    periodInput.type = "number";
+    periodInput.className = "traj-period";
+    periodInput.min = "0.1";
+    periodInput.max = "120";
+    periodInput.step = "0.1";
+    periodInput.value = point.period;
+    periodInput.addEventListener("change", (e) => {
+      callbacks.onTrajectoryUpdate?.(index, { period: Number(e.target.value) }, osc.id);
+    });
+    periodGroup.appendChild(periodLabel);
+    periodGroup.appendChild(periodInput);
+
+    const durationGroup = document.createElement("div");
+    durationGroup.className = "traj-group";
+    const durationLabel = document.createElement("label");
+    durationLabel.textContent = "Δt(s)";
+    const durationInput = document.createElement("input");
+    durationInput.type = "number";
+    durationInput.className = "traj-duration";
+    durationInput.min = "0";
+    durationInput.max = "600";
+    durationInput.step = "1";
+    durationInput.value = point.duration;
+    durationInput.addEventListener("change", (e) => {
+      callbacks.onTrajectoryUpdate?.(index, { duration: Number(e.target.value) }, osc.id);
+    });
+    durationGroup.appendChild(durationLabel);
+    durationGroup.appendChild(durationInput);
+
+    row.appendChild(periodGroup);
+    row.appendChild(durationGroup);
+
+    if (index > 0) { // Don't delete the root point? Or maybe allow it?
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "traj-remove";
+      removeBtn.textContent = "×";
+      removeBtn.title = "Remove point";
+      removeBtn.addEventListener("click", () => {
+        callbacks.onTrajectoryRemove?.(index, osc.id);
+      });
+      row.appendChild(removeBtn);
+    } else {
+      const spacer = document.createElement("span");
+      spacer.className = "traj-spacer";
+      row.appendChild(spacer);
+    }
+
+    container.appendChild(row);
+  });
 };
 
 export const updateMartigliWidget = (widget, osc) => {
@@ -897,6 +1012,11 @@ export const updateMartigliWidget = (widget, osc) => {
     if (widget.charts.waveform) widget.charts.waveform.render(osc, null);
     if (widget.charts.timeline) widget.charts.timeline.render(osc, null);
   }
+
+  // Update trajectory list
+  if (widget.trajectory && widget.trajectory.list) {
+    renderTrajectoryList(widget.trajectory.list, osc, widget.callbacks);
+  }
 };
 
 export const updateMartigliWidgetTelemetry = (widget, metrics) => {
@@ -917,10 +1037,6 @@ export const updateMartigliWidgetTelemetry = (widget, metrics) => {
     // For now, we assume the chart state has what it needs or we pass null for osc if not available.
     // Actually, the chart render function expects (osc, metrics).
     // We might need to store the latest osc on the widget.
-    // Let's assume the chart state has a reference or we can get it.
-    // But wait, the chart render function is: state.render = (osc, metrics) => drawMartigliWaveform(state, osc, metrics);
-    // So we need 'osc'.
-    // We can attach the latest osc to the widget in updateMartigliWidget.
   }
 };
 
@@ -959,12 +1075,31 @@ export const ensureMartigliTelemetryLoop = (martigliState, container) => {
       const oscId = widget.oscillationId;
       const osc = martigliState._oscillations.get(oscId);
       if (osc) {
-        // We should probably update the widget visual state too if it changed
-        // But that might be too heavy for every frame.
-        // Let's just update telemetry and charts.
-
+        // Update telemetry and charts
         const metrics = osc.runtimeMetrics();
         updateMartigliWidgetTelemetry(widget, metrics);
+
+        // Update button states and status text
+        const isActive = Boolean(osc.sessionActive);
+        if (widget.buttons) {
+          if (widget.buttons.start) widget.buttons.start.disabled = isActive;
+          if (widget.buttons.stop) widget.buttons.stop.disabled = !isActive;
+        }
+        if (widget.statusText) {
+          widget.statusText.textContent = isActive ? "Active" : "Idle";
+        }
+        if (widget.indicator) {
+          widget.indicator.classList.toggle("active", isActive);
+        }
+
+        // Update control value displays (but not the inputs themselves to avoid fighting user)
+        if (widget.controls) {
+          if (widget.controls.startValue) widget.controls.startValue.textContent = `${(osc.startPeriodSec ?? 10).toFixed(1)}s`;
+          if (widget.controls.endValue) widget.controls.endValue.textContent = `${(osc.endPeriodSec ?? 20).toFixed(1)}s`;
+          if (widget.controls.transitionValue) widget.controls.transitionValue.textContent = `${Math.round(osc.transitionSec ?? 0)}s`;
+          if (widget.controls.inhaleValue) widget.controls.inhaleValue.textContent = `${Math.round((osc.inhaleRatio ?? 0.5) * 100)}%`;
+          if (widget.controls.amplitudeValue) widget.controls.amplitudeValue.textContent = `${(osc.amplitude ?? 1).toFixed(2)}×`;
+        }
 
         if (widget.charts) {
           if (widget.charts.waveform) widget.charts.waveform.render(osc, metrics);
