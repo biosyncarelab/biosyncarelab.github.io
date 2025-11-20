@@ -1,0 +1,106 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix bsc: <https://w3id.org/biosyncare/ontology#> .
+
+# ===== Usage Examples Continuation =====
+# This file contains all usage examples for music structures
+# Import this into the main music-structures.ttl file
+
+## Plain Changes on 4 Bells - Usage Examples
+
+bsc:PlainChanges4_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Quadraphonic spatial audio journey" ;
+    bsc:hasScenario "Quadraphonic spatial audio journey" ;
+    bsc:hasBreathingPattern "Medium cycle (24-48 seconds), allowing each change to be clearly perceived" ;
+    bsc:hasTrackMapping """4 speakers in cardinal directions (North, East, South, West). Single sound source navigates through all 24 permutations of spatial positions. Row position determines speaker gain (0 = silent, 1 = -12dB, 2 = -6dB, 3 = 0dB). The Plain Bob Minimus pattern ensures smooth spatial transitions with only adjacent swaps, creating believable circular motion around the listener.""" ;
+    bsc:hasExpectedOutcome """Immersive spatial experience where sound appears to orbit, weave, and dance around the listener in predictable yet engaging patterns. The 24-row cycle is long enough to create narrative arc but short enough to maintain coherence. Excellent for meditation spaces, sound healing, planetarium soundtracks, or experimental spatial compositions. The mathematical precision prevents disorienting jumps while maintaining dynamic movement.""" .
+
+bsc:PlainChanges4_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Four-layer harmonic stack with evolving emphasis" ;
+    bsc:hasScenario "Four-layer harmonic stack with evolving emphasis" ;
+    bsc:hasBreathingPattern "Slow harmonic evolution (1-2 minutes per full cycle)" ;
+    bsc:hasTrackMapping """4 harmonic voices: fundamental (C3), perfect fifth (G3), octave (C4), major third (E4). Position determines amplitude where each voice cycles through prominence levels. Creates constantly shifting chord voicings and harmonic colors. The hunt pattern ensures each harmonic gets equal time at all dynamic levels, revealing internal chord structure over time.""" ;
+    bsc:hasExpectedOutcome """Rich harmonic tapestry that breathes and morphs without losing tonal center. The 24 permutations create subtle voicing changes that sophisticated listeners can track while casual listeners experience as organic harmonic movement. Perfect for drone music, spectral composition, or harmonic meditation. The pattern reveals how chord inversions and voice leading create different emotional colors from the same harmonic material.""" .
+
+bsc:PlainChanges4_Example3 a bsc:VisualUsageExample ;
+    rdfs:label "CMYK print color sequencing for generative art" ;
+    bsc:hasScenario "CMYK print color sequencing for generative art" ;
+    bsc:hasBreathingPattern "Frame-rate synchronized (change every 2-3 seconds for video art)" ;
+    bsc:hasTrackMapping """4 color channels: Cyan, Magenta, Yellow, Black (CMYK). Row position determines ink density (0 = 0%, 1 = 33%, 2 = 67%, 3 = 100%). The 24 permutations cycle through color space systematically, creating evolving color palettes. Each change ensures gradual color transitions through adjacent channel swaps, preventing jarring visual jumps.""" ;
+    bsc:hasExpectedOutcome """Mesmerizing color evolution with print-quality aesthetics. The systematic exploration of CMYK space creates unexpected color harmonies while maintaining visual coherence. Ideal for VJ loops, digital art installations, screensavers, or music video backgrounds. The 24-state cycle provides enough variation to sustain interest while remaining predictable enough for intentional design.""" .
+
+bsc:PlainChanges4_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Four-voice contrapuntal texture in Renaissance style" ;
+    bsc:hasScenario "Four-voice contrapuntal texture in Renaissance style" ;
+    bsc:hasBreathingPattern "Musical phrase-locked (change every 4 bars in 3/4 or 4/4 time)" ;
+    bsc:hasTrackMapping """4 vocal parts: Soprano, Alto, Tenor, Bass. Row position determines dynamic emphasis and melodic priority (0 = background, 3 = foreground). As the Plain Bob pattern progresses, different voices emerge and recede, creating woven polyphonic texture similar to medieval rounds or fugues. Each voice experiences all priority levels over the 24-change cycle.""" ;
+    bsc:hasExpectedOutcome """Sophisticated polyphonic writing with built-in voice-leading logic. The mathematical structure ensures balanced distribution of melodic interest across all voices. Composers can use this pattern as scaffolding for creating complex counterpoint without manual planning. Particularly effective for choral music, vocal ensembles, or multi-instrument chamber pieces. The gradual voice exchanges create natural ebb and flow.""" .
+
+bsc:PlainChanges4 bsc:hasUsageExample bsc:PlainChanges4_Example1, bsc:PlainChanges4_Example2, bsc:PlainChanges4_Example3, bsc:PlainChanges4_Example4 .
+
+## Plain Changes on 5 Bells - Usage Examples
+
+bsc:PlainChanges5_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Long-form pentatonic scale meditation with 5 tones" ;
+    bsc:hasScenario "Long-form pentatonic scale meditation with 5 tones" ;
+    bsc:hasBreathingPattern "Extended cycle (4-10 minutes), perfect for deep meditation or lengthy sound baths" ;
+    bsc:hasTrackMapping """5 pure sine tones forming pentatonic scale (C4, D4, E4, G4, A4). Each row determines amplitude envelope where position 0 = -∞dB (silent), position 1 = -24dB, position 2 = -12dB, position 3 = -6dB, position 4 = 0dB (full volume). The 120-row Plain Bob Doubles pattern ensures each tone migrates through all dynamic levels multiple times, creating slowly evolving melodic emphasis. The two hunt bells create complex interweaving patterns.""" ;
+    bsc:hasExpectedOutcome """Deeply hypnotic tonal meditation where pentatonic melodies emerge organically from mathematical structure. The 120 permutations create a complete sonic journey with clear beginning, middle, and end. Listeners experience shifting tonal centers and unexpected melodic relationships. Perfect for yoga studios, meditation retreats, sound healing practices, or ambient music composition. The long cycle allows practitioners to enter flow states while the gradual changes prevent monotony.""" .
+
+bsc:PlainChanges5_Example2 a bsc:VisualUsageExample ;
+    rdfs:label "Five-element Chinese philosophy visualization (Wu Xing)" ;
+    bsc:hasScenario "Five-element Chinese philosophy visualization (Wu Xing)" ;
+    bsc:hasBreathingPattern "Slow cosmic rhythm (5-15 minutes per cycle)" ;
+    bsc:hasTrackMapping """5 visual elements representing Wood, Fire, Earth, Metal, Water. Each element has associated color, texture, and motion pattern. Row position determines visual prominence and Z-depth layering. Position 4 = foreground (100% opacity, large scale), position 0 = deep background (20% opacity, small scale). The 120 permutations systematically explore all relationships between elements, revealing generative and destructive cycles of Wu Xing philosophy.""" ;
+    bsc:hasExpectedOutcome """Mesmerizing visual meditation on elemental interactions and cyclical philosophy. The mathematical rigor of Plain Bob Doubles mirrors the systematic nature of Chinese cosmology. Viewers can contemplate how elements interact, dominate, and recede through cosmic cycles. Ideal for museum installations, philosophical art exhibitions, or contemplative digital art. The 120-state journey creates a complete cosmological narrative.""" .
+
+bsc:PlainChanges5_Example3 a bsc:AudioUsageExample ;
+    rdfs:label "Five-layer granular synthesis with evolving density" ;
+    bsc:hasScenario "Five-layer granular synthesis with evolving density" ;
+    bsc:hasBreathingPattern "Glacial evolution (3-8 minutes for full sonic transformation)" ;
+    bsc:hasTrackMapping """5 granular synthesis engines with different source materials: field recording, orchestral sample, vocal texture, synthesizer pad, noise burst. Row position determines grain density and playback probability (position 0 = 5 grains/sec, position 4 = 100 grains/sec). As Plain Bob Doubles progresses, different textures emerge from the granular cloud, creating morphing soundscapes. The adjacent-swap rule ensures smooth textural transitions.""" ;
+    bsc:hasExpectedOutcome """Vast, ever-shifting sonic landscape that reveals new details with each listening. The 120-row cycle provides enough complexity for serious electroacoustic composition while maintaining structural coherence. Sound designers can use this for film scores, installation art, or experimental albums. The predictable-yet-complex nature allows intentional emotional arc design while leveraging mathematical structure for micro-variations.""" .
+
+bsc:PlainChanges5_Example4 a bsc:AudioUsageExample ;
+    rdfs:label "Five-oscillator FM synthesis with hunting modulators" ;
+    bsc:hasScenario "Five-oscillator FM synthesis with hunting modulators" ;
+    bsc:hasBreathingPattern "Timbral exploration (2-6 minutes per complete cycle)" ;
+    bsc:hasTrackMapping """5 FM oscillators in complex routing (carrier-modulator relationships). Row position determines modulation index for each oscillator (0 = no modulation, 4 = extreme sidebands). The Plain Bob Doubles pattern creates constantly shifting FM timbres as different oscillators become carriers vs. modulators. The two hunt bells ensure systematic exploration of the FM parameter space, revealing bell-like tones, brass textures, and otherworldly timbres.""" ;
+    bsc:hasExpectedOutcome """Comprehensive exploration of FM synthesis timbral possibilities through mathematical rigor. The 120 permutations uncover hidden timbral relationships and unexpected harmonic structures. Perfect for synthesis education, sound design experimentation, or creating evolving synth patches for electronic music. The gradual parameter changes allow listeners to perceive subtle timbral transformations that would be missed with random modulation.""" .
+
+bsc:PlainChanges5 bsc:hasUsageExample bsc:PlainChanges5_Example1, bsc:PlainChanges5_Example2, bsc:PlainChanges5_Example3, bsc:PlainChanges5_Example4 .
+
+## Plain Changes on 6 Bells - Usage Examples
+
+bsc:PlainChanges6_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Hexaphonic timbre morphing with full harmonic series subset" ;
+    bsc:hasScenario "Hexaphonic timbre morphing with full harmonic series subset" ;
+    bsc:hasBreathingPattern "Epic journey (5-12 minutes), suitable for concert performances or installation art" ;
+    bsc:hasTrackMapping """6 harmonic partials from overtone series: fundamental (100Hz), 2nd harmonic (200Hz), 3rd (300Hz), 4th (400Hz), 5th (500Hz), 6th (600Hz). Row position determines each partial's amplitude (0 = -∞dB, 5 = 0dB). The 120-row Plain Bob Minor pattern systematically explores all possible amplitude relationships, revealing how harmonic spectra create different timbres. The two hunt bells ensure each harmonic visits all prominence levels multiple times.""" ;
+    bsc:hasExpectedOutcome """Profound exploration of harmonic timbre and spectral composition principles. The 120 permutations unveil how the same frequency set creates bell tones, brass colors, string textures, and otherworldly timbres through amplitude modulation alone. Educational for acoustics students and mesmerizing for general audiences. Perfect for spectral music composition, acoustic research demonstrations, or meditation on the physics of sound. The mathematical structure makes complex spectral relationships perceptible.""" .
+
+bsc:PlainChanges6_Example2 a bsc:AudioUsageExample ;
+    rdfs:label "Six-band parametric EQ automation for evolving mix character" ;
+    bsc:hasScenario "Six-band parametric EQ automation for evolving mix character" ;
+    bsc:hasBreathingPattern "Mastering-grade evolution (3-10 minutes per cycle)" ;
+    bsc:hasTrackMapping """6 parametric EQ bands across frequency spectrum: 60Hz (sub-bass), 120Hz (bass), 250Hz (low-mid), 1kHz (mid), 4kHz (presence), 10kHz (air). Row position determines boost/cut amount (0 = -12dB cut, 3 = flat, 5 = +6dB boost). The Plain Bob Minor hunt pattern creates constantly shifting EQ curves, emphasizing different frequency ranges over time. Creates evolving tonal character from dark and warm to bright and aggressive.""" ;
+    bsc:hasExpectedOutcome """Masterclass in tonal shaping and mix evolution. The 120 permutations demonstrate how EQ creates emotional impact and genre characteristics. Audio engineers can use this for creating evolving soundscapes in film scores or electronic music. The systematic nature reveals how frequency balance affects perception of space, aggression, warmth, and clarity. Particularly powerful for ambient music where tonal evolution is primary narrative driver.""" .
+
+bsc:PlainChanges6_Example3 a bsc:AudioUsageExample ;
+    rdfs:label "Six-voice fugal composition with hunting subject entrances" ;
+    bsc:hasScenario "Six-voice fugal composition with hunting subject entrances" ;
+    bsc:hasBreathingPattern "Classical form (4-8 minutes, traditional fugue duration)" ;
+    bsc:hasTrackMapping """6 instrumental voices: Violin I, Violin II, Viola, Cello, Bass, Piano. Row position determines which voice carries the fugal subject vs. countersubject vs. free counterpoint (position 5 = primary subject, position 0 = resting/pedal tone). The Plain Bob Minor structure creates Renaissance-style voice-leading where melodic material migrates systematically through all parts. Each voice gets equal opportunity to shine.""" ;
+    bsc:hasExpectedOutcome """Sophisticated contrapuntal composition aid that embodies centuries of voice-leading wisdom. Composers can use this framework to ensure balanced polyphonic writing without manual planning. The 120-row structure provides enough length for substantial musical development. Perfect for choral compositions, chamber music, orchestral writing, or music theory pedagogy. Students can analyze how mathematical structure creates perceived complexity while maintaining theoretical rigor.""" .
+
+bsc:PlainChanges6_Example4 a bsc:VisualUsageExample ;
+    rdfs:label "Hexagonal LED array with rotational color symmetry" ;
+    bsc:hasScenario "Hexagonal LED array with rotational color symmetry" ;
+    bsc:hasBreathingPattern "Visual meditation (4-10 minutes, gallery installation tempo)" ;
+    bsc:hasTrackMapping """6 LED rings in hexagonal arrangement, each displaying different hue on color wheel (0°, 60°, 120°, 180°, 240°, 300°). Row position determines brightness (0 = off, 5 = maximum). The Plain Bob Minor pattern creates rotating, pulsing mandalas where color and brightness interweave according to change-ringing mathematics. The two hunt bells create complex spiral patterns.""" ;
+    bsc:hasExpectedOutcome """Hypnotic kinetic light sculpture that merges mathematics, color theory, and contemplative art. The 120-state cycle never quite repeats in viewers' perception, creating sustained engagement. Ideal for museum installations, healing spaces, corporate lobbies, or sacred architecture. The mathematical underpinning gives the piece intellectual depth while the visual beauty makes it accessible. Viewers often report meditative states and temporal disorientation due to the complex-yet-ordered patterns.""" .
+
+bsc:PlainChanges6 bsc:hasUsageExample bsc:PlainChanges6_Example1, bsc:PlainChanges6_Example2, bsc:PlainChanges6_Example3, bsc:PlainChanges6_Example4 .
+
+# Note: Additional usage examples for Plain Hunt, Martigli, and Symmetry structures
+# should be added following the same pattern

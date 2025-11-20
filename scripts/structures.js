@@ -263,6 +263,21 @@ export class MartigliOscillator {
     if (this.session.paused) {
       return this.config.prestartValue;
     }
+    
+    // Robustness against time jitter/multiple callers
+    if (this._lastTime !== null) {
+        const diff = timeSec - this._lastTime;
+        // If called with same time (or very close), return cached value
+        if (Math.abs(diff) < 0.0001 && this._lastValue !== undefined) {
+            return this._lastValue;
+        }
+        // If time moved backwards significantly, assume jitter and return last value
+        // (unless it's a reset, which should be handled by startSession)
+        if (diff < 0) {
+            return this._lastValue ?? this.config.prestartValue;
+        }
+    }
+
     const startTime = (this.session.startTime ?? this._anchor) + this.config.startOffsetSec;
     const elapsed = timeSec - startTime;
     if (elapsed < 0) {
@@ -274,16 +289,18 @@ export class MartigliOscillator {
     }
     const dt = this._lastTime === null ? 0 : timeSec - this._lastTime;
     const avgPeriod = this._lastPeriod ? (this._lastPeriod + period) / 2 : period;
+    
     if (dt >= 0 && avgPeriod > 0) {
       this._phase = (this._phase + (dt / avgPeriod)) % 1;
-    } else if (dt < 0) {
-      this._phase = 0;
     }
+    
     this._lastTime = timeSec;
     this._lastPeriod = period;
     const envelope = this._sessionEnvelope(timeSec, startTime);
     const shaped = this._shapeValue(this._phase);
-    return shaped * this.config.amplitude * envelope;
+    const result = shaped * this.config.amplitude * envelope;
+    this._lastValue = result;
+    return result;
   }
 
   runtimeMetrics(timeSec = nowSeconds()) {

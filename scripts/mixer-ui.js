@@ -284,9 +284,14 @@ function renderTrackList(tracks, container, kernel) {
             if (osc) {
               const modulator = {
                 getValue: (time) => {
-                  // Use Date.now() / 1000 to synchronize with Martigli's absolute time base
-                  // ignoring the audio-context time passed by the engine, which starts at 0.
-                  return typeof osc.valueAt === 'function' ? osc.valueAt(Date.now() / 1000) : 0;
+                  // Use performance.now() based time if available to match structures.js
+                  let now;
+                  if (typeof performance !== "undefined" && typeof performance.now === "function" && typeof performance.timeOrigin === "number") {
+                    now = (performance.timeOrigin + performance.now()) / 1000;
+                  } else {
+                    now = Date.now() / 1000;
+                  }
+                  return typeof osc.valueAt === 'function' ? osc.valueAt(now) : 0;
                 }
               };
               

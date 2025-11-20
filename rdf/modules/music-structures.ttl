@@ -70,6 +70,65 @@ bsc:modulatesParameter a owl:ObjectProperty ;
     rdfs:domain bsc:MusicStructure ;
     rdfs:range bsc:TrackParameter .
 
+# ===== Usage Example Classes =====
+
+bsc:UsageExample a owl:Class ;
+    rdfs:label "Usage Example" ;
+    rdfs:comment "Concrete application scenario demonstrating how to use a music structure" ;
+    skos:definition "Detailed use case with scenario, breathing pattern, track mapping, and expected outcome" .
+
+bsc:AudioUsageExample a owl:Class ;
+    rdfs:label "Audio Usage Example" ;
+    rdfs:comment "Usage example for audio/sound applications" ;
+    rdfs:subClassOf bsc:UsageExample .
+
+bsc:VisualUsageExample a owl:Class ;
+    rdfs:label "Visual Usage Example" ;
+    rdfs:comment "Usage example for visual/video applications" ;
+    rdfs:subClassOf bsc:UsageExample .
+
+bsc:MixedUsageExample a owl:Class ;
+    rdfs:label "Mixed Usage Example" ;
+    rdfs:comment "Usage example combining audio and visual modalities" ;
+    rdfs:subClassOf bsc:UsageExample .
+
+# ===== Usage Example Properties =====
+
+bsc:hasUsageExample a owl:ObjectProperty ;
+    rdfs:label "has usage example" ;
+    rdfs:comment "Links a music structure to a concrete usage example" ;
+    rdfs:domain bsc:MusicStructure ;
+    rdfs:range bsc:UsageExample .
+
+bsc:hasScenario a owl:DatatypeProperty ;
+    rdfs:label "has scenario" ;
+    rdfs:comment "Description of the application scenario" ;
+    rdfs:domain bsc:UsageExample ;
+    rdfs:range xsd:string .
+
+bsc:hasBreathingPattern a owl:DatatypeProperty ;
+    rdfs:label "has breathing pattern" ;
+    rdfs:comment "Timing and synchronization approach for the example" ;
+    rdfs:domain bsc:UsageExample ;
+    rdfs:range xsd:string .
+
+bsc:hasTrackMapping a owl:DatatypeProperty ;
+    rdfs:label "has track mapping" ;
+    rdfs:comment "Detailed parameter routing and mapping specification" ;
+    rdfs:domain bsc:UsageExample ;
+    rdfs:range xsd:string .
+
+bsc:hasExpectedOutcome a owl:DatatypeProperty ;
+    rdfs:label "has expected outcome" ;
+    rdfs:comment "Expected results and applications of the example" ;
+    rdfs:domain bsc:UsageExample ;
+    rdfs:range xsd:string .
+
+bsc:appliesToDomain a owl:ObjectProperty ;
+    rdfs:label "applies to domain" ;
+    rdfs:comment "The application domain (audio, visual, therapeutic, etc.)" ;
+    rdfs:domain bsc:UsageExample .
+
 # ===== Individuals: Change Ringing =====
 
 bsc:PlainHunt6 a bsc:ChangeRingingPattern ;
@@ -95,6 +154,63 @@ bsc:PlainHunt4 a bsc:ChangeRingingPattern ;
     bsc:isLooping true ;
     dcterms:source "Python music package: PlainChanges class" ;
     skos:example "Faster cycling suitable for shorter sessions due to smaller dimension" .
+
+# Plain Changes (Comprehensive) - from music-structures-comprehensive.json
+
+bsc:PlainChanges3 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Changes on 3 Bells" ;
+    dcterms:identifier "plain_changes_3" ;
+    rdfs:comment "Basic 3-bell peal with 1 hunt bell" ;
+    skos:definition """The simplest change-ringing pattern with minimal complexity.
+    Three elements cycle through 6 permutations, making it ideal for learning
+    change-ringing principles or creating subtle variations in minimal compositions.""" ;
+    bsc:hasOrderDimension 3 ;
+    bsc:hasRowCount 6 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:scopeNote "Perfect for beginners exploring change-ringing or subtle modulation" .
+
+bsc:PlainChanges4 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Changes on 4 Bells" ;
+    dcterms:identifier "plain_changes_4" ;
+    rdfs:comment "Classic 4-bell peal (Plain Bob Minimus)" ;
+    skos:definition """Traditional four-bell change-ringing with 24 distinct permutations.
+    The 24-row cycle provides enough length for narrative development while remaining
+    comprehensible. Fundamental pattern in campanology.""" ;
+    bsc:hasOrderDimension 4 ;
+    bsc:hasRowCount 24 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:altLabel "Plain Bob Minimus" ;
+    skos:scopeNote "Medium cycle length creates balance between variety and coherence" .
+
+bsc:PlainChanges5 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Changes on 5 Bells" ;
+    dcterms:identifier "plain_changes_5" ;
+    rdfs:comment "5-bell peal with 2 hunt bells (Plain Bob Doubles)" ;
+    skos:definition """Complex change-ringing with 120 permutations and two hunting bells.
+    The extended cycle creates opportunities for long-form meditation, sound baths,
+    and comprehensive parameter exploration. Two hunt bells create intricate weaving patterns.""" ;
+    bsc:hasOrderDimension 5 ;
+    bsc:hasRowCount 120 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:altLabel "Plain Bob Doubles" ;
+    skos:scopeNote "Extended cycle suitable for deep meditation and lengthy installations" .
+
+bsc:PlainChanges6 a bsc:ChangeRingingPattern ;
+    rdfs:label "Plain Changes on 6 Bells" ;
+    dcterms:identifier "plain_changes_6" ;
+    rdfs:comment "6-bell peal with 2 hunt bells (Plain Bob Minor)" ;
+    skos:definition """Full-featured six-bell change-ringing with 120 permutations.
+    Classic campanological pattern that systematically explores all amplitude relationships
+    between six elements. Two hunt bells ensure comprehensive parameter space coverage.""" ;
+    bsc:hasOrderDimension 6 ;
+    bsc:hasRowCount 120 ;
+    bsc:isLooping true ;
+    dcterms:source "Python music package: PlainChanges class" ;
+    skos:altLabel "Plain Bob Minor" ;
+    skos:scopeNote "Epic journey suitable for concert performances and installation art" .
 
 # ===== Individuals: Martigli-Following =====
 
@@ -159,8 +275,8 @@ bsc:RotatingCrossfade6 a bsc:SymmetryLineSequence ;
 bsc:ChangeRingingPattern rdfs:seeAlso bsc:ParameterAutomation ;
     skos:related bsc:AudioTrack, bsc:TrackParameter .
 
-bsc:MartigliFollowingSequence rdfs:seeAlso bsc:MartigliOscillator, bsc:BreathingEntrinment ;
-    skos:related bsc:RespiratoryPhase, bsc:AutonomiNeuronus System .
+bsc:MartigliFollowingSequence rdfs:seeAlso bsc:MartigliOscillator, bsc:BreathingEntrainment ;
+    skos:related bsc:RespiratoryPhase, bsc:AutonomicNervousSystem .
 
 bsc:SymmetryLineSequence rdfs:seeAlso bsc:ParameterSweep, bsc:CrossfadeModulation ;
     skos:related bsc:DihedralGroup, bsc:CyclicGroup .
@@ -172,3 +288,32 @@ bsc:MusicStructure
     dcterms:creator "Python Structures Pod" ;
     dcterms:source "Python music package (first-party)" ;
     rdfs:seeAlso <https://github.com/ttm/music> .
+
+# ===== Usage Examples =====
+# Concrete application scenarios for each music structure
+# These examples guide AI pods and users in applying structures effectively
+
+## Plain Changes on 3 Bells - Usage Examples
+
+bsc:PlainChanges3_Example1 a bsc:AudioUsageExample ;
+    rdfs:label "Minimalist three-track ambient composition" ;
+    bsc:hasScenario "Minimalist three-track ambient composition" ;
+    bsc:hasBreathingPattern "Short cycle (6-12 seconds), suitable for rapid breathing exercises or micro-variations" ;
+    bsc:hasTrackMapping """3 drone layers with different timbres (sub-bass 60Hz, mid-range 200Hz, harmonic overtone 800Hz). Each row determines amplitude relationships. The hunt bell (element 0) migrates through all positions, creating a 'spotlight' effect where each frequency takes turns dominating the mix. Position 0 = -18dB, position 1 = -6dB, position 2 = 0dB (loudest).""" ;
+    bsc:hasExpectedOutcome """Gentle timbral breathing with clear mathematical structure. The 6-row cycle is short enough to be perceived as a single phrase, yet varied enough to maintain interest. Perfect for beginners exploring change-ringing principles or creating subtle modulation in minimal music. The simplicity reveals the beauty of adjacent swaps without overwhelming complexity.""" .
+
+bsc:PlainChanges3_Example2 a bsc:VisualUsageExample ;
+    rdfs:label "RGB color cycling for LED art installation" ;
+    bsc:hasScenario "RGB color cycling for LED art installation" ;
+    bsc:hasBreathingPattern "Visual tempo (2-6 seconds per cycle for smooth perception)" ;
+    bsc:hasTrackMapping """3 color channels (Red, Green, Blue). Row position determines intensity for each channel (0 = 0%, 1 = 50%, 2 = 100%). The hunting pattern ensures each color visits all intensity levels. Creates 6 distinct color states: RGB → GRB → GBR → BGR → BRG → RBG, cycling through all permutations of primary colors with smooth intensity modulation.""" ;
+    bsc:hasExpectedOutcome """Hypnotic color transformation with mathematical elegance. The pattern is simple enough to loop seamlessly yet complex enough to avoid feeling static. Ideal for ambient lighting in meditation spaces, art galleries, or as visual accompaniment to music. The 6-state cycle provides just enough variation without overwhelming viewers.""" .
+
+bsc:PlainChanges3_Example3 a bsc:AudioUsageExample ;
+    rdfs:label "Three-voice rhythmic displacement in percussion" ;
+    bsc:hasScenario "Three-voice rhythmic displacement in percussion" ;
+    bsc:hasBreathingPattern "Rhythmic tempo-locked (change every 1-2 bars in 4/4 time)" ;
+    bsc:hasTrackMapping """3 percussion elements: hi-hat, snare, kick. Row position determines accent strength (0 = ghost note, 1 = medium, 2 = full accent). The hunt pattern creates evolving polyrhythmic emphasis. As the order changes, different drums take the lead, creating a woven texture where no single element dominates permanently.""" ;
+    bsc:hasExpectedOutcome """Subtle rhythmic complexity without chaos. The 6-change cycle creates a complete rhythmic phrase that can repeat or serve as foundation for longer compositions. Perfect for minimal techno, ambient percussion, or experimental rhythm studies. Musicians can anticipate pattern evolution while listeners enjoy organic variation.""" .
+
+bsc:PlainChanges3 bsc:hasUsageExample bsc:PlainChanges3_Example1, bsc:PlainChanges3_Example2, bsc:PlainChanges3_Example3 .
