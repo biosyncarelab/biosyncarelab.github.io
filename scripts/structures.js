@@ -266,14 +266,14 @@ export class MartigliOscillator {
 
     const startTime = (this.session.startTime ?? this._anchor) + this.config.startOffsetSec;
     const elapsed = timeSec - startTime;
-    
+
     if (elapsed < 0) {
       return this.config.prestartValue;
     }
 
     // Stateless phase calculation
     const phase = this._phaseAt(elapsed);
-    
+
     // Update internal state for metrics/debugging only
     this._phase = phase % 1;
     this._lastTime = timeSec;
@@ -288,7 +288,7 @@ export class MartigliOscillator {
 
   _phaseAt(elapsed) {
     if (elapsed <= 0) return 0;
-    
+
     let totalPhase = 0;
     let remaining = elapsed;
 
@@ -297,15 +297,15 @@ export class MartigliOscillator {
 
       const segDuration = segment.duration;
       // Time spent in this segment
-      const t = Math.min(remaining, segDuration); 
-      
+      const t = Math.min(remaining, segDuration);
+
       if (segDuration <= 0.001) {
         continue;
       }
 
       const P_start = segment.from;
       const P_end = segment.to;
-      
+
       if (Math.abs(P_end - P_start) < 0.001) {
         // Constant period: P(t) = P_start
         // Integral (1/P) dt = t / P
