@@ -52,7 +52,7 @@ export class AudioEngine {
     } else {
       time = Date.now() / 1000;
     }
-    
+
     this.update(time);
   }
 

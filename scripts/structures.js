@@ -1019,14 +1019,14 @@ export class BSCLabKernel {
   }
 
   toJsonLdSnapshot() {
-    const structures = Array.from(this.structures.catalog.entries()).map(
-      ([datasetId, data]) => datasetToJsonLd(data, { datasetId, contextUrl: CONTEXT_URL }),
+    const structureRefs = Array.from(this.structures.catalog.keys()).map(
+      (datasetId) => `${ID_BASE}/structure/${encodeURIComponent(datasetId)}`,
     );
     const martigli = this.martigli.listOscillations().map((osc) => martigliToJsonLd(osc, this.rdf));
     const tracks = this.tracks.getAll().map((track) => trackToJsonLd(track, this.rdf));
     return {
       "@context": CONTEXT_URL,
-      structures,
+      structureRefs,
       martigli,
       tracks,
     };

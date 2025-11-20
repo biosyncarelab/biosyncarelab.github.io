@@ -295,7 +295,7 @@ function renderTrackList(tracks, container, kernel) {
                   return typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0;
                 }
               };
-              
+
               param.bind(modulator);
               // Set default depth if 0
               if (param.depth === 0) {
