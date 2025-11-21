@@ -83,6 +83,31 @@
       "@type": "xsd:decimal"
     },
     "modulator": "bsc:modulator",
+    "carrierFrequency": {
+      "@id": "bsc:carrierFrequency",
+      "@type": "xsd:decimal"
+    },
+    "beatFrequency": {
+      "@id": "bsc:beatFrequency",
+      "@type": "xsd:decimal"
+    },
+    "startTime": {
+      "@id": "bsc:startTime",
+      "@type": "xsd:decimal"
+    },
+    "endTime": {
+      "@id": "bsc:endTime",
+      "@type": "xsd:decimal"
+    },
+    "fadeIn": {
+      "@id": "bsc:fadeIn",
+      "@type": "xsd:decimal"
+    },
+    "fadeOut": {
+      "@id": "bsc:fadeOut",
+      "@type": "xsd:decimal"
+    },
+    "hasTrack": "bsc:hasTrack",
 
     "waveform": "bsc:waveform",
     "startPeriod": {

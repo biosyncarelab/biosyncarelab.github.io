@@ -37,6 +37,10 @@ export class AppState {
     // Martigli dashboard widgets (Map of oscillator ID -> widget data)
     this.martigliWidgets = initialState.martigliWidgets ?? new Map();
 
+    // Pending state for restoration (when kernel is not yet attached)
+    this._pendingMartigliState = initialState.martigli ?? null;
+    this._pendingTracksState = initialState.tracks ?? null;
+
     // Observer pattern for reactive UI updates
     this.listeners = new Set();
   }
@@ -253,7 +257,7 @@ export class AppState {
    * @returns {object} Serializable state object
    */
   toSerializable() {
-    const martigliSnapshot = this.martigliState?.snapshot();
+    const martigliSnapshot = this.martigliState?.snapshot() ?? this._pendingMartigliState;
 
     return {
       version: '1.0',  // Schema version for future migrations
@@ -269,7 +273,7 @@ export class AppState {
       } : null,
 
       // Track state (full configuration)
-      tracks: this.kernel?.tracks?.toJSON() ?? null,
+      tracks: this.kernel?.tracks?.toJSON() ?? this._pendingTracksState,
 
       // Track bindings (for parameter modulation)
       trackBindings: this.trackBindingRegistry.size > 0
@@ -337,7 +341,9 @@ export class AppState {
       activeVideoLayerId: data.activeVideoLayer ?? null,
       trackBindingRegistry,
       trackExpansionState,
-      // Note: martigli state is restored separately via kernel
+      // Pass pending state for restoration
+      martigli: data.martigli ?? null,
+      tracks: data.tracks ?? null,
     });
   }
 

@@ -1,0 +1,45 @@
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix id:    <https://biosyncarelab.github.io/id/> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dbr:   <http://dbpedia.org/resource/> .
+
+# Session preset: Respira e entra/sai (audio + optional visuals)
+id:session/respira-entra-sai a bsc:SessionPreset ;
+  dct:title "Respira e entra/sai"@pt, "Breathe in/out interleave"@en ;
+  dct:description "Peça que ensina a respirar e alterna eventos sonoros; pode incluir vídeo/imagens ligadas à respiração. Cada track entra e sai com fades, e o ganho pode seguir Martigli."@pt ;
+  bsc:hasTrack id:track/respira/binaural ,
+               id:track/respira/voice ;
+  bsc:usesSequence id:sequence/community-alpha-change-ringing/plain-hunt-6 .
+
+# Martigli modulator (reference)
+id:martigli/respira a bsc:MartigliOscillation ;
+  bsc:waveform bsc:SineWave ;
+  bsc:startPeriod "10"^^xsd:decimal ;
+  bsc:endPeriod "20"^^xsd:decimal ;
+  bsc:transitionDuration "120"^^xsd:decimal ;
+  bsc:inhaleRatio "0.5"^^xsd:decimal ;
+  bsc:amplitude "1.0"^^xsd:decimal ;
+  dct:description "Respiratory guide wave for modulation of gain/opacity."@en .
+
+# Track 1: Binaural bed
+id:track/respira/binaural a bsc:BinauralBeatTrack ;
+  dct:title "Binaural base" ;
+  bsc:carrierFrequency "200"^^xsd:decimal ;
+  bsc:beatFrequency "9"^^xsd:decimal ;
+  bsc:waveform bsc:SineWave ;
+  bsc:startTime "0"^^xsd:decimal ;
+  bsc:endTime "420"^^xsd:decimal ;
+  bsc:fadeIn "8"^^xsd:decimal ;
+  bsc:fadeOut "8"^^xsd:decimal ;
+  bsc:modulates id:martigli/respira ;
+  owl:sameAs dbr:Binaural_beats .
+
+# Track 2: Voice guidance
+id:track/respira/voice a bsc:AudioTrack ;
+  dct:title "Voz guiada (respiração)"@pt ;
+  bsc:startTime "0"^^xsd:decimal ;
+  bsc:endTime "180"^^xsd:decimal ;
+  bsc:fadeIn "2"^^xsd:decimal ;
+  bsc:fadeOut "2"^^xsd:decimal .

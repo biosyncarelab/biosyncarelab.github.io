@@ -118,3 +118,55 @@ bsh:ParameterShape a sh:NodeShape ;
     sh:path bsc:modulator ;
     sh:message "Modulator should point to an oscillator or modulation source." ;
   ] .
+
+# Session presets and timing
+bsh:SessionPresetShape a sh:NodeShape ;
+  sh:targetClass bsc:SessionPreset ;
+  sh:property [
+    sh:path bsc:hasTrack ;
+    sh:minCount 1 ;
+    sh:message "Session presets must include at least one track." ;
+  ] .
+
+bsh:TrackTimingShape a sh:NodeShape ;
+  sh:targetClass bsc:Track ;
+  sh:property [
+    sh:path bsc:startTime ;
+    sh:datatype xsd:decimal ;
+    sh:message "startTime should be a decimal (seconds)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:endTime ;
+    sh:datatype xsd:decimal ;
+    sh:message "endTime should be a decimal (seconds)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:fadeIn ;
+    sh:datatype xsd:decimal ;
+    sh:message "fadeIn should be a decimal (seconds)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:fadeOut ;
+    sh:datatype xsd:decimal ;
+    sh:message "fadeOut should be a decimal (seconds)." ;
+  ] .
+
+# Binaural Beat Track shape
+bsh:BinauralBeatTrackShape a sh:NodeShape ;
+  sh:targetClass bsc:BinauralBeatTrack ;
+  sh:property [
+    sh:path bsc:carrierFrequency ;
+    sh:datatype xsd:decimal ;
+    sh:minCount 1 ;
+    sh:message "Binaural tracks need a carrierFrequency (Hz)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:beatFrequency ;
+    sh:datatype xsd:decimal ;
+    sh:minCount 1 ;
+    sh:message "Binaural tracks need a beatFrequency (Hz)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:waveform ;
+    sh:message "Waveform should reference a waveform class (e.g., bsc:SineWave)." ;
+  ] .

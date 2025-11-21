@@ -1,27 +1,34 @@
+import { loadHybridStructure } from './rdf-loader.js';
+
 const DEFAULT_URL = "data/structures/community-alpha-change-ringing.json";
 const ID_BASE = "https://biosyncarelab.github.io/id";
 const CONTEXT_URL = "https://biosyncarelab.github.io/context/structures.jsonld";
 
+// RDF-first architecture: Each structure has both JSON (performance) and RDF (metadata) sources
 export const STRUCTURE_MANIFEST = [
   {
     id: "community-alpha-change-ringing",
     label: "Community Alpha · Change Ringing",
     url: "data/structures/community-alpha-change-ringing.json",
+    rdfUrl: "rdf/modules/music-structures.ttl",  // RDF source of truth
   },
   {
     id: "martigli-following-sequences",
     label: "Martigli-Following Sequences",
     url: "data/structures/martigli-following-sequences.json",
+    rdfUrl: "rdf/modules/music-structures.ttl",  // RDF source of truth
   },
   {
     id: "symmetry-lines",
     label: "Symmetry Lines",
     url: "data/structures/symmetry-lines.json",
+    rdfUrl: "rdf/modules/music-structures.ttl",  // RDF source of truth
   },
   {
     id: "music-structures-comprehensive",
     label: "Comprehensive Music Structures",
     url: "data/structures/music-structures-comprehensive.json",
+    rdfUrl: "rdf/modules/music-structures.ttl",  // RDF source of truth
     description: "Full change-ringing library, permutation families, and symmetric group catalog",
   },
 ];
@@ -52,6 +59,10 @@ export function normalizeStructure(data, overrides = {}) {
         loop: true,
         metadata: entry.metadata,
         family: entry.family,
+        usageExamples: entry.usageExamples,  // Preserve usage examples from JSON
+        rdfMetadata: entry.rdfMetadata,  // Preserve RDF metadata if enriched
+        _rdfEnriched: entry._rdfEnriched,
+        _rdfURI: entry._rdfURI,
       })),
       // Preserve additional data for advanced features
       additionalPlainChanges: data.additionalPlainChanges,
@@ -68,12 +79,39 @@ export function normalizeStructure(data, overrides = {}) {
     sequences: (data.sequences ?? []).map((sequence) => ({
       ...sequence,
       rowsZeroBased: sequence.rows ? toZeroBased(sequence.rows) : [],
+      usageExamples: sequence.usageExamples,  // Preserve usage examples
+      rdfMetadata: sequence.rdfMetadata,  // Preserve RDF metadata if enriched
+      _rdfEnriched: sequence._rdfEnriched,
+      _rdfURI: sequence._rdfURI,
     })),
   };
 }
 
+/**
+ * Load structures with hybrid RDF+JSON approach
+ * If rdfUrl is provided in overrides, loads RDF metadata and merges with JSON
+ * @param {string} url - JSON file URL
+ * @param {Object} overrides - Override options (can include rdfUrl)
+ * @returns {Promise<Object>} Normalized structure data, enriched with RDF if available
+ */
 export async function loadStructures(url = DEFAULT_URL, overrides = {}) {
-  const data = await fetchJson(url);
+  let data;
+
+  // Check if we have an RDF URL for hybrid loading
+  if (overrides.rdfUrl) {
+    console.log(`📚 Loading hybrid RDF+JSON: ${url} + ${overrides.rdfUrl}`);
+    try {
+      data = await loadHybridStructure(url, overrides.rdfUrl);
+      console.log('✅ RDF enrichment successful');
+    } catch (error) {
+      console.warn('⚠️ RDF loading failed, using JSON only:', error);
+      data = await fetchJson(url);
+    }
+  } else {
+    // Fallback to JSON-only loading
+    data = await fetchJson(url);
+  }
+
   return normalizeStructure(data, overrides);
 }
 

@@ -7,6 +7,7 @@
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
 @prefix time:  <http://www.w3.org/2006/time#> .
 @prefix schema:<http://schema.org/> .
+@prefix dbr:   <http://dbpedia.org/resource/> .
 
 <https://biosyncarelab.github.io/ont/1.0.0> a owl:Ontology ;
   owl:versionIRI <https://biosyncarelab.github.io/ont/1.0.0> ;
@@ -223,6 +224,11 @@ bsc:Track        a owl:Class ; rdfs:label "Track" .
 bsc:AudioTrack   a owl:Class ; rdfs:label "Audio Track" ; rdfs:subClassOf bsc:Track .
 bsc:VisualTrack  a owl:Class ; rdfs:label "Visual Track" ; rdfs:subClassOf bsc:Track .
 bsc:HapticTrack  a owl:Class ; rdfs:label "Haptic Track" ; rdfs:subClassOf bsc:Track .
+bsc:BinauralBeatTrack a owl:Class ;
+  rdfs:label "Binaural Beat Track" ;
+  rdfs:subClassOf bsc:AudioTrack ;
+  owl:sameAs dbr:Binaural_beats .
+bsc:SessionPreset a owl:Class ; rdfs:label "Session Preset" ; rdfs:subClassOf bsc:Session .
 bsc:Parameter    a owl:Class ; rdfs:label "Parameter" .
 
 bsc:hasParameter a owl:ObjectProperty ;
@@ -245,6 +251,11 @@ bsc:usesSequence a owl:ObjectProperty ;
   rdfs:comment "Track or session references a permutation sequence for ordering" ;
   rdfs:range bsc:PermutationSequence .
 
+bsc:hasTrack     a owl:ObjectProperty ;
+  rdfs:label "has track" ;
+  rdfs:domain bsc:Session ;
+  rdfs:range bsc:Track .
+
 bsc:parameterName a owl:DatatypeProperty ;
   rdfs:label "parameter name" ;
   rdfs:domain bsc:Parameter ;
@@ -260,6 +271,36 @@ bsc:depth         a owl:DatatypeProperty ;
   rdfs:domain bsc:Parameter ;
   rdfs:range xsd:decimal .
 
+bsc:carrierFrequency a owl:DatatypeProperty ;
+  rdfs:label "carrier frequency" ;
+  rdfs:domain bsc:AudioTrack ;
+  rdfs:range xsd:decimal .
+
+bsc:beatFrequency a owl:DatatypeProperty ;
+  rdfs:label "beat frequency" ;
+  rdfs:domain bsc:AudioTrack ;
+  rdfs:range xsd:decimal .
+
+bsc:startTime    a owl:DatatypeProperty ;
+  rdfs:label "start time (seconds)" ;
+  rdfs:domain bsc:Track ;
+  rdfs:range xsd:decimal .
+
+bsc:endTime      a owl:DatatypeProperty ;
+  rdfs:label "end time (seconds)" ;
+  rdfs:domain bsc:Track ;
+  rdfs:range xsd:decimal .
+
+bsc:fadeIn       a owl:DatatypeProperty ;
+  rdfs:label "fade in (seconds)" ;
+  rdfs:domain bsc:Track ;
+  rdfs:range xsd:decimal .
+
+bsc:fadeOut      a owl:DatatypeProperty ;
+  rdfs:label "fade out (seconds)" ;
+  rdfs:domain bsc:Track ;
+  rdfs:range xsd:decimal .
+
 # Martigli oscillator and waveform terms
 bsc:MartigliOscillation a owl:Class ; rdfs:label "Martigli Oscillation" .
 bsc:Waveform            a owl:Class ; rdfs:label "Waveform" .
@@ -267,6 +308,7 @@ bsc:SineWave            a owl:Class ; rdfs:label "Sine Wave" ; rdfs:subClassOf b
 bsc:TriangleWave        a owl:Class ; rdfs:label "Triangle Wave" ; rdfs:subClassOf bsc:Waveform .
 bsc:SquareWave          a owl:Class ; rdfs:label "Square Wave" ; rdfs:subClassOf bsc:Waveform .
 bsc:SawWave             a owl:Class ; rdfs:label "Saw Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SineWave owl:sameAs dbr:Sine_wave .
 
 bsc:waveform            a owl:ObjectProperty ;
   rdfs:label "waveform" ;

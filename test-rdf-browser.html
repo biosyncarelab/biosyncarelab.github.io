@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDF Loader Browser Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #4fc3f7;
+        }
+        pre {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #444;
+        }
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #252525;
+            border-radius: 8px;
+            border-left: 4px solid #4fc3f7;
+        }
+        .success {
+            color: #4caf50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .warning {
+            color: #ff9800;
+        }
+        button {
+            background: #4fc3f7;
+            color: #1a1a1a;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+        button:hover {
+            background: #29b6f6;
+        }
+        #results {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 RDF Loader Browser Test</h1>
+    <p>This page tests the RDF-first architecture for BioSynCare Lab.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Load RDF Graph</h2>
+        <p>Load and parse the music structures RDF file.</p>
+        <button onclick="testLoadRDF()">Run Test</button>
+        <div id="test1-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Get Structure Metadata</h2>
+        <p>Extract metadata for PlainChanges3 structure.</p>
+        <button onclick="testGetMetadata()">Run Test</button>
+        <div id="test2-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Get Usage Examples</h2>
+        <p>Retrieve usage examples from RDF for a structure.</p>
+        <button onclick="testGetUsageExamples()">Run Test</button>
+        <div id="test3-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Hybrid RDF+JSON Loading</h2>
+        <p>Load comprehensive structure file with RDF enrichment.</p>
+        <button onclick="testHybridLoading()">Run Test</button>
+        <div id="test4-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Access</h2>
+        <p>All test functions are available in the console:</p>
+        <pre>// Load RDF manually:
+const { store, prefixes } = await loadRDFGraph('rdf/modules/music-structures.ttl');
+
+// Get metadata:
+const metadata = getStructureMetadata(store, 'plain_changes_3');
+
+// Get usage examples:
+const uri = findStructureURI(store, 'plain_changes_3');
+const examples = getUsageExamples(store, uri);
+
+// Hybrid loading:
+const data = await loadHybridStructure(
+  'data/structures/music-structures-comprehensive.json',
+  'rdf/modules/music-structures.ttl'
+);</pre>
+    </div>
+
+    <script type="module">
+        import {
+            loadRDFGraph,
+            getStructureMetadata,
+            getUsageExamples,
+            findStructureURI,
+            loadHybridStructure
+        } from './scripts/rdf-loader.js';
+
+        // Make functions globally available for console testing
+        window.loadRDFGraph = loadRDFGraph;
+        window.getStructureMetadata = getStructureMetadata;
+        window.getUsageExamples = getUsageExamples;
+        window.findStructureURI = findStructureURI;
+        window.loadHybridStructure = loadHybridStructure;
+
+        // Test 1: Load RDF Graph
+        window.testLoadRDF = async function() {
+            const results = document.getElementById('test1-results');
+            results.innerHTML = '<p>⏳ Loading RDF...</p>';
+
+            try {
+                const { store, prefixes } = await loadRDFGraph('rdf/modules/music-structures.ttl');
+                const quadCount = store.size;
+
+                results.innerHTML = `
+                    <p class="success">✅ Success! Loaded RDF graph</p>
+                    <pre>Quads: ${quadCount}
+Prefixes: ${Object.keys(prefixes).join(', ')}</pre>
+                `;
+
+                window.testStore = store;  // Save for other tests
+                console.log('✅ RDF Store loaded:', store);
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        };
+
+        // Test 2: Get Structure Metadata
+        window.testGetMetadata = async function() {
+            const results = document.getElementById('test2-results');
+
+            if (!window.testStore) {
+                results.innerHTML = '<p class="warning">⚠️ Please run Test 1 first</p>';
+                return;
+            }
+
+            try {
+                const metadata = getStructureMetadata(window.testStore, 'plain_changes_3');
+
+                if (!metadata) {
+                    results.innerHTML = '<p class="error">❌ No metadata found</p>';
+                    return;
+                }
+
+                results.innerHTML = `
+                    <p class="success">✅ Success! Retrieved metadata</p>
+                    <pre>${JSON.stringify(metadata, null, 2)}</pre>
+                `;
+                console.log('✅ Metadata:', metadata);
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        };
+
+        // Test 3: Get Usage Examples
+        window.testGetUsageExamples = async function() {
+            const results = document.getElementById('test3-results');
+
+            if (!window.testStore) {
+                results.innerHTML = '<p class="warning">⚠️ Please run Test 1 first</p>';
+                return;
+            }
+
+            try {
+                const uri = findStructureURI(window.testStore, 'plain_changes_3');
+                if (!uri) {
+                    results.innerHTML = '<p class="error">❌ Structure not found</p>';
+                    return;
+                }
+
+                const examples = getUsageExamples(window.testStore, uri);
+
+                results.innerHTML = `
+                    <p class="success">✅ Success! Found ${examples.length} usage examples</p>
+                    <pre>${JSON.stringify(examples[0], null, 2)}
+
+... and ${examples.length - 1} more examples</pre>
+                `;
+                console.log('✅ Usage Examples:', examples);
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        };
+
+        // Test 4: Hybrid Loading
+        window.testHybridLoading = async function() {
+            const results = document.getElementById('test4-results');
+            results.innerHTML = '<p>⏳ Loading hybrid RDF+JSON...</p>';
+
+            try {
+                const data = await loadHybridStructure(
+                    'data/structures/music-structures-comprehensive.json',
+                    'rdf/modules/music-structures.ttl'
+                );
+
+                const firstSeq = data.changeRinging[0];
+                const enriched = firstSeq._rdfEnriched;
+                const exampleCount = firstSeq.usageExamples?.length || 0;
+
+                results.innerHTML = `
+                    <p class="success">✅ Success! Hybrid loading complete</p>
+                    <pre>RDF Enriched: ${enriched}
+Sequences: ${data.changeRinging.length}
+First structure: ${firstSeq.id}
+Usage examples: ${exampleCount}
+RDF metadata available: ${!!firstSeq.rdfMetadata}</pre>
+                    <p>Check console for full data structure</p>
+                `;
+
+                console.log('✅ Hybrid Data:', data);
+                window.testData = data;  // Save for inspection
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        };
+
+        // Auto-run tests on page load
+        console.log('🧪 RDF Loader Test Page Ready');
+        console.log('💡 Click the buttons to run tests, or use the functions in the console');
+    </script>
+</body>
+</html>

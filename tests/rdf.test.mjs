@@ -11,6 +11,8 @@ const repoRoot = path.join(__dirname, "..");
 const ttlFiles = [
   "rdf/core/bsc-owl.ttl",
   "rdf/core/bsc-skos.ttl",
+  "rdf/modules/music-structures.ttl",
+  "rdf/modules/music-structures-usage-examples.ttl",
 ];
 
 let totalQuads = 0;
