@@ -135,11 +135,18 @@ function renderTrackList(tracks, container, kernel) {
 
     const muteBtn = document.createElement('button');
     muteBtn.className = 'ghost tiny';
-    muteBtn.textContent = track.enabled ? 'Mute' : 'Unmute';
-    muteBtn.title = track.enabled ? 'Mute track' : 'Unmute track';
+    // Use Play/Stop metaphor as requested
+    muteBtn.textContent = track.enabled ? 'Stop' : 'Play';
+    muteBtn.title = track.enabled ? 'Stop track' : 'Play track';
     muteBtn.onclick = () => {
       track.enabled = !track.enabled;
-      muteBtn.textContent = track.enabled ? 'Mute' : 'Unmute';
+      muteBtn.textContent = track.enabled ? 'Stop' : 'Play';
+      muteBtn.title = track.enabled ? 'Stop track' : 'Play track';
+      
+      // Ensure audio engine is running when user interacts
+      if (kernel.audio && kernel.audio.context.state === 'suspended') {
+        kernel.audio.resume();
+      }
     };
 
     const removeBtn = document.createElement('button');
@@ -290,6 +297,7 @@ function renderTrackList(tracks, container, kernel) {
 
             if (osc) {
               const modulator = {
+                id: oscId, // Ensure ID is captured for serialization
                 getValue: (time) => {
                   // AudioEngine now passes absolute time, so we can use it directly
                   return typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0;
