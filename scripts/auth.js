@@ -914,6 +914,7 @@ const handleSessionSave = async () => {
   }
 };
 
+// Helper to show the share indicator
 const showSessionShareIndicator = (text = "State in URL") => {
   if (!ui.sessionShareIndicator) return;
   ui.sessionShareIndicator.textContent = text;
