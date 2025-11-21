@@ -386,7 +386,6 @@ export class AppState {
     }
   }
 }
-}
 
 /**
  * Create singleton instance for app-wide state
