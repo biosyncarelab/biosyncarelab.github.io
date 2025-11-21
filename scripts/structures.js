@@ -989,10 +989,17 @@ const parameterToJsonLd = (trackId, name, param, rdfLinker) => {
   };
 };
 
-const trackToJsonLd = (track, rdfLinker) => {
-  const params = Array.from(track.parameters.entries()).map(([name, param]) =>
-    parameterToJsonLd(track.id, name, param, rdfLinker),
-  );
+const trackToJsonLd = (track, rdfLinker, defaultModulatorId = null) => {
+  const params = Array.from(track.parameters.entries()).map(([name, param]) => {
+    const modulatorUri = param?._modulator?.id
+      ? `${ID_BASE}/martigli/${encodeURIComponent(param._modulator.id)}`
+      : defaultModulatorId;
+    const record = parameterToJsonLd(track.id, name, param, rdfLinker);
+    if (!record.modulator && modulatorUri) {
+      record.modulator = modulatorUri;
+    }
+    return record;
+  });
   const links = rdfLinker?.get(track.id) ?? [];
   return {
     "@id": `${ID_BASE}/track/${encodeURIComponent(track.id)}`,
@@ -1070,7 +1077,10 @@ export class BSCLabKernel {
       ref: entry.id ? `${ID_BASE}/structure/${encodeURIComponent(entry.id)}` : null,
     }));
     const martigli = this.martigli.listOscillations().map((osc) => martigliToJsonLd(osc, this.rdf));
-    const tracks = this.tracks.getAll().map((track) => trackToJsonLd(track, this.rdf));
+    const defaultModulatorId = this.martigli.referenceId
+      ? `${ID_BASE}/martigli/${encodeURIComponent(this.martigli.referenceId)}`
+      : null;
+    const tracks = this.tracks.getAll().map((track) => trackToJsonLd(track, this.rdf, defaultModulatorId));
     return {
       "@context": CONTEXT_URL,
       structureRefs,
