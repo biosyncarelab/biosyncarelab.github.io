@@ -363,12 +363,8 @@ export class AppState {
     if (Array.isArray(martigliData.oscillations)) {
       martigliData.oscillations.forEach(osc => {
         try {
-          this._kernel.martigli.addOscillation({
-            id: osc.id,
-            startPeriod: osc.startPeriod,
-            endPeriod: osc.endPeriod,
-            transitionSeconds: osc.transitionSeconds,
-          });
+          // Pass the full osc object to preserve all properties including ID
+          this._kernel.martigli.addOscillation(osc);
         } catch (err) {
           console.warn('Failed to restore oscillation:', err);
         }
