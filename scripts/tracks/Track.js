@@ -146,7 +146,11 @@ export class Track {
           // Re-binding requires looking up the modulator in the context (e.g. Kernel)
           if (paramData.modulatorId && context?.resolveModulator) {
             const modulator = context.resolveModulator(paramData.modulatorId);
-            if (modulator) param.bind(modulator);
+            if (modulator) {
+              param.bind(modulator);
+            } else {
+              console.warn(`[Track] Failed to resolve modulator ${paramData.modulatorId} for param ${name}`);
+            }
           }
         }
       }

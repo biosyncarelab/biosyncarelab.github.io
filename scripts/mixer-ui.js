@@ -144,7 +144,7 @@ function renderTrackList(tracks, container, kernel) {
       muteBtn.title = track.enabled ? 'Stop track' : 'Play track';
       
       // Ensure audio engine is running when user interacts
-      if (kernel.audio && kernel.audio.context.state === 'suspended') {
+      if (kernel.audio && kernel.audio.ctx && kernel.audio.ctx.state === 'suspended') {
         kernel.audio.resume();
       }
     };

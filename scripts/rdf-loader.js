@@ -217,23 +217,43 @@ function enrichSequenceWithRDF(sequence, store) {
 /**
  * Load both RDF and JSON for a structure, merging them with RDF as priority
  * @param {string} jsonUrl - URL to JSON file
- * @param {string} rdfUrl - URL to RDF/Turtle file
+ * @param {string} rdfUrl - URL to RDF/Turtle file (can be main structures file)
  * @returns {Promise<Object>} Merged structure data
  */
 export async function loadHybridStructure(jsonUrl, rdfUrl) {
   try {
-    // Load both in parallel
-    const [jsonData, rdfData] = await Promise.all([
+    // Determine usage examples file path (same directory as structures file)
+    const rdfDir = rdfUrl.substring(0, rdfUrl.lastIndexOf('/'));
+    const usageExamplesUrl = `${rdfDir}/music-structures-usage-examples.ttl`;
+
+    // Load JSON and both RDF files in parallel
+    const [jsonData, structuresRdf, examplesRdf] = await Promise.all([
       fetch(jsonUrl).then(r => r.json()),
-      loadRDFGraph(rdfUrl)
+      loadRDFGraph(rdfUrl),
+      loadRDFGraph(usageExamplesUrl).catch(err => {
+        console.warn('⚠️ Usage examples RDF not found, continuing without it:', err.message);
+        return null;
+      })
     ]);
 
-    // Enrich JSON with RDF metadata
-    const enriched = enrichWithRDF(jsonData, rdfData.store);
+    // Merge both RDF stores if usage examples were loaded
+    let combinedStore = structuresRdf.store;
+    if (examplesRdf) {
+      // Add all quads from usage examples to the main store
+      examplesRdf.store.getQuads(null, null, null, null).forEach(quad => {
+        combinedStore.addQuad(quad);
+      });
+      console.log('📚 Merged usage examples RDF:', examplesRdf.store.size, 'quads');
+    }
+
+    // Enrich JSON with combined RDF metadata
+    const enriched = enrichWithRDF(jsonData, combinedStore);
 
     console.log('✅ Hybrid RDF+JSON loading complete:', {
       jsonUrl,
       rdfUrl,
+      usageExamplesUrl,
+      totalQuads: combinedStore.size,
       enriched: enriched._rdfEnriched || (enriched.sequences && enriched.sequences[0]?._rdfEnriched)
     });
 
