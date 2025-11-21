@@ -799,32 +799,100 @@ const handleSessionApply = () => {
  * @returns {Promise<void>}
  */
 const handleSessionSave = async () => {
-  const contextRecord = activeModalData ?? null;
-  if (!contextRecord) {
-    setMessage("Open a session first.", "info");
-    return;
-  }
-
   const user = getCurrentUser();
   if (!user) {
     setMessage("Sign in to save sessions.", "error");
     return;
   }
 
+  // Collect current state directly from kernel/appState
+  // If we have an active session ID, we might be updating it, 
+  // but for now let's treat "Save current state" as creating a snapshot/new session
+  // or updating if we are explicitly editing one.
+  
+  // We'll use a dummy record to seed collectSessionDraft if no modal is open
+  const currentSessionId = appState.snapshot().activeSessionId;
+  const currentLabel = appState.snapshot().activeSessionLabel || `Session ${new Date().toLocaleString()}`;
+  
+  const contextRecord = activeModalData ?? {
+    id: currentSessionId,
+    label: currentLabel
+  };
+
   const draft = collectSessionDraft(contextRecord);
+  
+  // Ensure we capture the actual current tracks from the kernel
+  // collectSessionDraft might rely on the record passed to it, let's verify.
+  // Looking at collectSessionDraft implementation:
+  // const tracks = getRecordTracks(record, { useLiveMartigli: true });
+  // getRecordTracks likely pulls from the record. We want LIVE tracks.
+  
+  // Let's override tracks with live kernel tracks
+  draft.tracks = kernel.tracks.getAll().map(t => serializeTrackState(t));
+  
   if (!draft.martigli) {
-    setMessage("Adjust the Martigli widget before saving a session.", "error");
-    return;
+    // Try to get live martigli state
+    const martigliSnapshot = kernel.martigli.snapshot();
+    if (martigliSnapshot && martigliSnapshot.oscillations.length > 0) {
+        draft.martigli = {
+            oscillations: martigliSnapshot.oscillations,
+            referenceId: martigliSnapshot.referenceId
+        };
+    } else {
+        setMessage("Adjust the Martigli widget before saving a session.", "error");
+        return;
+    }
   }
 
   setBusy(true);
   try {
     // Save to Firestore using session-manager
+    // If we have an ID, we should probably update, but createSession might handle it or we need updateSession
+    // For safety, let's create a new version if it's a "Save State" action to avoid overwriting without confirmation
+    // Or if the user expects "Save" to overwrite.
+    // Given the button says "Save current state", it implies a snapshot.
+    
+    // Let's create a new session for now to be safe
     const savedSession = await createSession(user.uid, draft);
 
     // Update appState with new session
     const state = appState.snapshot();
     appState.setSessions([...state.sessions, savedSession]);
+    appState.setActiveSession(savedSession.id, savedSession.label);
+
+    // Log activity
+    kernel.recordInteraction("session.saved", {
+      sessionId: savedSession.id,
+      label: draft.label,
+      userId: user.uid,
+    });
+
+    setMessage(`Session "${draft.label}" saved successfully.`, "success");
+
+    // Optional: Copy to clipboard as backup
+    const serialized = JSON.stringify(savedSession, null, 2);
+    await copyToClipboard(serialized);
+  } catch (err) {
+    console.error("Session save failed", err);
+    setMessage(`Failed to save session: ${err.message}`, "error");
+  } finally {
+    setBusy(false);
+  }
+};setBusy(true);
+  try {
+    // Save to Firestore using session-manager
+    // If we have an ID, we should probably update, but createSession might handle it or we need updateSession
+    // For safety, let's create a new version if it's a "Save State" action to avoid overwriting without confirmation
+    // Or if the user expects "Save" to overwrite.
+    // Given the button says "Save current state", it implies a snapshot.
+    
+    // Let's create a new session for now to be safe
+    const savedSession = await createSession(user.uid, draft);
+
+    // Update appState with new session
+    const state = appState.snapshot();
+    appState.setSessions([...state.sessions, savedSession]);
+    appState.setActiveSession(savedSession.id, savedSession.label);
 
     // Log activity
     kernel.recordInteraction("session.saved", {
@@ -853,17 +921,16 @@ const showSessionShareIndicator = (text = "State in URL") => {
 };
 
 const handleSessionShareLink = async () => {
-  const state = appState.snapshot();
-  if (!state.activeSessionId) {
-    setMessage("Select or open a session before creating a share link.", "info");
-    return;
-  }
-
+  // We don't strictly need an active session ID to share the current state
+  // The URL state manager serializes the current app state (tracks, martigli, etc.)
+  
   try {
     const success = await copyShareableURL(appState);
+    
+    const state = appState.snapshot();
     kernel.recordInteraction("session.share.url", {
-      sessionId: state.activeSessionId,
-      label: state.activeSessionLabel,
+      sessionId: state.activeSessionId ?? "unsaved",
+      label: state.activeSessionLabel ?? "Unsaved State",
       success,
     });
 
@@ -1667,7 +1734,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     // Do NOT stop the audio engine on visibility change.
     // The engine now handles background throttling internally.
-    // audioEngine.stop(); 
+    // audioEngine.stop();
   } else {
     // Resume context if suspended
     if (audioEngine && audioEngine.ctx && audioEngine.ctx.state === 'suspended') {
@@ -1695,6 +1762,11 @@ if (typeof window !== "undefined") {
       const serialized = urlState.toSerializable();
       if (serialized.martigli) {
         appState.applySerializedMartigliState(serialized);
+      }
+      
+      // Restore Tracks if present
+      if (serialized.tracks) {
+        appState.applySerializedTracks(serialized);
       }
 
       // Show URL indicator

@@ -268,6 +268,9 @@ export class AppState {
         referenceId: martigliSnapshot.referenceId ?? null,
       } : null,
 
+      // Track state (full configuration)
+      tracks: this.kernel?.tracks?.toJSON() ?? null,
+
       // Track bindings (for parameter modulation)
       trackBindings: this.trackBindingRegistry.size > 0
         ? Array.from(this.trackBindingRegistry.entries()).map(([id, binding]) => ({
@@ -366,6 +369,23 @@ export class AppState {
       });
     }
   }
+
+  /**
+   * Apply track state from serialized data to kernel
+   * @param {object} serializedState - Output from toSerializable()
+   */
+  applySerializedTracks(serializedState) {
+    if (!this._kernel || !serializedState?.tracks) {
+      return;
+    }
+
+    try {
+      this._kernel.tracks.load(serializedState.tracks);
+    } catch (err) {
+      console.warn('Failed to restore tracks:', err);
+    }
+  }
+}
 }
 
 /**
