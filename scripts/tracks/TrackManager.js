@@ -93,7 +93,13 @@ export class TrackManager {
           // Hydrate parameters and bindings
           // We pass the kernel as context so tracks can find modulators (Martigli oscillators)
           const context = {
-            resolveModulator: (id) => this.kernel.martigli.getOscillator(id)
+            resolveModulator: (id) => {
+              const osc = this.kernel.martigli.getOscillator(id);
+              if (!osc) {
+                console.warn(`[TrackManager] Could not resolve modulator ID: ${id}. Available:`, this.kernel.martigli.listOscillations().map(o => o.id));
+              }
+              return osc;
+            }
           };
           track.fromJSON(trackData, context);
           this.addTrack(track);
