@@ -1,4 +1,10 @@
-import { loadHybridStructure } from './rdf-loader.js';
+let loadHybridStructure = null;
+async function ensureHybridLoader() {
+  if (loadHybridStructure) return loadHybridStructure;
+  const mod = await import('./rdf-loader.js');
+  loadHybridStructure = mod.loadHybridStructure;
+  return loadHybridStructure;
+}
 
 const DEFAULT_URL = "data/structures/community-alpha-change-ringing.json";
 const ID_BASE = "https://biosyncarelab.github.io/id";
@@ -101,7 +107,8 @@ export async function loadStructures(url = DEFAULT_URL, overrides = {}) {
   if (overrides.rdfUrl) {
     console.log(`📚 Loading hybrid RDF+JSON: ${url} + ${overrides.rdfUrl}`);
     try {
-      data = await loadHybridStructure(url, overrides.rdfUrl);
+      const hybridLoader = await ensureHybridLoader();
+      data = await hybridLoader(url, overrides.rdfUrl);
       console.log('✅ RDF enrichment successful');
     } catch (error) {
       console.warn('⚠️ RDF loading failed, using JSON only:', error);

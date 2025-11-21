@@ -806,30 +806,30 @@ const handleSessionSave = async () => {
   }
 
   // Collect current state directly from kernel/appState
-  // If we have an active session ID, we might be updating it, 
+  // If we have an active session ID, we might be updating it,
   // but for now let's treat "Save current state" as creating a snapshot/new session
   // or updating if we are explicitly editing one.
-  
+
   // We'll use a dummy record to seed collectSessionDraft if no modal is open
   const currentSessionId = appState.snapshot().activeSessionId;
   const currentLabel = appState.snapshot().activeSessionLabel || `Session ${new Date().toLocaleString()}`;
-  
+
   const contextRecord = activeModalData ?? {
     id: currentSessionId,
     label: currentLabel
   };
 
   const draft = collectSessionDraft(contextRecord);
-  
+
   // Ensure we capture the actual current tracks from the kernel
   // collectSessionDraft might rely on the record passed to it, let's verify.
   // Looking at collectSessionDraft implementation:
   // const tracks = getRecordTracks(record, { useLiveMartigli: true });
   // getRecordTracks likely pulls from the record. We want LIVE tracks.
-  
+
   // Let's override tracks with live kernel tracks
   draft.tracks = kernel.tracks.getAll().map(t => serializeTrackState(t));
-  
+
   if (!draft.martigli) {
     // Try to get live martigli state
     const martigliSnapshot = kernel.martigli.snapshot();
@@ -851,7 +851,7 @@ const handleSessionSave = async () => {
     // For safety, let's create a new version if it's a "Save State" action to avoid overwriting without confirmation
     // Or if the user expects "Save" to overwrite.
     // Given the button says "Save current state", it implies a snapshot.
-    
+
     // Let's create a new session for now to be safe
     const savedSession = await createSession(user.uid, draft);
 
@@ -890,10 +890,10 @@ const showSessionShareIndicator = (text = "State in URL") => {
 const handleSessionShareLink = async () => {
   // We don't strictly need an active session ID to share the current state
   // The URL state manager serializes the current app state (tracks, martigli, etc.)
-  
+
   try {
     const success = await copyShareableURL(appState);
-    
+
     const state = appState.snapshot();
     kernel.recordInteraction("session.share.url", {
       sessionId: state.activeSessionId ?? "unsaved",
@@ -1730,7 +1730,7 @@ if (typeof window !== "undefined") {
       if (serialized.martigli) {
         appState.applySerializedMartigliState(serialized);
       }
-      
+
       // Restore Tracks if present
       if (serialized.tracks) {
         appState.applySerializedTracks(serialized);

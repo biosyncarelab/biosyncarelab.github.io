@@ -305,11 +305,27 @@ function renderSequenceSection(sequence, index) {
 
   let html = '<div class="sequence-container">';
   html += '<div class="sequence-header">';
-  html += `<h3>${sequence.label || sequence.id}</h3>`;
+  html += `<h3>${sequence.label || sequence.id}`;
+
+  // Add RDF indicator badge if structure has RDF metadata
+  if (sequence._rdfEnriched) {
+    html += ` <span class="rdf-badge" title="Enriched with RDF semantic data">🔗 RDF</span>`;
+  }
+  html += '</h3>';
   html += '</div>';
 
-  // Show explanation in a styled box if available
-  if (sequence.explanation) {
+  // Show RDF definition if available (priority over other explanations)
+  if (sequence.rdfMetadata?.definition) {
+    html += `<div class="sequence-explanation rdf-definition">`;
+    html += `<strong>Definition:</strong> ${sequence.rdfMetadata.definition}`;
+    html += '</div>';
+
+    if (sequence.rdfMetadata.scopeNote) {
+      html += `<div class="sequence-explanation rdf-scope-note">`;
+      html += `<em>${sequence.rdfMetadata.scopeNote}</em>`;
+      html += '</div>';
+    }
+  } else if (sequence.explanation) {
     html += `<div class="sequence-explanation">${sequence.explanation}</div>`;
   } else if (sequence.metadata?.comment) {
     html += `<div class="sequence-explanation">${sequence.metadata.comment}</div>`;
@@ -323,14 +339,31 @@ function renderSequenceSection(sequence, index) {
   if (sequence.usageExamples && sequence.usageExamples.length > 0) {
     html += '<div class="usage-examples">';
     html += '<h4 style="margin: 1.5rem 0 1rem 0; color: var(--text);">💡 Usage Examples</h4>';
+
     sequence.usageExamples.forEach((example, idx) => {
       html += '<div class="usage-example">';
-      html += `<div class="usage-example-header"><strong>${idx + 1}. ${example.scenario}</strong></div>`;
+
+      // Add category badge if from RDF
+      const categoryBadge = example.category ?
+        `<span class="usage-category usage-category-${example.category}">${example.category}</span>` : '';
+
+      html += `<div class="usage-example-header">`;
+      html += `<strong>${idx + 1}. ${example.scenario || example.label}</strong> ${categoryBadge}`;
+      html += `</div>`;
+
       html += '<dl class="usage-example-details">';
-      html += `<dt>Breathing:</dt><dd>${example.breathing}</dd>`;
-      html += `<dt>Track Mapping:</dt><dd>${example.trackMapping}</dd>`;
-      html += `<dt>Outcome:</dt><dd>${example.outcome}</dd>`;
+      html += `<dt>Breathing:</dt><dd>${example.breathing || example.breathingPattern || 'N/A'}</dd>`;
+      html += `<dt>Track Mapping:</dt><dd>${example.trackMapping || 'N/A'}</dd>`;
+      html += `<dt>Outcome:</dt><dd>${example.outcome || 'N/A'}</dd>`;
       html += '</dl>';
+
+      // Add RDF URI link if available
+      if (example.uri) {
+        html += `<div class="usage-example-footer">`;
+        html += `<a href="${example.uri}" class="rdf-link" target="_blank" title="View in RDF ontology">🔗 Ontology</a>`;
+        html += `</div>`;
+      }
+
       html += '</div>';
     });
     html += '</div>';
