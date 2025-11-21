@@ -878,40 +878,6 @@ const handleSessionSave = async () => {
   } finally {
     setBusy(false);
   }
-};setBusy(true);
-  try {
-    // Save to Firestore using session-manager
-    // If we have an ID, we should probably update, but createSession might handle it or we need updateSession
-    // For safety, let's create a new version if it's a "Save State" action to avoid overwriting without confirmation
-    // Or if the user expects "Save" to overwrite.
-    // Given the button says "Save current state", it implies a snapshot.
-    
-    // Let's create a new session for now to be safe
-    const savedSession = await createSession(user.uid, draft);
-
-    // Update appState with new session
-    const state = appState.snapshot();
-    appState.setSessions([...state.sessions, savedSession]);
-    appState.setActiveSession(savedSession.id, savedSession.label);
-
-    // Log activity
-    kernel.recordInteraction("session.saved", {
-      sessionId: savedSession.id,
-      label: draft.label,
-      userId: user.uid,
-    });
-
-    setMessage(`Session "${draft.label}" saved successfully.`, "success");
-
-    // Optional: Copy to clipboard as backup
-    const serialized = JSON.stringify(savedSession, null, 2);
-    await copyToClipboard(serialized);
-  } catch (err) {
-    console.error("Session save failed", err);
-    setMessage(`Failed to save session: ${err.message}`, "error");
-  } finally {
-    setBusy(false);
-  }
 };
 
 // Helper to show the share indicator
