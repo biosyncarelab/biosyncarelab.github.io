@@ -59,6 +59,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Suggests track lists, breathing shapes, and parameter tweaks while citing ontology concepts.
 - Must log prompts/responses for auditability and let users accept, tweak, or discard suggestions.
 - Safety rails to prevent invalid parameter ranges; integrates with preset CRUD (1.1).
+- **Philosophy:** In BioSyncare Lab, the AI agent re-derives the protocol/session logic from first principles (user physiology, session feedback), not from preloaded clinical stereotypes. It can also use clinical stereotypes and sessions.
 
 ### 1.8 Multi-User Sessions & Presence (🧩)
 - Scheduling layer so users across timezones can start synchronized sessions with countdowns.
