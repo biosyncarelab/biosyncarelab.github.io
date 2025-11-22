@@ -152,6 +152,28 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Offer moderation, verification, and export tools so stakeholders can engage regulators and health authorities.
 - Tie registry entries back to RDF concepts for discoverability.
 
+## 5. Research & Education
+
+### 5.1 User Preference Testing (🧩)
+- Offer users a selection of tracks and session presets.
+- Register user feedback on pleasantness (liked/not liked).
+- Optional scoring system (e.g., 0-10 scale).
+- Goal: Understand user preferences to refine session generation.
+
+### 5.2 EEG & Entropy Analysis (🧩)
+- Integrate EEG measurement capabilities.
+- Calculate entropy of EEG signals.
+- Hypothesis: Decreasing entropy indicates energy concentration and/or coherence.
+- Use this data to validate session effectiveness.
+
+### 5.3 Musical Manual (🧩)
+- Create a comprehensive guide on using different track types.
+- Explain usage with and without Martigli waves.
+- Cover composition techniques involving multiple tracks.
+- Discuss the role of new elements vs. oscillating tracks/symmetry lines:
+    - New elements can call for attention and open senses.
+    - Oscillating tracks and symmetry lines (linked to point 4.2) might be better for variation and musical discourse while maintaining coherence.
+
 ## Immediate Next Steps
 1. Implement Firebase persistence first (per clarified priorities), then BSCLab UI tied to presets, then migrate/simplify biosyncare algorithms.
 2. Stand up telemetry disclaimer + quota dashboard.
