@@ -174,6 +174,7 @@ Status legend: ✅ implemented · 🚧 in progress · 🧩 scoped (needs design)
 - Discuss the role of new elements vs. oscillating tracks/symmetry lines:
     - New elements can call for attention and open senses.
     - Oscillating tracks and symmetry lines (linked to point 4.2) might be better for variation and musical discourse while maintaining coherence.
+    - **Modality of usage:** Not only standard 15 min sessions, but 1-2h sessions for work, and short, intense sensory interventions (e.g., 5–8s “reset pulses”: Martigli bursts, symmetry inversions, high-coherence flashes) that “collapse” unhealthy cognitive states (rumination loops) before resuming smooth flow.
 
 ## Immediate Next Steps
 1. Implement Firebase persistence first (per clarified priorities), then BSCLab UI tied to presets, then migrate/simplify biosyncare algorithms.
