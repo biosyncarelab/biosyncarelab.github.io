@@ -142,7 +142,7 @@ function renderTrackList(tracks, container, kernel) {
       track.enabled = !track.enabled;
       muteBtn.textContent = track.enabled ? 'Stop' : 'Play';
       muteBtn.title = track.enabled ? 'Stop track' : 'Play track';
-      
+
       // Ensure audio engine is running when user interacts
       if (kernel.audio && kernel.audio.ctx && kernel.audio.ctx.state === 'suspended') {
         kernel.audio.resume();
@@ -177,7 +177,7 @@ function renderTrackList(tracks, container, kernel) {
     track.parameters.forEach(param => {
       const row = document.createElement('div');
       row.style.display = 'grid';
-      row.style.gridTemplateColumns = '60px 1fr 35px 24px'; // Added column for modulation
+      row.style.gridTemplateColumns = '60px 1fr 60px 24px'; // Widened value column for input
       row.style.alignItems = 'center';
       row.style.gap = '0.5rem';
 
@@ -190,6 +190,8 @@ function renderTrackList(tracks, container, kernel) {
       pLabel.dataset.rdfTerm = param.name; // For tooltip/navigation
 
       let input;
+      let valControl;
+
       if (param.options && Array.isArray(param.options)) {
         input = document.createElement('select');
         input.style.width = '100%';
@@ -207,31 +209,70 @@ function renderTrackList(tracks, container, kernel) {
 
         input.onchange = (e) => {
           param.base = e.target.value;
-          // No value display update needed for select
         };
+        
+        valControl = document.createElement('span'); // Placeholder for grid alignment
       } else {
         input = document.createElement('input');
         input.type = 'range';
         input.min = param.min !== -Infinity ? param.min : 0;
         input.max = param.max !== Infinity ? param.max : 1000;
-        input.step = (param.max - param.min) > 100 ? 1 : 0.1;
+        
+        const range = input.max - input.min;
+        const normalStep = range > 100 ? 1 : 0.1;
+        const fineStep = normalStep / 10;
+        
+        input.step = normalStep;
         input.value = param.base;
         input.style.width = '100%';
         input.style.cursor = 'pointer';
 
+        // Fine-tune logic: Shift key reduces step size
+        const updateStep = (e) => {
+            input.step = e.shiftKey ? fineStep : normalStep;
+        };
+        input.addEventListener('mousedown', updateStep);
+        input.addEventListener('mousemove', updateStep);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift') input.step = fineStep;
+        });
+        input.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') input.step = normalStep;
+        });
+
+        // Number input for direct typing
+        valControl = document.createElement('input');
+        valControl.type = 'number';
+        valControl.min = input.min;
+        valControl.max = input.max;
+        valControl.step = fineStep;
+        valControl.value = param.base < 10 ? param.base.toFixed(2) : Math.round(param.base);
+        valControl.style.width = '100%';
+        valControl.style.textAlign = 'right';
+        valControl.style.border = '1px solid var(--surface-border)';
+        valControl.style.borderRadius = '4px';
+        valControl.style.padding = '2px';
+        valControl.style.fontSize = '0.8rem';
+        valControl.style.background = 'transparent';
+        valControl.style.color = 'var(--text-main)';
+
         input.oninput = (e) => {
           const val = parseFloat(e.target.value);
           param.base = val;
-          valDisplay.textContent = val < 10 ? val.toFixed(1) : Math.round(val);
+          valControl.value = val < 10 ? val.toFixed(2) : Math.round(val);
+        };
+
+        valControl.onchange = (e) => {
+            let val = parseFloat(e.target.value);
+            if (isNaN(val)) return;
+            if (val < parseFloat(input.min)) val = parseFloat(input.min);
+            if (val > parseFloat(input.max)) val = parseFloat(input.max);
+            
+            param.base = val;
+            input.value = val;
+            valControl.value = val;
         };
       }
-
-      const valDisplay = document.createElement('span');
-      if (!param.options) {
-        valDisplay.textContent = param.base < 10 ? param.base.toFixed(1) : Math.round(param.base);
-      }
-      valDisplay.style.textAlign = 'right';
-      valDisplay.style.fontVariantNumeric = 'tabular-nums';
 
       // Martigli Modulation Button
       const modBtn = document.createElement('button');
@@ -327,7 +368,7 @@ function renderTrackList(tracks, container, kernel) {
 
       row.appendChild(pLabel);
       row.appendChild(input);
-      row.appendChild(valDisplay);
+      row.appendChild(valControl);
       row.appendChild(modBtn);
       paramsDiv.appendChild(row);
       paramsDiv.appendChild(modControls);
