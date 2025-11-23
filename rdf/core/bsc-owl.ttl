@@ -301,6 +301,109 @@ bsc:fadeOut      a owl:DatatypeProperty ;
   rdfs:domain bsc:Track ;
   rdfs:range xsd:decimal .
 
+# Parameter-specific scalar properties used throughout the BSCLab UI
+bsc:gain a owl:DatatypeProperty ;
+  rdfs:label "gain" ;
+  rdfs:comment "Amplitude multiplier (0-1) applied to an audio parameter or track." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:pan a owl:DatatypeProperty ;
+  rdfs:label "pan" ;
+  rdfs:comment "Stereo balance between the left (-1) and right (+1) channels." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:frequency a owl:DatatypeProperty ;
+  rdfs:label "frequency" ;
+  rdfs:comment "Base oscillator frequency in Hertz." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:pulseRate a owl:DatatypeProperty ;
+  rdfs:label "pulse rate" ;
+  rdfs:comment "Rate at which an isochronic pulse repeats, in Hertz." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:dutyCycle a owl:DatatypeProperty ;
+  rdfs:label "duty cycle" ;
+  rdfs:comment "Percentage of each pulse period spent in the ON state (0-1)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:opacity a owl:DatatypeProperty ;
+  rdfs:label "opacity" ;
+  rdfs:comment "Alpha/visibility level (0-1) for a visual layer." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:scaleFactor a owl:DatatypeProperty ;
+  rdfs:label "scale" ;
+  rdfs:comment "Normalized scale multiplier for a visual primitive." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:numberOfSides a owl:DatatypeProperty ;
+  rdfs:label "sides" ;
+  rdfs:comment "Number of polygon sides rendered in a geometric visual." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:integer .
+
+bsc:rotationSpeed a owl:DatatypeProperty ;
+  rdfs:label "rotation speed" ;
+  rdfs:comment "Angular velocity for rotating visuals (degrees per second)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:hue a owl:DatatypeProperty ;
+  rdfs:label "hue" ;
+  rdfs:comment "Hue value in degrees (0-360) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:saturation a owl:DatatypeProperty ;
+  rdfs:label "saturation" ;
+  rdfs:comment "Saturation percentage (0-100) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:lightness a owl:DatatypeProperty ;
+  rdfs:label "lightness" ;
+  rdfs:comment "Lightness percentage (0-100) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:particleCount a owl:DatatypeProperty ;
+  rdfs:label "particle count" ;
+  rdfs:comment "Number of particles emitted in a particle system." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:integer .
+
+bsc:particleSpeed a owl:DatatypeProperty ;
+  rdfs:label "particle speed" ;
+  rdfs:comment "Normalized velocity for particles (0-10)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:spread a owl:DatatypeProperty ;
+  rdfs:label "spread" ;
+  rdfs:comment "Dispersion factor (0-1) controlling how widely particles are emitted." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:intensity a owl:DatatypeProperty ;
+  rdfs:label "intensity" ;
+  rdfs:comment "Normalized output intensity for haptic cues." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:vibrationPattern a owl:DatatypeProperty ;
+  rdfs:label "vibration pattern" ;
+  rdfs:comment "Enumerated pattern identifier for vibrotactile cues (e.g., continuous vs. pulsed)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:string .
+
 # Martigli oscillator and waveform terms
 bsc:MartigliOscillation a owl:Class ; rdfs:label "Martigli Oscillation" .
 bsc:Waveform            a owl:Class ; rdfs:label "Waveform" .

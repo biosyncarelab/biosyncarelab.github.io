@@ -63,6 +63,20 @@ bsc:Outcome           a owl:Class ; rdfs:label "Outcome" .
 bsc:Report            a owl:Class ; rdfs:label "Report" .
 bsc:ParticipantGroup  a owl:Class ; rdfs:label "Participant Group" .
 
+# Track-level abstractions mirrored from the BSCLab runtime
+bsc:Track        a owl:Class ; rdfs:label "Track" .
+bsc:AudioTrack   a owl:Class ; rdfs:label "Audio Track" ; rdfs:subClassOf bsc:Track .
+bsc:VisualTrack  a owl:Class ; rdfs:label "Visual Track" ; rdfs:subClassOf bsc:Track .
+bsc:HapticTrack  a owl:Class ; rdfs:label "Haptic Track" ; rdfs:subClassOf bsc:Track .
+bsc:Parameter    a owl:Class ; rdfs:label "Parameter" .
+
+# Waveform taxonomy used by Martigli oscillators and pure tone cues
+bsc:Waveform     a owl:Class ; rdfs:label "Waveform" .
+bsc:SineWave     a owl:Class ; rdfs:label "Sine Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:TriangleWave a owl:Class ; rdfs:label "Triangle Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SquareWave   a owl:Class ; rdfs:label "Square Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SawWave      a owl:Class ; rdfs:label "Saw Wave" ; rdfs:subClassOf bsc:Waveform .
+
 # ============================================================================
 # CORE OBJECT PROPERTIES
 # ============================================================================
@@ -78,6 +92,109 @@ bsc:appliesTechnique  a owl:ObjectProperty ;
 bsc:hasOutcome        a owl:ObjectProperty ;
   rdfs:label "has outcome" ;
   rdfs:domain bsc:Session ; rdfs:range bsc:Outcome .
+
+# Track parameter properties surfaced in the BSCLab UI
+bsc:gain a owl:DatatypeProperty ;
+  rdfs:label "gain" ;
+  rdfs:comment "Amplitude multiplier (0-1) applied to an audio parameter or track." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:pan a owl:DatatypeProperty ;
+  rdfs:label "pan" ;
+  rdfs:comment "Stereo balance between the left (-1) and right (+1) channels." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:frequency a owl:DatatypeProperty ;
+  rdfs:label "frequency" ;
+  rdfs:comment "Base oscillator or tone frequency in Hertz." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:pulseRate a owl:DatatypeProperty ;
+  rdfs:label "pulse rate" ;
+  rdfs:comment "Rate at which an isochronic pulse repeats, in Hertz." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:dutyCycle a owl:DatatypeProperty ;
+  rdfs:label "duty cycle" ;
+  rdfs:comment "Percentage of each pulse period spent in the ON state (0-1)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:opacity a owl:DatatypeProperty ;
+  rdfs:label "opacity" ;
+  rdfs:comment "Alpha/visibility level (0-1) for a visual layer." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:scaleFactor a owl:DatatypeProperty ;
+  rdfs:label "scale" ;
+  rdfs:comment "Normalized scale multiplier for a visual primitive." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:numberOfSides a owl:DatatypeProperty ;
+  rdfs:label "sides" ;
+  rdfs:comment "Number of polygon sides rendered in a geometric visual." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:integer .
+
+bsc:rotationSpeed a owl:DatatypeProperty ;
+  rdfs:label "rotation speed" ;
+  rdfs:comment "Angular velocity for rotating visuals (degrees per second)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:hue a owl:DatatypeProperty ;
+  rdfs:label "hue" ;
+  rdfs:comment "Hue value in degrees (0-360) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:saturation a owl:DatatypeProperty ;
+  rdfs:label "saturation" ;
+  rdfs:comment "Saturation percentage (0-100) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:lightness a owl:DatatypeProperty ;
+  rdfs:label "lightness" ;
+  rdfs:comment "Lightness percentage (0-100) for HSL color controls." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:particleCount a owl:DatatypeProperty ;
+  rdfs:label "particle count" ;
+  rdfs:comment "Number of particles emitted in a particle system." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:integer .
+
+bsc:particleSpeed a owl:DatatypeProperty ;
+  rdfs:label "particle speed" ;
+  rdfs:comment "Normalized velocity for particles (0-10)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:spread a owl:DatatypeProperty ;
+  rdfs:label "spread" ;
+  rdfs:comment "Dispersion factor (0-1) controlling how widely particles are emitted." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:intensity a owl:DatatypeProperty ;
+  rdfs:label "intensity" ;
+  rdfs:comment "Normalized output intensity for haptic cues." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:vibrationPattern a owl:DatatypeProperty ;
+  rdfs:label "vibration pattern" ;
+  rdfs:comment "Enumerated pattern identifier for vibrotactile cues (e.g., continuous vs. pulsed)." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:string .
 
 bsc:partOfProject     a owl:ObjectProperty ;
   rdfs:label "part of project" ;
@@ -262,6 +379,18 @@ bsc:HemiSync a owl:Class ;
   bsc:evidenceReasoning "Proprietary nature limits independent verification. Some evidence for deep relaxation and meditative states." ;
   bsc:contraindications "Same as binaural beats; epilepsy, tinnitus." .
 
+bsc:SineTone a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Pure Sine Tone" ;
+  rdfs:comment "Unmodulated sine wave tones used for calibration, focus drills, and foundational entrainment studies." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.5 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Psychoacoustics literature on pure tones, auditory steady-state response (ASSR) baselines, and meditation practices using single-frequency drones." ;
+  bsc:evidenceReasoning "Pure tones form the basis of most auditory entrainment research but are rarely used standalone beyond calibration and minimalist meditation practices." ;
+  bsc:contraindications "Generally safe. Prolonged high-SPL exposure may cause ear fatigue." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Sine_wave> .
+
 # Audio deprecation mappings
 sso:AudioTechniques owl:deprecated true ;
   rdfs:isDefinedBy <https://acca-harmonicare-chromosound.netlify.app/rdf/SSO_Ontology.owl> ;
@@ -351,6 +480,30 @@ bsc:GanzfeldStimulation a owl:Class ;
   bsc:evidenceReasoning "Well-documented perceptual and psychological effects (visual hallucinations, altered time perception). Research primarily in experimental psychology and consciousness studies. No brainwave entrainment claims." ;
   bsc:contraindications "Generally safe. May induce anxiety or discomfort in individuals sensitive to sensory deprivation. Temporary visual distortions expected. Not recommended for individuals with psychotic disorders." ;
   rdfs:seeAlso <https://en.wikipedia.org/wiki/Ganzfeld_effect> .
+
+bsc:GeometricPatternVisualization a owl:Class ;
+  rdfs:subClassOf bsc:VisualTechnique ;
+  rdfs:label "Geometric Pattern Visualization" ;
+  rdfs:comment "Symmetric polygonal forms (triangles, hexagons, mandalas) rotated or scaled to support focus, breath pacing, or trance induction." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.7 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Meditation UX studies using mandala visualizations, mindfulness apps employing geometric focus objects, EEG attention experiments with rotating polygons." ;
+  bsc:evidenceReasoning "Widely used in meditation software though largely supported by user studies and attentional focus research rather than clinical trials." ;
+  bsc:contraindications "May induce motion discomfort or visual fatigue when rotated rapidly. Avoid small flashing shapes for photosensitive users." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Mandala> .
+
+bsc:ParticleFieldVisualization a owl:Class ;
+  rdfs:subClassOf bsc:VisualTechnique ;
+  rdfs:label "Particle Field Visualization" ;
+  rdfs:comment "Animated particle swarms used to convey breath, focus, or energetic flow through shimmer, trails, and depth cues." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.4 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Human-computer interaction studies on calm technology, mindfulness apps employing particle drift backgrounds, VR meditative experiences." ;
+  bsc:evidenceReasoning "Primarily UX-driven evidence showing perceived calming/elevating effects; limited physiological validation yet strong engagement metrics." ;
+  bsc:contraindications "Potential motion sickness at high speeds or with large parallax shifts." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Particle_system> .
 
 # Visual deprecation mappings
 sso:VisualTechniques owl:deprecated true ;
@@ -442,6 +595,20 @@ bsc:HapticEntrainment a owl:Class ;
   bsc:evidenceCorpus "Emerging research area; 6 studies on tactile rhythm perception and cortical entrainment (2019-2024)" ;
   bsc:evidenceReasoning "Early-stage research. Some evidence for tactile rhythm perception and cortical activation. Less studied than audio or visual entrainment. Potential for accessibility applications (hearing/vision impaired individuals)." ;
   bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." .
+
+bsc:VibrationCue a owl:Class ;
+  rdfs:subClassOf bsc:HapticEntrainment ;
+  rdfs:label "Vibration Cue" ;
+  rdfs:comment "Localized vibrotactile pulses (continuous or pulsed) delivered through wearables, chairs, or handheld devices for grounding, pacing, or tactile entrainment." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.6 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Wearable haptics research, ADHD fidget devices with vibration feedback, clinical grounding protocols for trauma therapy." ;
+  bsc:evidenceReasoning "Solid user research and early clinical pilots but limited large-sample trials. Effective for grounding and focus support." ;
+  bsc:contraindications "Avoid open wounds, acute inflammation, or implanted stimulators unless cleared by manufacturer guidance." ;
+  rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D014110> ,
+               <http://purl.bioontology.org/ontology/MESH/D014732> ;
+  skos:related <http://purl.bioontology.org/ontology/MESH/D055698> .
 
 bsc:ImmersiveVRNeurostimulation a owl:Class ;
   rdfs:subClassOf bsc:MultimodalTechnique ;

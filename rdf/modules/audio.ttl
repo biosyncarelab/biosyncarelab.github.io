@@ -112,6 +112,22 @@ bsc:HemiSync a owl:Class ;
   bsc:contraindications "Same as binaural beats; epilepsy, tinnitus." .
 
 # ============================================================================
+# PURE SINE TONES
+# ============================================================================
+
+bsc:SineTone a owl:Class ;
+  rdfs:subClassOf bsc:AudioTechnique ;
+  rdfs:label "Pure Sine Tone" ;
+  rdfs:comment "Unmodulated sine wave tones used for calibration, focus drills, and foundational entrainment studies." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.5 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Psychoacoustics literature on pure tones, auditory steady-state response (ASSR) baselines, and meditation practices using single-frequency drones." ;
+  bsc:evidenceReasoning "Pure tones form the basis of most auditory entrainment research but are rarely used standalone beyond calibration and minimalist meditation practices." ;
+  bsc:contraindications "Generally safe. Prolonged high-SPL exposure may cause ear fatigue." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Sine_wave> .
+
+# ============================================================================
 # DEPRECATION MAPPINGS (for backward compatibility)
 # ============================================================================
 

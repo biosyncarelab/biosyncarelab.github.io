@@ -1040,19 +1040,55 @@ function initCytoscape(elements) {
 
   // Expose navigation function globally
   window.biosyncare = window.biosyncare || {};
-  window.biosyncare.navigateToConcept = (term) => {
+  window.biosyncare.navigateToConcept = (conceptTarget) => {
     // Switch to NSO tab
     const nsoTab = document.getElementById('tab-nso');
     if (nsoTab) nsoTab.click();
 
-    // Find node by label or id
-    // Simple search for now
-    const nodes = cy.nodes();
-    const target = nodes.filter(n => {
-      const data = n.data();
-      return (data.label && data.label.toLowerCase().includes(term.toLowerCase())) ||
-             (data.id && data.id.toLowerCase().includes(term.toLowerCase()));
-    }).first();
+    const normalized = typeof conceptTarget === 'string' ? { label: conceptTarget } : (conceptTarget || {});
+    const targetUri = typeof normalized.uri === 'string' ? normalized.uri.trim() : '';
+    const targetLabel = typeof normalized.label === 'string' ? normalized.label.trim() : '';
+
+    let target = null;
+
+    const resolveNode = (uri) => {
+      if (!uri) return null;
+      let node = cy.getElementById(uri);
+      if (node && node.length > 0) {
+        return node;
+      }
+
+      if (window.conceptToClassMapping && window.conceptToClassMapping.has(uri)) {
+        const mapped = cy.getElementById(window.conceptToClassMapping.get(uri));
+        if (mapped && mapped.length > 0) {
+          return mapped;
+        }
+      }
+
+      if (window.deprecatedToReplacementMapping && window.deprecatedToReplacementMapping.has(uri)) {
+        const replacement = cy.getElementById(window.deprecatedToReplacementMapping.get(uri));
+        if (replacement && replacement.length > 0) {
+          return replacement;
+        }
+      }
+
+      return null;
+    };
+
+    target = resolveNode(targetUri);
+
+    if (!target || target.length === 0) {
+      const term = (targetLabel || targetUri || '').toLowerCase();
+      if (term) {
+        const nodes = cy.nodes();
+        target = nodes.filter(n => {
+          const data = n.data();
+          const label = data.label ? data.label.toLowerCase() : '';
+          const id = data.id ? data.id.toLowerCase() : '';
+          return label.includes(term) || id.includes(term);
+        }).first();
+      }
+    }
 
     if (target && target.length > 0) {
       cy.animate({
@@ -1066,7 +1102,8 @@ function initCytoscape(elements) {
       // Trigger selection logic if any
       target.emit('tap');
     } else {
-      console.warn(`Concept not found: ${term}`);
+      const descriptor = targetUri || targetLabel || '[unknown concept]';
+      console.warn(`Concept not found: ${descriptor}`);
     }
   };
 }

@@ -1,7 +1,52 @@
 import { appState } from "./state/app-state.js";
+import { RDF_LINKS } from "./state/rdf-link-map.js";
 import { BinauralBeatTrack, IsochronicTrack, SineTrack } from "./tracks/AudioTrack.js";
 import { GeometryVisualTrack, ParticleVisualTrack } from "./tracks/VisualTrack.js";
 import { VibrationTrack } from "./tracks/HapticTrack.js";
+
+const getTrackConcept = (track) => {
+  if (!track) return null;
+  const name = track.constructor?.name;
+  return name ? RDF_LINKS.tracks?.[name] ?? null : null;
+};
+
+const getParameterConcept = (paramName) => {
+  if (!paramName) return null;
+  return RDF_LINKS.parameters?.[paramName] ?? null;
+};
+
+const setRdfMetadata = (element, concept) => {
+  if (!element) return;
+  if (concept) {
+    const label = concept.label || '';
+    element.dataset.rdfLabel = label;
+    element.dataset.rdfTerm = label;
+    if (concept.uri) {
+      element.dataset.rdfUri = concept.uri;
+    } else {
+      delete element.dataset.rdfUri;
+    }
+  } else {
+    delete element.dataset.rdfLabel;
+    delete element.dataset.rdfTerm;
+    delete element.dataset.rdfUri;
+  }
+};
+
+const getRdfDataset = (target) => {
+  let node = target;
+  while (node) {
+    if (node.nodeType === 1 && node.dataset) {
+      const label = node.dataset.rdfLabel || node.dataset.rdfTerm;
+      const uri = node.dataset.rdfUri;
+      if (label || uri) {
+        return { label, uri, element: node };
+      }
+    }
+    node = node.parentElement || node.parentNode;
+  }
+  return null;
+};
 
 export function initMixerUI() {
   const audioAddBtn = document.getElementById('audio-add-track');
@@ -79,30 +124,46 @@ export function initMixerUI() {
   const tooltip = document.getElementById('rdf-tooltip');
   const tooltipTerm = document.getElementById('rdf-tooltip-term');
 
-  document.addEventListener('mouseover', (e) => {
-    if (e.target.dataset.rdfTerm) {
-      const term = e.target.dataset.rdfTerm;
-      tooltipTerm.textContent = term;
-      tooltip.classList.remove('hidden');
+  const hideTooltip = () => {
+    if (!tooltip.classList.contains('hidden')) {
+      tooltip.classList.add('hidden');
+    }
+  };
 
-      const rect = e.target.getBoundingClientRect();
+  document.addEventListener('mouseover', (e) => {
+    const rdfInfo = getRdfDataset(e.target);
+    if (!rdfInfo) return;
+
+    tooltipTerm.textContent = rdfInfo.label || rdfInfo.uri || '';
+    tooltip.classList.remove('hidden');
+
+    const rect = rdfInfo.element?.getBoundingClientRect();
+    if (rect) {
       tooltip.style.left = `${rect.left}px`;
       tooltip.style.top = `${rect.top}px`;
     }
   });
 
   document.addEventListener('mouseout', (e) => {
-    if (e.target.dataset.rdfTerm) {
-      tooltip.classList.add('hidden');
+    const currentInfo = getRdfDataset(e.target);
+    if (!currentInfo) return;
+
+    const relatedInfo = getRdfDataset(e.relatedTarget);
+    if (relatedInfo && relatedInfo.element === currentInfo.element) {
+      return; // Still within the same annotated element
     }
+    hideTooltip();
   });
 
   document.addEventListener('click', (e) => {
-    if (e.target.dataset.rdfTerm) {
-      const term = e.target.dataset.rdfTerm;
-      if (window.biosyncare && window.biosyncare.navigateToConcept) {
-        window.biosyncare.navigateToConcept(term);
-      }
+    const rdfInfo = getRdfDataset(e.target);
+    if (!rdfInfo) return;
+
+    if (window.biosyncare && typeof window.biosyncare.navigateToConcept === 'function') {
+      window.biosyncare.navigateToConcept({
+        label: rdfInfo.label,
+        uri: rdfInfo.uri,
+      });
     }
   });
 }
@@ -127,7 +188,7 @@ function renderTrackList(tracks, container, kernel) {
     label.style.fontWeight = '600';
     label.style.fontSize = '0.9rem';
     label.style.cursor = 'help';
-    label.dataset.rdfTerm = track.label; // For tooltip/navigation
+    setRdfMetadata(label, getTrackConcept(track));
 
     const actions = document.createElement('div');
     actions.style.display = 'flex';
@@ -181,13 +242,18 @@ function renderTrackList(tracks, container, kernel) {
       row.style.alignItems = 'center';
       row.style.gap = '0.5rem';
 
+      const paramConcept = getParameterConcept(param.name);
+      const annotateParamElement = (element) => {
+        if (element) setRdfMetadata(element, paramConcept);
+      };
+
       const pLabel = document.createElement('label');
       pLabel.textContent = param.name;
       pLabel.style.color = 'var(--text-muted)';
       pLabel.style.overflow = 'hidden';
       pLabel.style.textOverflow = 'ellipsis';
       pLabel.style.cursor = 'help';
-      pLabel.dataset.rdfTerm = param.name; // For tooltip/navigation
+      annotateParamElement(pLabel);
 
       let input;
       let valControl;
@@ -207,6 +273,7 @@ function renderTrackList(tracks, container, kernel) {
         input.style.height = '28px';
         input.style.outline = 'none';
         input.style.gridColumn = '2 / 5';
+        annotateParamElement(input);
 
         param.options.forEach(opt => {
           const option = document.createElement('option');
@@ -224,8 +291,10 @@ function renderTrackList(tracks, container, kernel) {
 
         fineBtn = document.createElement('span'); // Placeholder
         fineBtn.style.display = 'none';
+        annotateParamElement(fineBtn);
         valControl = document.createElement('span'); // Placeholder for grid alignment
         valControl.style.display = 'none';
+        annotateParamElement(valControl);
       } else {
         const originalMin = param.min !== -Infinity ? param.min : 0;
         const originalMax = param.max !== Infinity ? param.max : 1000;
@@ -243,6 +312,7 @@ function renderTrackList(tracks, container, kernel) {
         fineBtn.style.width = '24px';
         fineBtn.style.height = '24px';
         fineBtn.style.opacity = '0.5';
+        annotateParamElement(fineBtn);
 
         let isZoomed = false;
 
@@ -261,6 +331,7 @@ function renderTrackList(tracks, container, kernel) {
         valControl.style.fontSize = '0.8rem';
         valControl.style.background = 'transparent';
         valControl.style.color = 'var(--text)';
+        annotateParamElement(valControl);
 
         // Create Knob
         const knob = createKnob(param, originalMin, originalMax, normalStep, (val) => {
@@ -269,6 +340,7 @@ function renderTrackList(tracks, container, kernel) {
         });
 
         input = knob.element; // Assign to input so it gets appended
+        annotateParamElement(input);
 
         fineBtn.onclick = () => {
             isZoomed = !isZoomed;
@@ -322,10 +394,12 @@ function renderTrackList(tracks, container, kernel) {
       const depthWrapper = document.createElement('div');
       depthWrapper.className = 'mod-depth inactive';
       depthWrapper.title = 'Martigli modulation depth';
+      annotateParamElement(depthWrapper);
 
       const depthValue = document.createElement('span');
       depthValue.className = 'mod-depth-value';
       depthValue.textContent = param.depth.toFixed(1);
+      annotateParamElement(depthValue);
 
       let depthKnob;
       let knobValuePath;
@@ -394,6 +468,7 @@ function renderTrackList(tracks, container, kernel) {
       depthKnob = createKnob({ base: param.depth }, 0, depthMax, depthStep, handleDepthChange);
       depthKnob.element.classList.add('mod-depth-knob');
       knobValuePath = depthKnob.element.querySelector('.knob-value');
+      annotateParamElement(depthKnob.element);
 
       depthWrapper.appendChild(depthKnob.element);
       depthWrapper.appendChild(depthValue);

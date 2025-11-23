@@ -131,6 +131,34 @@ bsc:GanzfeldStimulation a owl:Class ;
                <http://purl.bioontology.org/ontology/MESH/D012676> .  # MeSH: Sensory Deprivation
 
 # ============================================================================
+# GEOMETRIC AND PARTICLE VISUALIZATIONS
+# ============================================================================
+
+bsc:GeometricPatternVisualization a owl:Class ;
+  rdfs:subClassOf bsc:VisualTechnique ;
+  rdfs:label "Geometric Pattern Visualization" ;
+  rdfs:comment "Symmetric polygonal forms (triangles, hexagons, mandalas) rotated or scaled to support focus, breath pacing, or trance induction." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.7 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Meditation UX studies using mandala visualizations, mindfulness apps employing geometric focus objects, EEG attention experiments with rotating polygons." ;
+  bsc:evidenceReasoning "Widely used in meditation software though largely supported by user studies and attentional focus research rather than clinical trials." ;
+  bsc:contraindications "May induce motion discomfort or visual fatigue when rotated rapidly. Avoid small flashing shapes for photosensitive users." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Mandala> .
+
+bsc:ParticleFieldVisualization a owl:Class ;
+  rdfs:subClassOf bsc:VisualTechnique ;
+  rdfs:label "Particle Field Visualization" ;
+  rdfs:comment "Animated particle swarms used to convey breath, focus, or energetic flow through shimmer, trails, and depth cues." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.4 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Human-computer interaction studies on calm technology, mindfulness apps employing particle drift backgrounds, VR meditative experiences." ;
+  bsc:evidenceReasoning "Primarily UX-driven evidence showing perceived calming/elevating effects; limited physiological validation yet strong engagement metrics." ;
+  bsc:contraindications "Potential motion sickness at high speeds or with large parallax shifts." ;
+  rdfs:seeAlso <https://en.wikipedia.org/wiki/Particle_system> .
+
+# ============================================================================
 # DEPRECATION MAPPINGS (for backward compatibility)
 # ============================================================================
 

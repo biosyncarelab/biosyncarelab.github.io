@@ -28,9 +28,9 @@ def main():
     data_dir = root / "rdf" / "datasets"
     shapes_file = root / "rdf" / "shapes" / "structures.shacl.ttl"
 
-    data_files = sorted(data_dir.glob("*.jsonld"))
+    data_files = sorted(data_dir.glob("*.jsonld")) + sorted(data_dir.glob("*.ttl"))
     if not data_files:
-        sys.stderr.write("No JSON-LD datasets found in rdf/datasets. Run export first.\n")
+        sys.stderr.write("No datasets found in rdf/datasets. Run export first.\n")
         sys.exit(1)
 
     if not shapes_file.exists():
@@ -50,16 +50,19 @@ def main():
     data_graph = Graph()
     import json as _json
     for file_path in data_files:
-        data_obj = _json.loads(file_path.read_text(encoding="utf-8"))
-        # Override remote context to avoid network fetches
-        data_obj["@context"] = context_json
-        raw = _json.dumps(data_obj)
-        data_graph.parse(
-            data=raw,
-            format="json-ld",
-            context=context_json,
-            publicID=file_path.as_uri()
-        )
+        if file_path.suffix == ".jsonld":
+            data_obj = _json.loads(file_path.read_text(encoding="utf-8"))
+            # Override remote context to avoid network fetches
+            data_obj["@context"] = context_json
+            raw = _json.dumps(data_obj)
+            data_graph.parse(
+                data=raw,
+                format="json-ld",
+                context=context_json,
+                publicID=file_path.as_uri()
+            )
+        else:
+            data_graph.parse(file_path, format="turtle")
 
     shapes_graph = Graph()
     shapes_graph.parse(shapes_file)

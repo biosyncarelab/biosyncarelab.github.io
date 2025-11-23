@@ -136,7 +136,18 @@ bsc:HapticEntrainment a owl:Class ;
   bsc:evidenceCurator "Claude Sonnet 4.5 (2025-11-17)" ;
   bsc:evidenceCorpus "Emerging research area; 6 studies on tactile rhythm perception and cortical entrainment (2019-2024)" ;
   bsc:evidenceReasoning "Early-stage research. Some evidence for tactile rhythm perception and cortical activation. Less studied than audio or visual entrainment. Potential for accessibility applications (hearing/vision impaired individuals)." ;
-  bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." ;
+  bsc:contraindications "Generally safe. Skin sensitivity, peripheral neuropathy may reduce effectiveness or cause discomfort. Avoid over damaged skin or acute injuries." .
+
+bsc:VibrationCue a owl:Class ;
+  rdfs:subClassOf bsc:HapticEntrainment ;
+  rdfs:label "Vibration Cue" ;
+  rdfs:comment "Localized vibrotactile pulses (continuous or pulsed) delivered through wearables, chairs, or handheld devices for grounding, pacing, or tactile entrainment." ;
+  bsc:invasiveness "non-invasive" ;
+  bsc:evidenceLevel 1.6 ;
+  bsc:evidenceCurator "BioSynCare Lab (2025-11-23)" ;
+  bsc:evidenceCorpus "Wearable haptics research, ADHD fidget devices with vibration feedback, clinical grounding protocols for trauma therapy." ;
+  bsc:evidenceReasoning "Solid user research and early clinical pilots but limited large-sample trials. Effective for grounding and focus support." ;
+  bsc:contraindications "Avoid open wounds, acute inflammation, or implanted stimulators unless cleared by manufacturer guidance." ;
   rdfs:seeAlso <http://purl.bioontology.org/ontology/MESH/D014110> ,  # MeSH: Touch
                <http://purl.bioontology.org/ontology/MESH/D014732> ;  # MeSH: Vibration
   skos:related <http://purl.bioontology.org/ontology/MESH/D055698> .  # MeSH: Touch Perception

@@ -91,6 +91,26 @@
       "@id": "bsc:beatFrequency",
       "@type": "xsd:decimal"
     },
+    "gain": {
+      "@id": "bsc:gain",
+      "@type": "xsd:decimal"
+    },
+    "pan": {
+      "@id": "bsc:pan",
+      "@type": "xsd:decimal"
+    },
+    "frequency": {
+      "@id": "bsc:frequency",
+      "@type": "xsd:decimal"
+    },
+    "pulseRate": {
+      "@id": "bsc:pulseRate",
+      "@type": "xsd:decimal"
+    },
+    "dutyCycle": {
+      "@id": "bsc:dutyCycle",
+      "@type": "xsd:decimal"
+    },
     "startTime": {
       "@id": "bsc:startTime",
       "@type": "xsd:decimal"
@@ -107,6 +127,51 @@
       "@id": "bsc:fadeOut",
       "@type": "xsd:decimal"
     },
+    "opacity": {
+      "@id": "bsc:opacity",
+      "@type": "xsd:decimal"
+    },
+    "scale": {
+      "@id": "bsc:scaleFactor",
+      "@type": "xsd:decimal"
+    },
+    "sides": {
+      "@id": "bsc:numberOfSides",
+      "@type": "xsd:integer"
+    },
+    "rotationSpeed": {
+      "@id": "bsc:rotationSpeed",
+      "@type": "xsd:decimal"
+    },
+    "hue": {
+      "@id": "bsc:hue",
+      "@type": "xsd:decimal"
+    },
+    "saturation": {
+      "@id": "bsc:saturation",
+      "@type": "xsd:decimal"
+    },
+    "lightness": {
+      "@id": "bsc:lightness",
+      "@type": "xsd:decimal"
+    },
+    "count": {
+      "@id": "bsc:particleCount",
+      "@type": "xsd:integer"
+    },
+    "speed": {
+      "@id": "bsc:particleSpeed",
+      "@type": "xsd:decimal"
+    },
+    "spread": {
+      "@id": "bsc:spread",
+      "@type": "xsd:decimal"
+    },
+    "intensity": {
+      "@id": "bsc:intensity",
+      "@type": "xsd:decimal"
+    },
+    "pattern": "bsc:vibrationPattern",
     "hasTrack": "bsc:hasTrack",
 
     "waveform": "bsc:waveform",

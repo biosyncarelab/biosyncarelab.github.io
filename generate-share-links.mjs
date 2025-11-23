@@ -16,15 +16,15 @@ function encodeState(state) {
   }
 }
 
-function createStructureShareLink(structureId, category = 'comprehensive', baseUrl = 'http://localhost:3000') {
+function createStructureShareLink(sequenceId, category = 'comprehensive', structureId = null, baseUrl = 'http://localhost:3000') {
   const state = {
     version: 1,
     activeTab: 'structures',
     session: null,
     structures: {
       category: category,
-      structureId: structureId,
-      sequenceId: null,
+      structureId: category === 'curated' ? structureId : sequenceId,
+      sequenceId: category === 'curated' ? sequenceId : null,
       playbackPosition: 0,
       isPlaying: false,
     },
@@ -48,6 +48,18 @@ function createStructureShareLink(structureId, category = 'comprehensive', baseU
 // Generate example links for key structures
 console.log('# BioSynCare Lab - Shareable Structure URLs\n');
 console.log('These URLs directly load specific structures with full RDF metadata.\n');
+
+console.log('## Curated Structures\n');
+console.log('### Mirror Sweep on 6 (Symmetry Lines)');
+let url = createStructureShareLink('mirror-sweep-6', 'curated', 'symmetry-lines');
+console.log(`\`\`\`\n${url}\n\`\`\``);
+console.log();
+
+console.log('### Rotating Crossfade on 6 (Symmetry Lines)');
+url = createStructureShareLink('rotating-crossfade-6', 'curated', 'symmetry-lines');
+console.log(`\`\`\`\n${url}\n\`\`\``);
+console.log();
+
 console.log('## Change-Ringing Structures (Comprehensive)\n');
 
 const comprehensiveStructures = [

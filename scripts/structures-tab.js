@@ -3,23 +3,39 @@ import { stateManager, setPath, getPath, subscribePath, getShareableURL } from '
 
 /**
  * Create a shareable URL for a specific structure
- * @param {string} structureId - Structure identifier (e.g., "plain_changes_3")
+ * @param {string} sequenceId - Sequence identifier (e.g., "plain_changes_3" or "mirror-sweep-6")
  * @param {string} category - Category ('curated' or 'comprehensive')
+ * @param {string} structureId - For curated: manifest ID (e.g., "symmetry-lines"), for comprehensive: same as sequenceId
  * @returns {string} Shareable URL
  */
-function createStructureShareLink(structureId, category = 'comprehensive') {
+function createStructureShareLink(sequenceId, category = 'comprehensive', structureId = null) {
   const state = stateManager.getState();
+
+  // For curated structures, we need both structureId (manifest) and sequenceId (sequence within file)
+  // For comprehensive structures, structureId = sequenceId (they're the same)
   const shareState = {
     ...state,
     activeTab: 'structures',
     structures: {
-      ...state.structures,
       category: category,
-      structureId: structureId,
-      sequenceId: null,
+      structureId: category === 'curated' ? structureId : sequenceId,
+      sequenceId: category === 'curated' ? sequenceId : null,
       playbackPosition: 0,
       isPlaying: false,
-    }
+    },
+    // Clear other state to keep URL minimal
+    session: null,
+    nso: {
+      currentConcept: null,
+      viewMode: 'graph',
+      searchQuery: null,
+    },
+    tracks: {
+      audio: [],
+      visual: [],
+      haptic: [],
+      martigli: [],
+    },
   };
   return getShareableURL(shareState);
 }
@@ -67,6 +83,8 @@ const tabPanels = {
 const labTabs = document.getElementById('lab-tabs');
 
 function switchTab(tabName) {
+  console.log('🔄 Switching to tab:', tabName);
+
   // Update state
   setPath('activeTab', tabName);
 
@@ -80,9 +98,13 @@ function switchTab(tabName) {
 
   // Update tab panels
   Object.entries(tabPanels).forEach(([name, panel]) => {
-    if (!panel) return;
+    if (!panel) {
+      console.warn(`Panel not found: ${name}`);
+      return;
+    }
     const isActive = name === tabName;
     panel.classList.toggle('hidden', !isActive);
+    console.log(`Panel ${name}: ${isActive ? 'VISIBLE' : 'hidden'}`);
   });
 
   // Trigger resize to ensure charts/graphs render correctly
@@ -203,7 +225,8 @@ if (structureSelect) {
       setPath('structures.structureId', value);
 
       try {
-        const data = await loadStructures(entry.url);
+        const data = await loadStructures(entry.url, entry);
+        currentData = data;
         visualizeCuratedStructure(data);
       } catch (err) {
         console.error('Failed to load structure:', err);
@@ -377,7 +400,8 @@ function renderSequenceSection(sequence, index) {
 
   // Add share button
   const category = getPath('structures.category') || 'comprehensive';
-  const shareUrl = createStructureShareLink(sequence.id, category);
+  const currentStructureId = getPath('structures.structureId'); // For curated: manifest ID (e.g., "symmetry-lines")
+  const shareUrl = createStructureShareLink(sequence.id, category, currentStructureId);
   html += `<button class="share-structure-btn" data-share-url="${shareUrl}" title="Copy shareable link">📋 Share</button>`;
   html += '</div>';
   html += '</div>';
@@ -493,7 +517,10 @@ async function restoreStateFromURL() {
 
   // Restore structure selection if in structures tab
   if (state.activeTab === 'structures' && state.structures) {
-    const { category, structureId } = state.structures;
+    const { category, structureId, sequenceId } = state.structures;
+
+    // Explicitly switch to structures tab FIRST before any async operations
+    switchTab('structures');
 
     if (category && categorySelect) {
       // Set category
@@ -520,7 +547,20 @@ async function restoreStateFromURL() {
           if (entry) {
             try {
               const data = await loadStructures(entry.url, entry);
-              visualizeCuratedStructure(data);
+              currentData = data;
+
+              // If sequenceId specified, show that specific sequence
+              if (sequenceId && data.sequences) {
+                const sequence = data.sequences.find(seq => seq.id === sequenceId);
+                if (sequence) {
+                  visualizeSequence(sequence, data);
+                } else {
+                  visualizeCuratedStructure(data);
+                }
+              } else {
+                visualizeCuratedStructure(data);
+              }
+
               // Set select value after loading
               structureSelect.value = structureId;
             } catch (err) {
