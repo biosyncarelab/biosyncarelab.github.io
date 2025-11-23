@@ -195,29 +195,41 @@ function renderTrackList(tracks, container, kernel) {
 
       if (param.options && Array.isArray(param.options)) {
         input = document.createElement('select');
+        input.className = 'track-param-select';
         input.style.width = '100%';
         input.style.cursor = 'pointer';
-        input.style.fontSize = '0.8rem';
-        input.style.padding = '0.1rem';
+        input.style.fontSize = '0.9rem';
+        input.style.padding = '4px 6px';
+        input.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+        input.style.color = '#f8fafc';
+        input.style.border = '1px solid rgba(148, 163, 184, 0.4)';
+        input.style.borderRadius = '4px';
+        input.style.height = '28px';
+        input.style.outline = 'none';
+        input.style.gridColumn = '2 / 5';
 
         param.options.forEach(opt => {
           const option = document.createElement('option');
           option.value = opt;
           option.textContent = opt;
           option.selected = opt === param.base;
+          option.style.backgroundColor = 'rgba(15, 23, 42, 0.98)';
+          option.style.color = '#f8fafc';
           input.appendChild(option);
         });
 
         input.onchange = (e) => {
           param.base = e.target.value;
         };
-        
+
         fineBtn = document.createElement('span'); // Placeholder
+        fineBtn.style.display = 'none';
         valControl = document.createElement('span'); // Placeholder for grid alignment
+        valControl.style.display = 'none';
       } else {
         const originalMin = param.min !== -Infinity ? param.min : 0;
         const originalMax = param.max !== Infinity ? param.max : 1000;
-        
+
         const range = originalMax - originalMin;
         const normalStep = range > 100 ? 1 : 0.1;
         const fineStep = normalStep / 10;
@@ -243,32 +255,32 @@ function renderTrackList(tracks, container, kernel) {
         valControl.value = param.base < 10 ? param.base.toFixed(2) : Math.round(param.base);
         valControl.style.width = '100%';
         valControl.style.textAlign = 'right';
-        valControl.style.border = '1px solid var(--surface-border)';
+        valControl.style.border = '1px solid var(--border)';
         valControl.style.borderRadius = '4px';
         valControl.style.padding = '2px';
         valControl.style.fontSize = '0.8rem';
         valControl.style.background = 'transparent';
-        valControl.style.color = 'var(--text-main)';
+        valControl.style.color = 'var(--text)';
 
         // Create Knob
         const knob = createKnob(param, originalMin, originalMax, normalStep, (val) => {
             param.base = val;
             valControl.value = val < 10 ? val.toFixed(2) : Math.round(val);
         });
-        
+
         input = knob.element; // Assign to input so it gets appended
 
         fineBtn.onclick = () => {
             isZoomed = !isZoomed;
             fineBtn.style.opacity = isZoomed ? '1' : '0.5';
-            fineBtn.style.color = isZoomed ? 'var(--primary)' : 'var(--text-main)';
-            
+            fineBtn.style.color = isZoomed ? 'var(--primary)' : 'var(--text)';
+
             if (isZoomed) {
                 const currentVal = knob.getValue();
                 const zoomRange = (originalMax - originalMin) * 0.1; // 10% window
                 const newMin = Math.max(originalMin, currentVal - zoomRange / 2);
                 const newMax = Math.min(originalMax, currentVal + zoomRange / 2);
-                
+
                 knob.setRange(newMin, newMax, (newMax - newMin) / 100);
                 input.title = `Fine Tune: ${newMin.toFixed(1)} - ${newMax.toFixed(1)}`;
             } else {
@@ -284,11 +296,11 @@ function renderTrackList(tracks, container, kernel) {
             if (isNaN(val)) return;
             if (val < parseFloat(originalMin)) val = parseFloat(originalMin);
             if (val > parseFloat(originalMax)) val = parseFloat(originalMax);
-            
+
             param.base = val;
             knob.setValue(val);
             valControl.value = val;
-            
+
             // If zoomed, re-center zoom around new typed value?
             if (isZoomed) {
                  // Re-trigger zoom logic to center around new value
@@ -546,7 +558,7 @@ function describeArc(x, y, radius, startAngle, endAngle) {
     const end = polarToCartesian(x, y, radius, startAngle);
     const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
     const d = [
-        "M", start.x, start.y, 
+        "M", start.x, start.y,
         "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
     ].join(" ");
     return d;
@@ -564,37 +576,37 @@ function createKnob(param, min, max, step, onInput) {
     const container = document.createElement('div');
     container.className = 'knob-container';
     container.title = 'Drag up/down to adjust';
-    
+
     // SVG generation
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('class', 'knob-svg');
     svg.setAttribute('viewBox', '0 0 40 40');
-    
+
     // Background track (270 degrees: 135 to 405)
     const trackPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     trackPath.setAttribute('class', 'knob-track');
     trackPath.setAttribute('d', describeArc(20, 20, 16, 135, 405));
-    
+
     // Value path
     const valuePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     valuePath.setAttribute('class', 'knob-value');
-    
+
     svg.appendChild(trackPath);
     svg.appendChild(valuePath);
     container.appendChild(svg);
-    
+
     let currentMin = min;
     let currentMax = max;
     let currentStep = step;
     let value = param.base;
-    
+
     const updateVisuals = () => {
         const range = currentMax - currentMin;
         // Clamp value for display
         const displayVal = Math.max(currentMin, Math.min(currentMax, value));
         const pct = range === 0 ? 0 : Math.max(0, Math.min(1, (displayVal - currentMin) / range));
         const endAngle = 135 + (270 * pct);
-        
+
         // If start == end, arc is invalid, handle that
         if (Math.abs(endAngle - 135) < 0.1) {
              valuePath.setAttribute('d', '');
@@ -602,11 +614,11 @@ function createKnob(param, min, max, step, onInput) {
              valuePath.setAttribute('d', describeArc(20, 20, 16, 135, endAngle));
         }
     };
-    
+
     // Drag Logic
     let startY;
     let startVal;
-    
+
     const handleDragStart = (e) => {
         startY = e.clientY || e.touches[0].clientY;
         startVal = value;
@@ -616,7 +628,7 @@ function createKnob(param, min, max, step, onInput) {
         document.addEventListener('touchend', handleDragEnd);
         container.classList.add('active');
     };
-    
+
     const handleDrag = (e) => {
         e.preventDefault(); // Prevent scrolling on touch
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
@@ -624,24 +636,24 @@ function createKnob(param, min, max, step, onInput) {
 
         const deltaY = startY - clientY; // Up is positive
         const range = currentMax - currentMin;
-        
+
         // Sensitivity: full range in 200px?
-        const pxRange = 200; 
+        const pxRange = 200;
         const deltaVal = (deltaY / pxRange) * range;
-        
+
         let newVal = startVal + deltaVal;
         newVal = Math.max(currentMin, Math.min(currentMax, newVal));
-        
+
         // Quantize to step
         if (currentStep) {
             newVal = Math.round(newVal / currentStep) * currentStep;
         }
-        
+
         value = newVal;
         updateVisuals();
         onInput(value);
     };
-    
+
     const handleDragEnd = () => {
         document.removeEventListener('mousemove', handleDrag);
         document.removeEventListener('mouseup', handleDragEnd);
@@ -649,12 +661,12 @@ function createKnob(param, min, max, step, onInput) {
         document.removeEventListener('touchend', handleDragEnd);
         container.classList.remove('active');
     };
-    
+
     container.addEventListener('mousedown', handleDragStart);
     container.addEventListener('touchstart', handleDragStart, { passive: false });
-    
+
     updateVisuals();
-    
+
     return {
         element: container,
         getValue: () => value,
