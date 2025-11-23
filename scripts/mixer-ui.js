@@ -177,7 +177,7 @@ function renderTrackList(tracks, container, kernel) {
     track.parameters.forEach(param => {
       const row = document.createElement('div');
       row.style.display = 'grid';
-      row.style.gridTemplateColumns = '60px 1fr 60px 24px'; // Widened value column for input
+      row.style.gridTemplateColumns = '60px 1fr 24px 60px 24px'; // Added column for fine-tune button
       row.style.alignItems = 'center';
       row.style.gap = '0.5rem';
 
@@ -191,6 +191,7 @@ function renderTrackList(tracks, container, kernel) {
 
       let input;
       let valControl;
+      let fineBtn;
 
       if (param.options && Array.isArray(param.options)) {
         input = document.createElement('select');
@@ -211,14 +212,17 @@ function renderTrackList(tracks, container, kernel) {
           param.base = e.target.value;
         };
         
+        fineBtn = document.createElement('span'); // Placeholder
         valControl = document.createElement('span'); // Placeholder for grid alignment
       } else {
         input = document.createElement('input');
         input.type = 'range';
-        input.min = param.min !== -Infinity ? param.min : 0;
-        input.max = param.max !== Infinity ? param.max : 1000;
+        const originalMin = param.min !== -Infinity ? param.min : 0;
+        const originalMax = param.max !== Infinity ? param.max : 1000;
+        input.min = originalMin;
+        input.max = originalMax;
         
-        const range = input.max - input.min;
+        const range = originalMax - originalMin;
         const normalStep = range > 100 ? 1 : 0.1;
         const fineStep = normalStep / 10;
         
@@ -227,24 +231,50 @@ function renderTrackList(tracks, container, kernel) {
         input.style.width = '100%';
         input.style.cursor = 'pointer';
 
-        // Fine-tune logic: Shift key reduces step size
-        const updateStep = (e) => {
-            input.step = e.shiftKey ? fineStep : normalStep;
+        // Fine-tune Button
+        fineBtn = document.createElement('button');
+        fineBtn.className = 'ghost tiny';
+        fineBtn.innerHTML = '🔍';
+        fineBtn.title = 'Fine Tune Mode';
+        fineBtn.style.padding = '0';
+        fineBtn.style.width = '24px';
+        fineBtn.style.height = '24px';
+        fineBtn.style.opacity = '0.5';
+
+        let isZoomed = false;
+
+        fineBtn.onclick = () => {
+            isZoomed = !isZoomed;
+            fineBtn.style.opacity = isZoomed ? '1' : '0.5';
+            fineBtn.style.color = isZoomed ? 'var(--primary)' : 'var(--text-main)';
+            
+            if (isZoomed) {
+                const currentVal = parseFloat(input.value);
+                const zoomRange = (originalMax - originalMin) * 0.1; // 10% window
+                const newMin = Math.max(originalMin, currentVal - zoomRange / 2);
+                const newMax = Math.min(originalMax, currentVal + zoomRange / 2);
+                
+                input.min = newMin;
+                input.max = newMax;
+                input.step = (newMax - newMin) / 100; // 100 steps in zoomed range
+                
+                // Show limits in tooltip
+                input.title = `Fine Tune: ${newMin.toFixed(1)} - ${newMax.toFixed(1)}`;
+            } else {
+                input.min = originalMin;
+                input.max = originalMax;
+                input.step = normalStep;
+                input.title = '';
+            }
+            // Ensure value is synced
+            input.value = param.base;
         };
-        input.addEventListener('mousedown', updateStep);
-        input.addEventListener('mousemove', updateStep);
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Shift') input.step = fineStep;
-        });
-        input.addEventListener('keyup', (e) => {
-            if (e.key === 'Shift') input.step = normalStep;
-        });
 
         // Number input for direct typing
         valControl = document.createElement('input');
         valControl.type = 'number';
-        valControl.min = input.min;
-        valControl.max = input.max;
+        valControl.min = originalMin;
+        valControl.max = originalMax;
         valControl.step = fineStep;
         valControl.value = param.base < 10 ? param.base.toFixed(2) : Math.round(param.base);
         valControl.style.width = '100%';
@@ -265,12 +295,19 @@ function renderTrackList(tracks, container, kernel) {
         valControl.onchange = (e) => {
             let val = parseFloat(e.target.value);
             if (isNaN(val)) return;
-            if (val < parseFloat(input.min)) val = parseFloat(input.min);
-            if (val > parseFloat(input.max)) val = parseFloat(input.max);
+            if (val < parseFloat(originalMin)) val = parseFloat(originalMin);
+            if (val > parseFloat(originalMax)) val = parseFloat(originalMax);
             
             param.base = val;
             input.value = val;
             valControl.value = val;
+            
+            // If zoomed, re-center zoom around new typed value?
+            if (isZoomed) {
+                 // Re-trigger zoom logic to center around new value
+                 fineBtn.onclick(); // Toggle off
+                 fineBtn.onclick(); // Toggle on (re-centers)
+            }
         };
       }
 
@@ -368,6 +405,7 @@ function renderTrackList(tracks, container, kernel) {
 
       row.appendChild(pLabel);
       row.appendChild(input);
+      row.appendChild(fineBtn);
       row.appendChild(valControl);
       row.appendChild(modBtn);
       paramsDiv.appendChild(row);

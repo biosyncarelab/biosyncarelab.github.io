@@ -1,5 +1,55 @@
 import { loadStructures, STRUCTURE_MANIFEST } from './structures-loader.js';
-import { stateManager, setPath, getPath, subscribePath } from './state-manager.js';
+import { stateManager, setPath, getPath, subscribePath, getShareableURL } from './state-manager.js';
+
+/**
+ * Create a shareable URL for a specific structure
+ * @param {string} structureId - Structure identifier (e.g., "plain_changes_3")
+ * @param {string} category - Category ('curated' or 'comprehensive')
+ * @returns {string} Shareable URL
+ */
+function createStructureShareLink(structureId, category = 'comprehensive') {
+  const state = stateManager.getState();
+  const shareState = {
+    ...state,
+    activeTab: 'structures',
+    structures: {
+      ...state.structures,
+      category: category,
+      structureId: structureId,
+      sequenceId: null,
+      playbackPosition: 0,
+      isPlaying: false,
+    }
+  };
+  return getShareableURL(shareState);
+}
+
+/**
+ * Copy shareable URL to clipboard and show feedback
+ * @param {string} url - URL to copy
+ * @param {HTMLElement} button - Button element for feedback
+ */
+async function copyShareLink(url, button) {
+  try {
+    await navigator.clipboard.writeText(url);
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '✓ Copied!';
+    button.classList.add('success-feedback');
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.classList.remove('success-feedback');
+    }, 2000);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy URL:', err);
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '✗ Failed';
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+    }, 2000);
+    return false;
+  }
+}
 
 // Tab switching logic
 const tabButtons = {
@@ -55,6 +105,17 @@ const structureSelect = document.getElementById('structure-select');
 const statsContainer = document.getElementById('stats-container');
 const sequenceContainer = document.getElementById('sequence-container');
 const additionalDataContainer = document.getElementById('additional-data-container');
+
+// Event delegation for share buttons
+if (sequenceContainer) {
+  sequenceContainer.addEventListener('click', (e) => {
+    const shareBtn = e.target.closest('.share-structure-btn');
+    if (shareBtn) {
+      const shareUrl = shareBtn.getAttribute('data-share-url');
+      copyShareLink(shareUrl, shareBtn);
+    }
+  });
+}
 
 // Color classes for visualization
 const COLORS = [
@@ -305,6 +366,7 @@ function renderSequenceSection(sequence, index) {
 
   let html = '<div class="sequence-container">';
   html += '<div class="sequence-header">';
+  html += '<div class="sequence-title-row">';
   html += `<h3>${sequence.label || sequence.id}`;
 
   // Add RDF indicator badge if structure has RDF metadata
@@ -312,6 +374,12 @@ function renderSequenceSection(sequence, index) {
     html += ` <span class="rdf-badge" title="Enriched with RDF semantic data">🔗 RDF</span>`;
   }
   html += '</h3>';
+
+  // Add share button
+  const category = getPath('structures.category') || 'comprehensive';
+  const shareUrl = createStructureShareLink(sequence.id, category);
+  html += `<button class="share-structure-btn" data-share-url="${shareUrl}" title="Copy shareable link">📋 Share</button>`;
+  html += '</div>';
   html += '</div>';
 
   // Show RDF definition if available (priority over other explanations)
@@ -410,4 +478,101 @@ function renderSequenceSection(sequence, index) {
 // Show empty state initially
 if (sequenceContainer) {
   sequenceContainer.innerHTML = '<div class="empty-state">Select a category and structure to visualize</div>';
+}
+
+/**
+ * Restore state from URL on page load
+ */
+async function restoreStateFromURL() {
+  const state = stateManager.getState();
+
+  // Switch to active tab if specified
+  if (state.activeTab && tabButtons[state.activeTab]) {
+    switchTab(state.activeTab);
+  }
+
+  // Restore structure selection if in structures tab
+  if (state.activeTab === 'structures' && state.structures) {
+    const { category, structureId } = state.structures;
+
+    if (category && categorySelect) {
+      // Set category
+      categorySelect.value = category;
+
+      // Trigger category change to load structure options
+      if (category === 'curated') {
+        const curatedManifest = STRUCTURE_MANIFEST.filter(
+          entry => entry.id !== 'music-structures-comprehensive'
+        );
+        structureSelect.innerHTML = '<option value="">Choose a structure...</option>';
+        curatedManifest.forEach(entry => {
+          const option = document.createElement('option');
+          option.value = entry.id;
+          option.textContent = entry.label;
+          structureSelect.appendChild(option);
+        });
+        structureSelectGroup.style.display = 'block';
+        structureSelect.disabled = false;
+
+        // Load the specific structure if specified
+        if (structureId) {
+          const entry = STRUCTURE_MANIFEST.find(m => m.id === structureId);
+          if (entry) {
+            try {
+              const data = await loadStructures(entry.url, entry);
+              visualizeCuratedStructure(data);
+              // Set select value after loading
+              structureSelect.value = structureId;
+            } catch (err) {
+              console.error('Failed to restore structure:', err);
+            }
+          }
+        }
+      } else if (category === 'comprehensive') {
+        try {
+          const data = await loadStructures('data/structures/music-structures-comprehensive.json', {
+            rdfUrl: 'rdf/modules/music-structures.ttl'
+          });
+          currentData = data;
+
+          structureSelect.innerHTML = '<option value="">Choose a structure...</option>';
+
+          if (data.sequences && data.sequences.length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = 'Change-Ringing Sequences';
+            data.sequences.forEach(seq => {
+              const option = document.createElement('option');
+              option.value = 'seq:' + seq.id;
+              option.textContent = `${seq.label} (${seq.orderDimension} bells, ${seq.rows?.length || 0} rows)`;
+              optgroup.appendChild(option);
+            });
+            structureSelect.appendChild(optgroup);
+          }
+
+          structureSelectGroup.style.display = 'block';
+          structureSelect.disabled = false;
+
+          // Load the specific structure if specified
+          if (structureId) {
+            const sequence = data.sequences?.find(seq => seq.id === structureId);
+            if (sequence) {
+              visualizeSequence(sequence);
+              // Set select value after loading
+              structureSelect.value = 'seq:' + structureId;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to restore comprehensive structures:', err);
+        }
+      }
+    }
+  }
+}
+
+// Restore state on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', restoreStateFromURL);
+} else {
+  // DOM already loaded
+  restoreStateFromURL();
 }
