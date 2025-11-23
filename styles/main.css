@@ -2067,3 +2067,44 @@ select {
   background: #0f172a;
   color: var(--text);
 }
+
+.mod-depth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 42px;
+  text-align: center;
+  transition: opacity 0.2s ease;
+}
+
+.mod-depth .knob-container {
+  width: 40px;
+  height: 40px;
+}
+
+.mod-depth .mod-depth-value {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.mod-depth.inactive {
+  opacity: 0.6;
+}
+
+.mod-depth.inactive .knob-value {
+  stroke: var(--muted);
+}
+
+.mod-depth.inactive .knob-track {
+  stroke: rgba(148, 163, 184, 0.35);
+}
+
+.mod-depth.active .mod-depth-value {
+  color: var(--primary);
+}
+
+.mod-depth.active .knob-value {
+  stroke: var(--primary);
+}

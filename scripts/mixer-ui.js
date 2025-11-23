@@ -310,105 +310,102 @@ function renderTrackList(tracks, container, kernel) {
         };
       }
 
-      // Martigli Modulation Button
-      const modBtn = document.createElement('button');
-      modBtn.className = 'ghost tiny';
-      modBtn.innerHTML = '≈'; // Wave icon
-      modBtn.title = 'Modulate with Martigli';
-      modBtn.style.padding = '0';
-      modBtn.style.width = '24px';
-      modBtn.style.height = '24px';
-      modBtn.style.opacity = param._modulator ? '1' : '0.3';
-      modBtn.style.color = param._modulator ? 'var(--primary)' : 'var(--muted)';
+      // Martigli Modulation Depth (Knob replaces toggle)
+      if (typeof param.depth !== 'number') param.depth = 0;
 
-      // Container for modulation controls (hidden by default)
-      const modControls = document.createElement('div');
-      modControls.className = 'mod-controls';
-      modControls.style.gridColumn = '1 / -1';
-      modControls.style.display = param._modulator ? 'grid' : 'none';
-      modControls.style.gridTemplateColumns = 'auto 1fr auto';
-      modControls.style.gap = '0.5rem';
-      modControls.style.padding = '0.5rem';
-      modControls.style.background = 'rgba(0,0,0,0.2)';
-      modControls.style.borderRadius = '4px';
-      modControls.style.marginTop = '0.25rem';
-      modControls.style.fontSize = '0.75rem';
+      const rawDepthRange = (Number.isFinite(param.max) && Number.isFinite(param.min))
+        ? Math.abs(param.max - param.min) / 2
+        : 100;
+      const depthMax = (!Number.isFinite(rawDepthRange) || rawDepthRange <= 0) ? 100 : rawDepthRange;
+      const depthStep = depthMax / 100 || 1;
 
-      // Depth Slider
-      const depthLabel = document.createElement('span');
-      depthLabel.textContent = 'Depth:';
+      const depthWrapper = document.createElement('div');
+      depthWrapper.className = 'mod-depth inactive';
+      depthWrapper.title = 'Martigli modulation depth';
 
-      const depthInput = document.createElement('input');
-      depthInput.type = 'range';
-      depthInput.min = 0;
-      depthInput.max = (param.max - param.min) / 2; // Heuristic for depth range
-      if (depthInput.max === Infinity) depthInput.max = 100;
-      depthInput.step = depthInput.max / 100;
-      depthInput.value = param.depth;
-      depthInput.style.width = '100%';
+      const depthValue = document.createElement('span');
+      depthValue.className = 'mod-depth-value';
+      depthValue.textContent = param.depth.toFixed(1);
 
-      const depthVal = document.createElement('span');
-      depthVal.textContent = param.depth.toFixed(1);
+      let depthKnob;
+      let knobValuePath;
 
-      depthInput.oninput = (e) => {
-        const val = parseFloat(e.target.value);
-        param.depth = val;
-        depthVal.textContent = val.toFixed(1);
+      const ensureMartigliBinding = () => {
+        if (param._modulator) return true;
+        if (!kernel.martigli) {
+          console.warn("No Martigli engine available");
+          return false;
+        }
+        const oscId = kernel.martigli.referenceId;
+        const osc = oscId ? kernel.martigli._oscillations.get(oscId) : null;
+        if (!osc) {
+          console.warn("No active Martigli oscillator found");
+          return false;
+        }
+
+        const modulator = {
+          id: oscId,
+          getValue: (time) => (typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0)
+        };
+
+        param.bind(modulator);
+        return true;
       };
 
-      modControls.appendChild(depthLabel);
-      modControls.appendChild(depthInput);
-      modControls.appendChild(depthVal);
+      const deactivateModulation = () => {
+        if (param._modulator) param.unbind();
+      };
 
-      modBtn.onclick = () => {
-        if (param._modulator) {
-          param.unbind();
-          modBtn.style.opacity = '0.3';
-          modBtn.style.color = 'var(--muted)';
-          modControls.style.display = 'none';
-        } else {
-          // Connect to actual Martigli instance
-          if (kernel.martigli) {
-            const oscId = kernel.martigli.referenceId;
-            const osc = oscId ? kernel.martigli._oscillations.get(oscId) : null;
-
-            if (osc) {
-              const modulator = {
-                id: oscId, // Ensure ID is captured for serialization
-                getValue: (time) => {
-                  // AudioEngine now passes absolute time, so we can use it directly
-                  return typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0;
-                }
-              };
-
-              param.bind(modulator);
-              // Set default depth if 0
-              if (param.depth === 0) {
-                  param.depth = (param.max - param.min) * 0.1; // 10% default depth
-                  if (!isFinite(param.depth)) param.depth = 10;
-                  depthInput.value = param.depth;
-                  depthVal.textContent = param.depth.toFixed(1);
-              }
-
-              modBtn.style.opacity = '1';
-              modBtn.style.color = 'var(--primary)';
-              modControls.style.display = 'grid';
-            } else {
-              console.warn("No active Martigli oscillator found");
-              modBtn.style.color = 'var(--text-error)';
-              setTimeout(() => modBtn.style.color = 'var(--muted)', 1000);
-            }
-          }
+      const updateDepthVisual = (value) => {
+        const isActive = value > 0 && !!param._modulator;
+        depthWrapper.classList.toggle('active', isActive);
+        depthWrapper.classList.toggle('inactive', !isActive);
+        depthValue.style.color = isActive ? 'var(--primary)' : 'var(--muted)';
+        if (knobValuePath) {
+          knobValuePath.style.stroke = isActive ? 'var(--primary)' : 'var(--muted)';
         }
       };
+
+      const handleDepthChange = (rawVal) => {
+        const val = Math.max(0, Number(rawVal) || 0);
+
+        if (val === 0) {
+          param.depth = 0;
+          depthValue.textContent = '0.0';
+          deactivateModulation();
+          if (depthKnob) depthKnob.setValue(0);
+          updateDepthVisual(0);
+          return;
+        }
+
+        if (!ensureMartigliBinding()) {
+          param.depth = 0;
+          depthValue.textContent = '0.0';
+          if (depthKnob) depthKnob.setValue(0);
+          updateDepthVisual(0);
+          return;
+        }
+
+        param.depth = val;
+        depthValue.textContent = val.toFixed(1);
+        updateDepthVisual(val);
+      };
+
+      depthKnob = createKnob({ base: param.depth }, 0, depthMax, depthStep, handleDepthChange);
+      depthKnob.element.classList.add('mod-depth-knob');
+      knobValuePath = depthKnob.element.querySelector('.knob-value');
+
+      depthWrapper.appendChild(depthKnob.element);
+      depthWrapper.appendChild(depthValue);
+
+      updateDepthVisual(param.depth);
 
       row.appendChild(pLabel);
       row.appendChild(input);
       row.appendChild(fineBtn);
       row.appendChild(valControl);
-      row.appendChild(modBtn);
+      row.appendChild(depthWrapper);
       paramsDiv.appendChild(row);
-      paramsDiv.appendChild(modControls);
     });
 
     // Visual Preview
