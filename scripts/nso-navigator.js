@@ -175,6 +175,8 @@ const ui = {
   layoutSelector: document.getElementById("layout-selector"),
   toggleProperties: document.getElementById("toggle-properties"),
   propertiesToggleText: document.getElementById("properties-toggle-text"),
+  filterPanel: document.getElementById("filter-panel"),
+  filterToggle: document.getElementById("toggle-filter-panel"),
   edgeFilters: document.getElementById("edge-filters"),
   filterObject: document.getElementById("filter-object"),
   filterData: document.getElementById("filter-data"),
@@ -589,15 +591,35 @@ const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
           uri === skosRelated || uri === skosBroader || uri === skosNarrower) {
         continue; // Skip creating node AND skip storing as property
       }
-      // Store object properties separately - they will become edges
       objectProperties.set(uri, resource);
-      console.log('Storing object property for edge creation:', uri);
-      continue; // Skip creating node
+
+      elements.push({
+        data: {
+          id: uri,
+          label: resource.label || getLocalName(uri),
+          type: "objectProperty",
+          color: "#a78bfa",
+          resource: resource
+        },
+      });
+      nodeMap.add(uri);
+      console.log('Created object property node:', uri);
+      continue;
     } else if (resource.types.includes(datatypePropertyURI)) {
-      // Store datatype properties separately - they will become edges
       datatypeProperties.set(uri, resource);
-      console.log('Storing datatype property for edge creation:', uri);
-      continue; // Skip creating node
+
+      elements.push({
+        data: {
+          id: uri,
+          label: resource.label || getLocalName(uri),
+          type: "datatypeProperty",
+          color: "#fb923c",
+          resource: resource
+        },
+      });
+      nodeMap.add(uri);
+      console.log('Created datatype property node:', uri);
+      continue;
     } else if (resource.types.includes(conceptURI)) {
       nodeType = "concept";
       color = "#22d3ee"; // cyan
@@ -1091,6 +1113,17 @@ function initCytoscape(elements) {
     }
 
     if (target && target.length > 0) {
+      const targetType = target.data("type");
+      if ((targetType === "objectProperty" || targetType === "datatypeProperty") && !showPropertiesAsNodes) {
+        showPropertiesAsNodes = true;
+        if (ui.propertiesToggleText) {
+          ui.propertiesToggleText.textContent = "Hide Properties";
+        }
+        if (ui.filterObject) ui.filterObject.checked = true;
+        if (ui.filterData) ui.filterData.checked = true;
+        updatePropertyVisualization();
+      }
+
       cy.animate({
         fit: {
           eles: target,
@@ -2711,6 +2744,23 @@ ui.layoutSelector.addEventListener("change", (e) => {
     updateURLState(currentURI);
   }
 });
+
+if (ui.filterToggle && ui.filterPanel) {
+  const applyFilterPanelState = (collapsed) => {
+    ui.filterPanel.classList.toggle("collapsed", collapsed);
+    document.body.classList.toggle("filters-hidden", collapsed);
+    ui.filterToggle.textContent = collapsed ? "Show Filters" : "Hide Filters";
+    ui.filterToggle.setAttribute("aria-expanded", String(!collapsed));
+  };
+
+  // Initialize state
+  applyFilterPanelState(false);
+
+  ui.filterToggle.addEventListener("click", () => {
+    const collapsed = !ui.filterPanel.classList.contains("collapsed");
+    applyFilterPanelState(collapsed);
+  });
+}
 
 if (ui.evidenceLevelSlider) {
   ui.evidenceLevelSlider.addEventListener("input", () => {

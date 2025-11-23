@@ -10,10 +10,40 @@
   </head>
   <body class="nso-body">
     <header class="nso-header">
-      <div class="nso-header-content">
-        <h1>NSO Navigator</h1>
-        <p class="muted-text">Neurosensory Stimulation Ontology Browser</p>
+      <div class="nso-title-row">
+        <div class="nso-header-content">
+          <h1>NSO Navigator</h1>
+          <p class="muted-text">Neurosensory Stimulation Ontology Browser</p>
+        </div>
+        <div class="nso-title-actions">
+          <select id="layout-selector" class="layout-selector" title="Choose a layout for the graph">
+            <option value="cose">Force-Directed (COSE)</option>
+            <option value="circle">Circle</option>
+            <option value="concentric">Concentric</option>
+            <option value="breadthfirst">Breadth-First Tree</option>
+            <option value="grid">Grid</option>
+            <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
+          </select>
+          <button type="button" id="reset-view" class="ghost small">Reset View</button>
+          <button
+            type="button"
+            id="toggle-filter-panel"
+            class="ghost small"
+            aria-controls="filter-panel"
+            aria-expanded="true"
+          >
+            Hide Filters
+          </button>
+          <button type="button" id="toggle-properties" class="ghost small">
+            <span id="properties-toggle-text">Hide Properties</span>
+          </button>
+          <button type="button" id="select-all-filters" class="ghost small">Select All</button>
+          <button type="button" id="invert-filters" class="ghost small">Invert</button>
+          <button type="button" id="reset-filters" class="ghost small">Reset Filters</button>
+          <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
+        </div>
       </div>
+
       <div class="nso-header-controls">
         <select id="ontology-selector" class="ontology-selector" title="Select an ontology to visualize">
           <optgroup label="━━━ Main Ontologies ━━━">
@@ -70,21 +100,12 @@
           </optgroup>
         </select>
         <div id="ontology-description" class="ontology-description" style="font-size: 0.85em; color: #666; margin-top: 4px; max-width: 600px;"></div>
-        <select id="layout-selector" class="layout-selector">
-          <option value="cose">Force-Directed (COSE)</option>
-          <option value="circle">Circle</option>
-          <option value="concentric">Concentric</option>
-          <option value="breadthfirst">Breadth-First Tree</option>
-          <option value="grid">Grid</option>
-          <option value="cose-bilkent">COSE-Bilkent (Compound)</option>
-        </select>
-        <button type="button" id="reset-view" class="ghost small">Reset View</button>
-        <a href="index.html" class="ghost small" style="text-decoration: none; display: inline-block; line-height: 1">Back to Dashboard</a>
       </div>
     </header>
 
+    <main class="nso-main">
     <!-- Inline Semantic & Edge Filters Row -->
-    <div class="filter-row">
+    <section id="filter-panel" class="filter-row" aria-label="Ontology filters">
       <div class="filter-block">
         <div class="filter-label">📊 Evidence</div>
         <div class="filter-control">
@@ -178,17 +199,7 @@
           </label>
         </div>
       </div>
-
-      <div class="filter-block">
-        <div class="filter-label">⚙️ View</div>
-        <button type="button" id="toggle-properties" class="ghost small">
-          <span id="properties-toggle-text">Hide Properties</span>
-        </button>
-        <button type="button" id="select-all-filters" class="ghost small">Select All</button>
-        <button type="button" id="invert-filters" class="ghost small">Invert</button>
-        <button type="button" id="reset-filters" class="ghost small">Reset Filters</button>
-      </div>
-    </div>
+    </section>
     <div id="filter-status" class="filter-status" aria-live="polite"></div>
 
     <div class="nso-container">
@@ -245,7 +256,7 @@
         </div>
       </aside>
 
-      <main class="graph-container">
+      <section class="graph-container" aria-label="Ontology graph">
         <div id="cy-canvas" class="cy-canvas"></div>
 
         <div class="graph-legend">
@@ -299,8 +310,10 @@
         <div id="error-message" class="error-message hidden">
           <p id="error-text"></p>
         </div>
-      </main>
+      </section>
     </div>
+
+    </main>
 
     <script type="module" src="scripts/nso-navigator.js?v=1.1"></script>
   </body>
