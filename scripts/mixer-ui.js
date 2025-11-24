@@ -376,135 +376,190 @@ function renderTrackList(tracks, container, kernel) {
       const depthMax = (!Number.isFinite(rawDepthRange) || rawDepthRange <= 0) ? 100 : rawDepthRange;
       const depthStep = depthMax / 100 || 1;
 
-      const modulationSection = document.createElement('div');
-      modulationSection.className = 'track-param-modulations';
+      const modInline = document.createElement('div');
+      modInline.className = 'track-mod-inline';
 
-      const modHeader = document.createElement('div');
-      modHeader.className = 'track-param-modulations-head';
+      const modInlineHead = document.createElement('div');
+      modInlineHead.className = 'track-mod-inline-head';
       const modLabel = document.createElement('span');
-      modLabel.textContent = 'Modulators';
-      modHeader.appendChild(modLabel);
+      modLabel.textContent = 'mod';
+      modInlineHead.appendChild(modLabel);
 
       const addModBtn = document.createElement('button');
       addModBtn.type = 'button';
       addModBtn.className = 'ghost tiny add-modulator-btn';
       addModBtn.textContent = '+';
-      addModBtn.title = 'Add modulator';
-      modHeader.appendChild(addModBtn);
-      modulationSection.appendChild(modHeader);
+      addModBtn.title = martigliOscillations.length ? 'Add modulator' : 'No Martigli oscillations available';
+      addModBtn.disabled = martigliOscillations.length === 0;
+      modInlineHead.appendChild(addModBtn);
+      modInline.appendChild(modInlineHead);
 
-      const modList = document.createElement('div');
-      modList.className = 'track-param-modulation-list';
-      modulationSection.appendChild(modList);
+      const modChipList = document.createElement('div');
+      modChipList.className = 'track-mod-chip-list';
+      modInline.appendChild(modChipList);
+
+      controlsRow.appendChild(modInline);
+
+      const renderModChip = (slot) => {
+        const chip = document.createElement('div');
+        chip.className = 'track-mod-chip';
+        chip.dataset.slotId = slot.slotId;
+
+        const syncChipState = () => {
+          chip.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
+        };
+
+        const chipHead = document.createElement('div');
+        chipHead.className = 'track-mod-chip-head';
+
+        const modSelect = document.createElement('select');
+        modSelect.className = 'track-modulation-select';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = martigliOscillations.length ? 'choose mod…' : 'no Martigli waves';
+        modSelect.appendChild(placeholder);
+
+        const available = getAvailableModulators();
+        available.forEach((entry) => {
+          const option = document.createElement('option');
+          option.value = entry.id;
+          option.textContent = entry.label;
+          if (slot.modulatorId === entry.id) option.selected = true;
+          modSelect.appendChild(option);
+        });
+        modSelect.disabled = !available.length;
+        modSelect.onchange = (e) => {
+          const targetId = e.target.value;
+          if (!targetId) {
+            slot.source = null;
+            slot.modulatorId = null;
+            syncChipState();
+            return;
+          }
+          const picked = available.find((entry) => entry.id === targetId);
+          if (picked) {
+            param.attachModulator(slot.slotId, picked.source, { type: picked.type, label: picked.label });
+            syncChipState();
+          }
+        };
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'ghost tiny remove-modulator-btn';
+        removeBtn.textContent = '×';
+        removeBtn.title = 'Remove modulator';
+        removeBtn.onclick = () => {
+          param.unbind(slot.slotId);
+          refreshModList();
+        };
+
+        chipHead.appendChild(modSelect);
+        chipHead.appendChild(removeBtn);
+
+        const chipBody = document.createElement('div');
+        chipBody.className = 'track-mod-chip-body';
+
+        const depthStack = document.createElement('div');
+        depthStack.className = 'knob-stack';
+
+        let depthInput;
+        const depthKnob = createKnob({ base: slot.depth }, 0, depthMax, depthStep, (value) => {
+          const nextVal = Math.max(0, value);
+          param.setModulationDepth(slot.slotId, nextVal);
+          slot.depth = nextVal;
+          if (depthInput) depthInput.value = nextVal.toFixed(2);
+          if (isZoomed) {
+            applyDepthZoom();
+          }
+          syncChipState();
+        });
+        depthKnob.element.classList.add('mod-depth-knob');
+
+        const depthInputWrapper = document.createElement('div');
+        depthInputWrapper.className = 'knob-value-field';
+        depthInput = document.createElement('input');
+        depthInput.type = 'number';
+        depthInput.className = 'knob-value-input';
+        depthInput.step = depthStep;
+        depthInput.min = 0;
+        depthInput.max = depthMax;
+        depthInput.value = slot.depth.toFixed(2);
+        depthInput.onchange = (e) => {
+          let nextVal = parseFloat(e.target.value);
+          if (!Number.isFinite(nextVal)) nextVal = 0;
+          if (nextVal < 0) nextVal = 0;
+          if (nextVal > depthMax) nextVal = depthMax;
+          param.setModulationDepth(slot.slotId, nextVal);
+          slot.depth = nextVal;
+          depthKnob.setValue(nextVal);
+          depthInput.value = nextVal.toFixed(2);
+          if (isZoomed) {
+            applyDepthZoom();
+          }
+          syncChipState();
+        };
+        depthInputWrapper.appendChild(depthInput);
+
+        depthStack.appendChild(depthKnob.element);
+        depthStack.appendChild(depthInputWrapper);
+
+        const modFineBtn = document.createElement('button');
+        modFineBtn.type = 'button';
+        modFineBtn.className = 'ghost tiny fine-tune-btn';
+        modFineBtn.innerHTML = '🔍';
+        modFineBtn.title = 'Fine Tune Mode';
+
+        let isZoomed = false;
+        const applyDepthZoom = () => {
+          const currentVal = depthKnob.getValue();
+          const windowSize = Math.max(depthMax * 0.2, depthStep * 20);
+          const newMin = Math.max(0, currentVal - windowSize / 2);
+          const newMax = Math.min(depthMax, currentVal + windowSize / 2);
+          const zoomStep = Math.max((newMax - newMin) / 100, depthStep / 5);
+          depthKnob.setRange(newMin, newMax, zoomStep);
+          depthKnob.element.title = `Fine Tune: ${newMin.toFixed(2)} - ${newMax.toFixed(2)}`;
+        };
+
+        const resetDepthZoom = () => {
+          depthKnob.setRange(0, depthMax, depthStep);
+          depthKnob.element.title = 'Drag up/down to adjust';
+        };
+
+        modFineBtn.onclick = () => {
+          isZoomed = !isZoomed;
+          modFineBtn.classList.toggle('active', isZoomed);
+          if (isZoomed) {
+            applyDepthZoom();
+          } else {
+            resetDepthZoom();
+          }
+          depthKnob.setValue(slot.depth);
+        };
+
+        chipBody.appendChild(depthStack);
+        chipBody.appendChild(modFineBtn);
+
+        chip.appendChild(chipHead);
+        chip.appendChild(chipBody);
+        syncChipState();
+        return chip;
+      };
 
       const refreshModList = () => {
-        modList.innerHTML = '';
+        modChipList.innerHTML = '';
+        addModBtn.disabled = martigliOscillations.length === 0;
+        addModBtn.title = addModBtn.disabled ? 'No Martigli oscillations available' : 'Add modulator';
+
         if (!Array.isArray(param.modulations) || !param.modulations.length) {
           const empty = document.createElement('p');
-          empty.className = 'track-param-modulation-empty';
-          empty.textContent = 'No modulators';
-          modList.appendChild(empty);
+          empty.className = 'track-mod-inline-empty';
+          empty.textContent = martigliOscillations.length ? 'Add mod' : 'No Martigli waves yet';
+          modChipList.appendChild(empty);
           return;
         }
 
         param.modulations.forEach((slot) => {
-          const modRow = document.createElement('div');
-          modRow.className = 'track-param-modulation-row';
-          modRow.dataset.slotId = slot.slotId;
-          const syncRowState = () => {
-            modRow.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
-          };
-
-          const modSelect = document.createElement('select');
-          modSelect.className = 'track-modulation-select';
-          const placeholder = document.createElement('option');
-          placeholder.value = '';
-          placeholder.textContent = martigliOscillations.length ? 'Select modulator…' : 'No Martigli oscillators';
-          modSelect.appendChild(placeholder);
-
-          const available = getAvailableModulators();
-          available.forEach((entry) => {
-            const option = document.createElement('option');
-            option.value = entry.id;
-            option.textContent = entry.label;
-            if (slot.modulatorId === entry.id) option.selected = true;
-            modSelect.appendChild(option);
-          });
-          modSelect.disabled = !available.length;
-
-          modSelect.onchange = (e) => {
-            const targetId = e.target.value;
-            if (!targetId) {
-              slot.source = null;
-              slot.modulatorId = null;
-              syncRowState();
-              return;
-            }
-            const picked = available.find((entry) => entry.id === targetId);
-            if (picked) {
-              param.attachModulator(slot.slotId, picked.source, { type: picked.type, label: picked.label });
-              syncRowState();
-            }
-          };
-
-          const modControls = document.createElement('div');
-          modControls.className = 'track-modulation-controls';
-
-          const depthStack = document.createElement('div');
-          depthStack.className = 'knob-stack';
-
-          let depthInput;
-          const depthKnob = createKnob({ base: slot.depth }, 0, depthMax, depthStep, (value) => {
-            const nextVal = Math.max(0, value);
-            param.setModulationDepth(slot.slotId, nextVal);
-            if (depthInput) depthInput.value = nextVal.toFixed(2);
-            slot.depth = nextVal;
-            syncRowState();
-          });
-          depthKnob.element.classList.add('mod-depth-knob');
-
-          const depthInputWrapper = document.createElement('div');
-          depthInputWrapper.className = 'knob-value-field';
-          depthInput = document.createElement('input');
-          depthInput.type = 'number';
-          depthInput.className = 'knob-value-input';
-          depthInput.step = depthStep;
-          depthInput.min = 0;
-          depthInput.max = depthMax;
-          depthInput.value = slot.depth.toFixed(2);
-          depthInput.onchange = (e) => {
-            let nextVal = parseFloat(e.target.value);
-            if (!Number.isFinite(nextVal)) nextVal = 0;
-            if (nextVal < 0) nextVal = 0;
-            if (nextVal > depthMax) nextVal = depthMax;
-            param.setModulationDepth(slot.slotId, nextVal);
-            slot.depth = nextVal;
-            depthKnob.setValue(nextVal);
-            depthInput.value = nextVal.toFixed(2);
-            syncRowState();
-          };
-          depthInputWrapper.appendChild(depthInput);
-
-          depthStack.appendChild(depthKnob.element);
-          depthStack.appendChild(depthInputWrapper);
-
-          const removeBtn = document.createElement('button');
-          removeBtn.type = 'button';
-          removeBtn.className = 'ghost tiny remove-modulator-btn';
-          removeBtn.textContent = '×';
-          removeBtn.title = 'Remove modulator';
-          removeBtn.onclick = () => {
-            param.unbind(slot.slotId);
-            refreshModList();
-          };
-
-          modControls.appendChild(depthStack);
-          modControls.appendChild(removeBtn);
-
-          modRow.appendChild(modSelect);
-          modRow.appendChild(modControls);
-          syncRowState();
-          modList.appendChild(modRow);
+          modChipList.appendChild(renderModChip(slot));
         });
       };
 
@@ -528,7 +583,6 @@ function renderTrackList(tracks, container, kernel) {
 
       row.appendChild(headerRow);
       row.appendChild(controlsRow);
-      row.appendChild(modulationSection);
       paramsDiv.appendChild(row);
     });
 
