@@ -101,16 +101,16 @@ function createSessionFromExample(exampleData) {
   // Create audio tracks for audio or mixed examples
   if (exampleCategory === 'audio' || exampleCategory === 'mixed') {
     // Parse track mapping to extract audio configuration
-    // Common patterns: "bells 1-3 map to frequency sweeps", "Structure drives timing"
     const hasFrequencySweep = /frequency|sweep|tone/i.test(trackMapping);
     const hasBinaural = /binaural/i.test(trackMapping);
     const hasIsochronic = /isochronic|pulse/i.test(trackMapping);
 
-    if (hasFrequencySweep || hasBinaural || hasIsochronic || exampleCategory === 'audio') {
-      // Determine track type and parameters based on patterns
+    if (hasFrequencySweep || hasBinaural || hasIsochronic || exampleCategory === 'audio' || exampleCategory === 'mixed') {
+      // Determine track type based on RDF patterns or intelligent defaults
       let trackType, params;
 
       if (hasBinaural) {
+        // Explicitly mentioned binaural in RDF
         trackType = 'BinauralBeatTrack';
         params = {
           frequency: 432,
@@ -119,6 +119,7 @@ function createSessionFromExample(exampleData) {
           waveform: 'sine'
         };
       } else if (hasIsochronic) {
+        // Explicitly mentioned isochronic in RDF
         trackType = 'IsochronicTrack';
         params = {
           frequency: 432,
@@ -127,11 +128,23 @@ function createSessionFromExample(exampleData) {
           dutyCycle: 0.5,
           waveform: 'sine'
         };
-      } else {
-        trackType = 'SineTrack';
+      } else if (exampleCategory === 'mixed') {
+        // Mixed examples default to binaural beats (audiovisual entrainment)
+        trackType = 'BinauralBeatTrack';
         params = {
           frequency: 432,
           gain: 0.3,
+          beat: 10, // 10 Hz alpha waves for mixed stimulation
+          waveform: 'sine'
+        };
+      } else {
+        // Pure audio examples default to isochronic tones
+        trackType = 'IsochronicTrack';
+        params = {
+          frequency: 528, // 528 Hz "love frequency"
+          gain: 0.3,
+          pulseRate: 4, // 4 Hz theta waves
+          dutyCycle: 0.5,
           waveform: 'sine'
         };
       }
