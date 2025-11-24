@@ -761,10 +761,14 @@ function renderSequenceSection(sequence, index) {
       html += `<div class="usage-example-footer">`;
 
       // Try This Example button - stores all data needed for session creation
+      // Get category and sequenceId from state (for curated structures)
+      const currentCategory = getPath('structures.category') || 'comprehensive';
+      const currentSequenceId = getPath('structures.sequenceId');
+
       const exampleData = JSON.stringify({
         structureId: sequence.id,
-        category: structureData.category || 'comprehensive',
-        sequenceId: structureData.sequenceId || null,
+        category: currentCategory,
+        sequenceId: currentSequenceId,
         example: example,
         structureName: sequence.label || sequence.name || sequence.id
       }).replace(/"/g, '&quot;');
