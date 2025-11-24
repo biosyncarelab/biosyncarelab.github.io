@@ -83,8 +83,6 @@ const tabPanels = {
 const labTabs = document.getElementById('lab-tabs');
 
 function switchTab(tabName) {
-  console.log('🔄 Switching to tab:', tabName);
-
   // Update state
   setPath('activeTab', tabName);
 
@@ -98,13 +96,9 @@ function switchTab(tabName) {
 
   // Update tab panels
   Object.entries(tabPanels).forEach(([name, panel]) => {
-    if (!panel) {
-      console.warn(`Panel not found: ${name}`);
-      return;
-    }
+    if (!panel) return;
     const isActive = name === tabName;
     panel.classList.toggle('hidden', !isActive);
-    console.log(`Panel ${name}: ${isActive ? 'VISIBLE' : 'hidden'}`);
   });
 
   // Trigger resize to ensure charts/graphs render correctly

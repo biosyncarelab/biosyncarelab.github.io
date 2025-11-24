@@ -146,7 +146,8 @@ let currentOntology =
 let currentLayout = requestedLayout || "cose";
 // Default to CognitiveOutcome if no concept requested
 let pendingConceptFocus = requestedConcept || "https://biosyncarelab.github.io/ont#CognitiveOutcome";
-let showPropertiesAsNodes = true;
+let pendingConceptLabel = pendingConceptFocus;
+let showPropertiesAsNodes = false;
 let initialPanZoom = {
   zoom: requestedView.zoom ? parseFloat(requestedView.zoom) : null,
   pan: {
@@ -207,6 +208,10 @@ const ui = {
   error: document.getElementById("error-message"),
   errorText: document.getElementById("error-text"),
 };
+
+if (ui.propertiesToggleText) {
+  ui.propertiesToggleText.textContent = showPropertiesAsNodes ? "Hide Properties" : "Show Properties";
+}
 
 // Auth state listener
 onAuthStateChanged(auth, (user) => {
@@ -768,6 +773,7 @@ const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
               style: "solid",
               width: 2,
               predicate: propertyURI,
+              resource: propertyResource,
             },
           });
           console.log('Created object property edge:', domainURI, '->', rangeURI, 'via', getLocalName(propertyURI));
@@ -854,6 +860,7 @@ const skosNarrower = "http://www.w3.org/2004/02/skos/core#narrower";
               style: "dashed",
               width: 2,
               predicate: propertyURI,
+              resource: propertyResource,
             },
           });
           console.log('Created datatype property edge:', domainURI, '->', rangeURI, 'via', getLocalName(propertyURI));
@@ -1019,6 +1026,15 @@ function initCytoscape(elements) {
         },
       },
       {
+        selector: "edge:selected",
+        style: {
+          "line-color": "#fbbf24",
+          "target-arrow-color": "#fbbf24",
+          width: 4,
+          "line-style": "solid",
+        },
+      },
+      {
         selector: "node:selected",
         style: {
           "border-width": 4,
@@ -1029,9 +1045,22 @@ function initCytoscape(elements) {
     layout: getLayoutConfig(currentLayout),
   });
 
+  const isPropertyNode = (node) => {
+    if (!node || node.empty()) return false;
+    const type = node.data("type");
+    return type === "objectProperty" || type === "datatypeProperty";
+  };
+
   // Node click handler
   cy.on("tap", "node", (evt) => {
     const node = evt.target;
+    if (isPropertyNode(node)) {
+      const edge = findPropertyEdgeByPredicate(node.id());
+      if (edge && edge.length > 0) {
+        focusPropertyEdge(edge);
+        return;
+      }
+    }
     const resource = node.data("resource");
     showURIInspector(resource);
   });
@@ -1059,6 +1088,8 @@ function initCytoscape(elements) {
   if (pendingConceptFocus) {
     setTimeout(focusConceptIfNeeded, 300);
   }
+
+  updatePropertyVisualization();
 
   // Expose navigation function globally
   window.biosyncare = window.biosyncare || {};
@@ -1098,8 +1129,31 @@ function initCytoscape(elements) {
     };
 
     target = resolveNode(targetUri);
+    let targetEdge = findPropertyEdgeByPredicate(targetUri);
 
-    if (!target || target.length === 0) {
+    if (target && isPropertyNode(target)) {
+      const edgeForNode = findPropertyEdgeByPredicate(target.id());
+      if (edgeForNode && edgeForNode.length > 0) {
+        targetEdge = edgeForNode;
+        target = null;
+      }
+    }
+
+    if ((!target || target.length === 0) && (!targetEdge || targetEdge.length === 0) && currentOntology !== 'bsc-consolidated') {
+      pendingConceptFocus = targetUri || targetLabel || null;
+      pendingConceptLabel = targetLabel || targetUri || pendingConceptFocus;
+      const consolidatedOption = 'bsc-consolidated';
+      if (ui.ontologySelector) {
+        ui.ontologySelector.value = consolidatedOption;
+        const changeEvent = new Event('change', { bubbles: true });
+        ui.ontologySelector.dispatchEvent(changeEvent);
+      } else {
+        loadOntology(consolidatedOption);
+      }
+      return;
+    }
+
+    if ((!target || target.length === 0) && (!targetEdge || targetEdge.length === 0)) {
       const term = (targetLabel || targetUri || '').toLowerCase();
       if (term) {
         const nodes = cy.nodes();
@@ -1109,21 +1163,27 @@ function initCytoscape(elements) {
           const id = data.id ? data.id.toLowerCase() : '';
           return label.includes(term) || id.includes(term);
         }).first();
+
+        if (target && isPropertyNode(target)) {
+          const edgeForNode = findPropertyEdgeByPredicate(target.id());
+          if (edgeForNode && edgeForNode.length > 0) {
+            targetEdge = edgeForNode;
+            target = null;
+          }
+        }
+
+        if (!target || target.length === 0) {
+          const edges = cy.edges();
+          targetEdge = edges.filter(edge => {
+            const label = edge.data('label') ? edge.data('label').toLowerCase() : '';
+            const predicate = edge.data('predicate') ? edge.data('predicate').toLowerCase() : '';
+            return label.includes(term) || predicate.includes(term);
+          }).first();
+        }
       }
     }
 
     if (target && target.length > 0) {
-      const targetType = target.data("type");
-      if ((targetType === "objectProperty" || targetType === "datatypeProperty") && !showPropertiesAsNodes) {
-        showPropertiesAsNodes = true;
-        if (ui.propertiesToggleText) {
-          ui.propertiesToggleText.textContent = "Hide Properties";
-        }
-        if (ui.filterObject) ui.filterObject.checked = true;
-        if (ui.filterData) ui.filterData.checked = true;
-        updatePropertyVisualization();
-      }
-
       cy.animate({
         fit: {
           eles: target,
@@ -1134,6 +1194,8 @@ function initCytoscape(elements) {
       target.select();
       // Trigger selection logic if any
       target.emit('tap');
+    } else if (targetEdge && targetEdge.length > 0) {
+      focusPropertyEdge(targetEdge);
     } else {
       const descriptor = targetUri || targetLabel || '[unknown concept]';
       console.warn(`Concept not found: ${descriptor}`);
@@ -1146,6 +1208,15 @@ function focusConceptIfNeeded() {
 
   console.log('Attempting to focus concept:', pendingConceptFocus);
   let node = cy.getElementById(pendingConceptFocus);
+  let edge = findPropertyEdgeByPredicate(pendingConceptFocus);
+
+  if (node && (node.data("type") === "objectProperty" || node.data("type") === "datatypeProperty")) {
+    const edgeForNode = findPropertyEdgeByPredicate(node.id());
+    if (edgeForNode && edgeForNode.length > 0) {
+      edge = edgeForNode;
+      node = null;
+    }
+  }
 
   // If not found directly, check if it's a concept URI mapped to a class
   if ((!node || node.empty()) && window.conceptToClassMapping) {
@@ -1165,21 +1236,77 @@ function focusConceptIfNeeded() {
     }
   }
 
-  if (!node || node.empty()) {
-    console.warn('Concept node not found:', pendingConceptFocus);
-    console.log('Available nodes:', cy.nodes().map(n => n.id()).slice(0, 10));
+  if ((!node || node.empty()) && pendingConceptLabel) {
+    const term = pendingConceptLabel.toLowerCase();
+    if (term) {
+      if (!node || node.empty()) {
+        const fallback = cy.nodes().filter((n) => {
+          const data = n.data();
+          const label = data.label ? data.label.toLowerCase() : '';
+          const id = data.id ? data.id.toLowerCase() : '';
+          return label.includes(term) || id.includes(term);
+        }).first();
+        if (fallback && fallback.length > 0) {
+          node = fallback;
+        }
+      }
+
+      if ((!edge || edge.empty())) {
+        edge = cy.edges().filter((e) => {
+          const label = e.data('label') ? e.data('label').toLowerCase() : '';
+          const predicate = e.data('predicate') ? e.data('predicate').toLowerCase() : '';
+          return label.includes(term) || predicate.includes(term);
+        }).first();
+      }
+    }
+  }
+
+  if (node && node.length > 0) {
+    console.log('Found node:', node.id());
+    cy.center(node);
+    node.select();
+    const resource = node.data("resource");
+    if (resource) {
+      showURIInspector(resource);
+    }
+    pendingConceptFocus = null;
+    pendingConceptLabel = null;
     return;
   }
 
-  console.log('Found node:', node.id());
-  // Center node without excessive zoom - just pan to it
-  cy.center(node);
-  node.select();
-  const resource = node.data("resource");
+  if (edge && edge.length > 0) {
+    focusPropertyEdge(edge);
+    return;
+  }
+
+  console.warn('Concept node not found:', pendingConceptFocus);
+  console.log('Available nodes:', cy.nodes().map(n => n.id()).slice(0, 10));
+}
+
+function findPropertyEdgeByPredicate(predicateUri) {
+  if (!cy || !predicateUri) return null;
+  return cy.edges().filter(edge => edge.data('predicate') === predicateUri).first();
+}
+
+function focusPropertyEdge(edge) {
+  if (!edge || edge.empty()) return;
+  const nodes = edge.connectedNodes();
+  const highlightEles = nodes.add(edge);
+  cy.animate({
+    fit: {
+      eles: highlightEles,
+      padding: 80,
+    },
+    duration: 500,
+  });
+  nodes.select();
+  edge.select();
+  const resource = edge.data('resource');
   if (resource) {
     showURIInspector(resource);
   }
   pendingConceptFocus = null;
+  pendingConceptLabel = null;
 }
 
 // Update URL with current state (ontology + concept)
@@ -2924,6 +3051,7 @@ window.addEventListener('popstate', (event) => {
     // Update concept selection
     if (concept && cy) {
       pendingConceptFocus = concept;
+      pendingConceptLabel = concept;
       setTimeout(focusConceptIfNeeded, 300);
     } else if (!concept) {
       hideURIInspector();
