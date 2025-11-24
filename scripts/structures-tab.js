@@ -616,6 +616,322 @@ function stopAudioPreview() {
   }
 }
 
+// ============================================================
+// Structure Playback - Music Sequencer
+// ============================================================
+
+/**
+ * StructurePlayer - Manages playback of structures as musical sequences
+ */
+class StructurePlayer {
+  constructor(sequence, tempo = 120) {
+    this.sequence = sequence;
+    this.rows = sequence.rowsZeroBased || sequence.rows || [];
+    this.tempo = tempo; // BPM
+    this.currentRow = 0;
+    this.isPlaying = false;
+    this.intervalId = null;
+    this.oscillators = new Map(); // bell -> oscillator
+    this.gainNodes = new Map(); // bell -> gain node
+
+    // Initialize audio context
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Bell-to-note mapping: Pentatonic scale starting from C4 (261.63 Hz)
+    // Using C4, D4, E4, G4, A4, C5, D5, E5, G5, A5 for bells 0-9
+    this.pentatonicScale = [
+      261.63, // C4 (bell 0)
+      293.66, // D4 (bell 1)
+      329.63, // E4 (bell 2)
+      392.00, // G4 (bell 3)
+      440.00, // A4 (bell 4)
+      523.25, // C5 (bell 5)
+      587.33, // D5 (bell 6)
+      659.25, // E5 (bell 7)
+      783.99, // G5 (bell 8)
+      880.00  // A5 (bell 9)
+    ];
+  }
+
+  /**
+   * Start playback from current position
+   */
+  start() {
+    if (this.isPlaying) return;
+
+    this.isPlaying = true;
+    audioContext.resume();
+
+    // Calculate interval between rows (milliseconds per beat)
+    const msPerBeat = 60000 / this.tempo;
+
+    // Play first row immediately
+    this.playRow(this.currentRow);
+
+    // Set interval for subsequent rows
+    this.intervalId = setInterval(() => {
+      this.currentRow++;
+
+      if (this.currentRow >= this.rows.length) {
+        // Check if sequence loops
+        if (this.sequence.loop) {
+          this.currentRow = 0;
+        } else {
+          this.stop();
+          return;
+        }
+      }
+
+      this.playRow(this.currentRow);
+    }, msPerBeat);
+  }
+
+  /**
+   * Stop playback and cleanup
+   */
+  stop() {
+    this.isPlaying = false;
+
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+
+    // Stop all oscillators
+    this.stopAllNotes();
+
+    // Reset to beginning
+    this.currentRow = 0;
+  }
+
+  /**
+   * Set tempo (BPM)
+   */
+  setTempo(tempo) {
+    const wasPlaying = this.isPlaying;
+    if (wasPlaying) {
+      this.stop();
+    }
+
+    this.tempo = tempo;
+
+    if (wasPlaying) {
+      this.start();
+    }
+  }
+
+  /**
+   * Play a single row as a chord
+   */
+  playRow(rowIndex) {
+    if (rowIndex < 0 || rowIndex >= this.rows.length) return;
+
+    const row = this.rows[rowIndex];
+
+    // Stop all currently playing notes
+    this.stopAllNotes();
+
+    // Start notes for each bell in this row
+    row.forEach((bellValue, position) => {
+      this.playNote(bellValue, position);
+    });
+
+    // Trigger UI update
+    this.onRowChange?.(rowIndex);
+  }
+
+  /**
+   * Play a single note (one bell)
+   */
+  playNote(bellValue, position) {
+    // Get frequency from pentatonic scale
+    const frequency = this.pentatonicScale[bellValue % this.pentatonicScale.length];
+
+    // Create oscillator for this bell
+    const oscillator = audioContext.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+
+    // Create gain node with envelope (ADSR)
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01); // Attack
+    gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.05); // Decay
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime + 0.4); // Sustain
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5); // Release
+
+    // Connect nodes
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Start oscillator
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.5); // Stop after 500ms
+
+    // Store references
+    this.oscillators.set(position, oscillator);
+    this.gainNodes.set(position, gainNode);
+
+    // Clean up after note ends
+    setTimeout(() => {
+      this.oscillators.delete(position);
+      this.gainNodes.delete(position);
+    }, 600);
+  }
+
+  /**
+   * Stop all currently playing notes
+   */
+  stopAllNotes() {
+    this.oscillators.forEach((oscillator, position) => {
+      try {
+        oscillator.stop();
+      } catch (e) {
+        // May already be stopped
+      }
+    });
+
+    this.gainNodes.forEach((gainNode, position) => {
+      try {
+        gainNode.disconnect();
+      } catch (e) {
+        // May already be disconnected
+      }
+    });
+
+    this.oscillators.clear();
+    this.gainNodes.clear();
+  }
+}
+
+// Global player instance
+let currentPlayer = null;
+
+/**
+ * Start structure playback
+ */
+function startStructurePlayback(sequenceId) {
+  // Stop any existing playback
+  if (currentPlayer) {
+    currentPlayer.stop();
+    currentPlayer = null;
+  }
+
+  // Find the sequence
+  let sequence = null;
+  if (currentData) {
+    if (currentData.sequences) {
+      sequence = currentData.sequences.find(seq => seq.id === sequenceId);
+    }
+  }
+
+  if (!sequence) {
+    console.error('Sequence not found:', sequenceId);
+    return;
+  }
+
+  // Get tempo from slider
+  const tempoSlider = document.querySelector('.tempo-slider');
+  const tempo = tempoSlider ? parseInt(tempoSlider.value) : 120;
+
+  // Create player
+  currentPlayer = new StructurePlayer(sequence, tempo);
+
+  // Set up row change callback for UI updates
+  currentPlayer.onRowChange = (rowIndex) => {
+    updatePlaybackUI(sequenceId, rowIndex);
+  };
+
+  // Update button states
+  const playBtn = document.querySelector(`.play-structure-btn[data-sequence-id="${sequenceId}"]`);
+  const stopBtn = document.querySelector(`.stop-structure-btn[data-sequence-id="${sequenceId}"]`);
+
+  if (playBtn) playBtn.style.display = 'none';
+  if (stopBtn) stopBtn.style.display = 'inline-block';
+
+  // Start playback
+  currentPlayer.start();
+
+  console.log(`▶ Playing structure: ${sequence.label || sequenceId} at ${tempo} BPM`);
+}
+
+/**
+ * Stop structure playback
+ */
+function stopStructurePlayback(sequenceId) {
+  if (currentPlayer) {
+    currentPlayer.stop();
+    currentPlayer = null;
+  }
+
+  // Update button states
+  const playBtn = document.querySelector(`.play-structure-btn[data-sequence-id="${sequenceId}"]`);
+  const stopBtn = document.querySelector(`.stop-structure-btn[data-sequence-id="${sequenceId}"]`);
+
+  if (playBtn) playBtn.style.display = 'inline-block';
+  if (stopBtn) stopBtn.style.display = 'none';
+
+  // Clear row highlighting
+  document.querySelectorAll('.row-line.playing').forEach(row => {
+    row.classList.remove('playing');
+  });
+
+  // Reset position display
+  const positionDisplay = document.querySelector('.playback-position');
+  if (positionDisplay) {
+    const totalRows = currentPlayer ? currentPlayer.rows.length : 0;
+    positionDisplay.textContent = `Row: 0 / ${totalRows}`;
+  }
+
+  console.log('⏹ Stopped playback');
+}
+
+/**
+ * Update playback UI (row highlighting and position)
+ */
+function updatePlaybackUI(sequenceId, rowIndex) {
+  // Remove previous highlighting
+  document.querySelectorAll('.row-line.playing').forEach(row => {
+    row.classList.remove('playing');
+  });
+
+  // Highlight current row
+  const rowElements = document.querySelectorAll('.row-line');
+  if (rowElements[rowIndex]) {
+    rowElements[rowIndex].classList.add('playing');
+
+    // Scroll into view if needed
+    rowElements[rowIndex].scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+
+  // Update position display
+  const positionDisplay = document.querySelector('.playback-position');
+  if (positionDisplay && currentPlayer) {
+    positionDisplay.textContent = `Row: ${rowIndex} / ${currentPlayer.rows.length}`;
+  }
+}
+
+/**
+ * Update tempo for current playback
+ */
+function updateTempo(tempo) {
+  // Update display
+  const tempoValue = document.querySelector('.tempo-value');
+  if (tempoValue) {
+    tempoValue.textContent = `${tempo} BPM`;
+  }
+
+  // Update player if playing
+  if (currentPlayer) {
+    currentPlayer.setTempo(tempo);
+  }
+}
+
 // Tab switching logic
 const tabButtons = {
   dashboard: document.getElementById('tab-dashboard'),
@@ -671,7 +987,7 @@ const statsContainer = document.getElementById('stats-container');
 const sequenceContainer = document.getElementById('sequence-container');
 const additionalDataContainer = document.getElementById('additional-data-container');
 
-// Event delegation for share buttons
+// Event delegation for share buttons, playback controls, and example buttons
 if (sequenceContainer) {
   sequenceContainer.addEventListener('click', (e) => {
     const shareBtn = e.target.closest('.share-structure-btn');
@@ -692,6 +1008,32 @@ if (sequenceContainer) {
           console.error('Failed to parse example data:', err);
         }
       }
+    }
+
+    // Handle play structure buttons
+    const playBtn = e.target.closest('.play-structure-btn');
+    if (playBtn) {
+      const sequenceId = playBtn.getAttribute('data-sequence-id');
+      if (sequenceId) {
+        startStructurePlayback(sequenceId);
+      }
+    }
+
+    // Handle stop structure buttons
+    const stopBtn = e.target.closest('.stop-structure-btn');
+    if (stopBtn) {
+      const sequenceId = stopBtn.getAttribute('data-sequence-id');
+      if (sequenceId) {
+        stopStructurePlayback(sequenceId);
+      }
+    }
+  });
+
+  // Event delegation for tempo slider
+  sequenceContainer.addEventListener('input', (e) => {
+    if (e.target.classList.contains('tempo-slider')) {
+      const tempo = parseInt(e.target.value);
+      updateTempo(tempo);
     }
   });
 }
@@ -961,6 +1303,18 @@ function renderSequenceSection(sequence, index) {
   const shareUrl = createStructureShareLink(sequence.id, category, currentStructureId);
   html += `<button class="share-structure-btn" data-share-url="${shareUrl}" title="Copy shareable link">📋 Share</button>`;
   html += '</div>';
+
+  // Add playback controls
+  html += '<div class="playback-controls">';
+  html += `<button class="play-structure-btn" data-sequence-id="${sequence.id}" title="Play structure as music">▶ Play</button>`;
+  html += `<button class="stop-structure-btn" data-sequence-id="${sequence.id}" title="Stop playback" style="display:none;">⏹ Stop</button>`;
+  html += '<label class="tempo-control">';
+  html += 'Tempo: <input type="range" class="tempo-slider" min="60" max="300" value="120" step="10" />';
+  html += '<span class="tempo-value">120 BPM</span>';
+  html += '</label>';
+  html += '<span class="playback-position" style="margin-left: 1rem; color: var(--muted); font-size: 0.85rem;">Row: 0 / ' + rows.length + '</span>';
+  html += '</div>';
+
   html += '</div>';
 
   // Show RDF definition if available (priority over other explanations)
