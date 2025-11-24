@@ -67,6 +67,306 @@ async function copyShareLink(url, button) {
   }
 }
 
+/**
+ * Create a session from a usage example
+ * This builds tracks based on RDF metadata and switches to Dashboard
+ * @param {Object} exampleData - Data from the usage example button
+ */
+function createSessionFromExample(exampleData) {
+  const { structureId, category, sequenceId, example, structureName } = exampleData;
+
+  console.log('Creating session from example:', {
+    structure: structureName,
+    category: example.category,
+    scenario: example.scenario || example.label
+  });
+
+  // Parse track mapping to determine what tracks to create
+  const trackMapping = example.trackMapping || example.trackMapping || '';
+  const exampleCategory = example.category || 'mixed';
+  const breathing = example.breathing || example.breathingPattern || '';
+
+  // Build session tracks based on example category and track mapping
+  const tracks = {
+    audio: [],
+    visual: [],
+    haptic: [],
+    martigli: []
+  };
+
+  // Generate track ID
+  let trackIdCounter = Date.now();
+  const generateTrackId = () => `track_${trackIdCounter++}`;
+
+  // Create audio tracks for audio or mixed examples
+  if (exampleCategory === 'audio' || exampleCategory === 'mixed') {
+    // Parse track mapping to extract audio configuration
+    // Common patterns: "bells 1-3 map to frequency sweeps", "Structure drives timing"
+    const hasFrequencySweep = /frequency|sweep|tone/i.test(trackMapping);
+    const hasBinaural = /binaural/i.test(trackMapping);
+
+    if (hasFrequencySweep || hasBinaural) {
+      tracks.audio.push({
+        id: generateTrackId(),
+        label: `${structureName} - Audio`,
+        type: hasBinaural ? 'BinauralBeatTrack' : 'SineTrack',
+        modality: 'audio',
+        params: {
+          frequency: 432, // Base frequency in Hz
+          gain: 0.3,
+          beat: hasBinaural ? 8 : undefined
+        },
+        bindings: [],
+        metadata: {
+          structureId,
+          category,
+          exampleUri: example.uri
+        }
+      });
+    }
+  }
+
+  // Create visual tracks for visual or mixed examples
+  if (exampleCategory === 'visual' || exampleCategory === 'mixed') {
+    const hasGeometry = /geometry|shape|pattern/i.test(trackMapping);
+    const hasParticles = /particle|dot|point/i.test(trackMapping);
+
+    if (hasGeometry || hasParticles || exampleCategory === 'visual') {
+      tracks.visual.push({
+        id: generateTrackId(),
+        label: `${structureName} - Visual`,
+        type: hasParticles ? 'ParticleVisualTrack' : 'GeometryVisualTrack',
+        modality: 'visual',
+        params: {
+          color: '#38bdf8',
+          intensity: 0.7
+        },
+        bindings: [],
+        metadata: {
+          structureId,
+          category,
+          exampleUri: example.uri
+        }
+      });
+    }
+  }
+
+  // Create martigli/breathing track if breathing pattern is specified
+  if (breathing && breathing !== 'N/A') {
+    // Parse breathing pattern: "4-count inhale on rows 1-4, 4-count exhale on rows 5-8"
+    const inhaleMatch = breathing.match(/(\d+)-count\s+inhale/i);
+    const exhaleMatch = breathing.match(/(\d+)-count\s+exhale/i);
+
+    if (inhaleMatch) {
+      const inhaleCount = parseInt(inhaleMatch[1]);
+      const exhaleCount = exhaleMatch ? parseInt(exhaleMatch[1]) : inhaleCount;
+
+      tracks.martigli.push({
+        id: generateTrackId(),
+        label: `${structureName} - Breathing`,
+        type: 'MartigliTrack',
+        modality: 'breathing',
+        isMartigli: true,
+        params: {
+          waveform: 'sine',
+          period: (inhaleCount + exhaleCount) * 1000, // Convert to milliseconds
+          inhaleRatio: inhaleCount / (inhaleCount + exhaleCount)
+        },
+        metadata: {
+          structureId,
+          category,
+          breathingPattern: breathing,
+          exampleUri: example.uri
+        }
+      });
+    }
+  }
+
+  // Update state with structure info and tracks
+  const newState = {
+    activeTab: 'dashboard',
+    structures: {
+      category: category,
+      structureId: category === 'curated' ? structureId : sequenceId || structureId,
+      sequenceId: category === 'curated' ? sequenceId : null,
+      playbackPosition: 0,
+      isPlaying: false
+    },
+    tracks: tracks,
+    session: {
+      name: `${structureName} - ${example.scenario || example.label}`,
+      description: example.outcome || '',
+      structureId: structureId,
+      exampleUri: example.uri,
+      timestamp: new Date().toISOString()
+    }
+  };
+
+  // Update state manager
+  stateManager.setState(newState);
+
+  // Switch to dashboard
+  switchTab('dashboard');
+
+  // Render tracks to dashboard
+  renderTracksToDashboard(tracks, structureName);
+
+  // Show success message
+  console.log('✅ Session created from usage example:', {
+    tracks: {
+      audio: tracks.audio.length,
+      visual: tracks.visual.length,
+      haptic: tracks.haptic.length,
+      martigli: tracks.martigli.length
+    },
+    structure: structureName
+  });
+}
+
+/**
+ * Render tracks to dashboard panels
+ * @param {Object} tracks - Tracks object with audio, visual, haptic, martigli arrays
+ * @param {string} structureName - Name of the structure for display
+ */
+function renderTracksToDashboard(tracks, structureName) {
+  // Get dashboard UI elements
+  const audioList = document.getElementById('audio-sensory-list');
+  const audioStatus = document.getElementById('audio-sensory-status');
+  const visualList = document.getElementById('visual-sensory-list');
+  const visualStatus = document.getElementById('visual-sensory-status');
+  const hapticList = document.getElementById('haptic-sensory-list');
+  const hapticStatus = document.getElementById('haptic-sensory-status');
+  const martigliList = document.getElementById('martigli-dashboard-list');
+  const martigliSummary = document.getElementById('martigli-dashboard-summary');
+
+  // Helper to create track item
+  const createTrackItem = (track) => {
+    const li = document.createElement('li');
+    li.className = 'sensory-item';
+    li.style.cssText = `
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    `;
+
+    const label = document.createElement('div');
+    label.style.cssText = 'font-weight: 600; margin-bottom: 0.25rem; color: var(--text);';
+    label.textContent = track.label;
+
+    const type = document.createElement('div');
+    type.style.cssText = 'font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem;';
+    type.textContent = `Type: ${track.type}`;
+
+    const params = document.createElement('div');
+    params.style.cssText = 'font-size: 0.75rem; color: var(--muted);';
+    const paramStrings = Object.entries(track.params || {})
+      .map(([key, val]) => `${key}: ${val}`)
+      .join(', ');
+    params.textContent = paramStrings || 'No parameters';
+
+    li.appendChild(label);
+    li.appendChild(type);
+    li.appendChild(params);
+
+    return li;
+  };
+
+  // Render audio tracks
+  if (audioList) {
+    audioList.innerHTML = '';
+    if (tracks.audio.length > 0) {
+      tracks.audio.forEach(track => {
+        audioList.appendChild(createTrackItem(track));
+      });
+      if (audioStatus) {
+        audioStatus.textContent = `${tracks.audio.length} audio track(s) from ${structureName}`;
+      }
+    } else {
+      audioList.innerHTML = '<li class="muted-text" style="padding: 0.5rem;">No audio tracks in this example</li>';
+      if (audioStatus) {
+        audioStatus.textContent = 'No audio tracks';
+      }
+    }
+  }
+
+  // Render visual tracks
+  if (visualList) {
+    visualList.innerHTML = '';
+    if (tracks.visual.length > 0) {
+      tracks.visual.forEach(track => {
+        visualList.appendChild(createTrackItem(track));
+      });
+      if (visualStatus) {
+        visualStatus.textContent = `${tracks.visual.length} visual track(s) from ${structureName}`;
+      }
+    } else {
+      visualList.innerHTML = '<li class="muted-text" style="padding: 0.5rem;">No visual tracks in this example</li>';
+      if (visualStatus) {
+        visualStatus.textContent = 'No visual tracks';
+      }
+    }
+  }
+
+  // Render haptic tracks
+  if (hapticList) {
+    hapticList.innerHTML = '';
+    if (tracks.haptic.length > 0) {
+      tracks.haptic.forEach(track => {
+        hapticList.appendChild(createTrackItem(track));
+      });
+      if (hapticStatus) {
+        hapticStatus.textContent = `${tracks.haptic.length} haptic track(s) from ${structureName}`;
+      }
+    } else {
+      hapticList.innerHTML = '<li class="muted-text" style="padding: 0.5rem;">No haptic tracks in this example</li>';
+      if (hapticStatus) {
+        hapticStatus.textContent = 'No haptic tracks';
+      }
+    }
+  }
+
+  // Render martigli/breathing tracks
+  if (martigliList) {
+    martigliList.innerHTML = '';
+    if (tracks.martigli.length > 0) {
+      tracks.martigli.forEach(track => {
+        const div = document.createElement('div');
+        div.className = 'martigli-item';
+        div.style.cssText = `
+          padding: 0.75rem;
+          background: rgba(56, 189, 248, 0.1);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+        `;
+
+        const label = document.createElement('div');
+        label.style.cssText = 'font-weight: 600; margin-bottom: 0.25rem; color: #38bdf8;';
+        label.textContent = track.label;
+
+        const params = document.createElement('div');
+        params.style.cssText = 'font-size: 0.75rem; color: var(--muted);';
+        const period = track.params?.period ? `${track.params.period}ms` : 'N/A';
+        const ratio = track.params?.inhaleRatio ? `${(track.params.inhaleRatio * 100).toFixed(0)}%` : 'N/A';
+        params.textContent = `Period: ${period} | Inhale: ${ratio} | Waveform: ${track.params?.waveform || 'N/A'}`;
+
+        div.appendChild(label);
+        div.appendChild(params);
+        martigliList.appendChild(div);
+      });
+      if (martigliSummary) {
+        martigliSummary.textContent = `${tracks.martigli.length} breathing track(s) from ${structureName}`;
+      }
+    } else if (martigliSummary) {
+      martigliSummary.textContent = 'No breathing tracks in this example';
+    }
+  }
+
+  console.log('✅ Tracks rendered to dashboard');
+}
+
 // Tab switching logic
 const tabButtons = {
   dashboard: document.getElementById('tab-dashboard'),
@@ -129,6 +429,20 @@ if (sequenceContainer) {
     if (shareBtn) {
       const shareUrl = shareBtn.getAttribute('data-share-url');
       copyShareLink(shareUrl, shareBtn);
+    }
+
+    // Handle "Try This Example" buttons
+    const tryBtn = e.target.closest('.try-example-btn');
+    if (tryBtn) {
+      const exampleDataStr = tryBtn.getAttribute('data-example');
+      if (exampleDataStr) {
+        try {
+          const exampleData = JSON.parse(exampleDataStr);
+          createSessionFromExample(exampleData);
+        } catch (err) {
+          console.error('Failed to parse example data:', err);
+        }
+      }
     }
   });
 }
@@ -443,12 +757,26 @@ function renderSequenceSection(sequence, index) {
       html += `<dt>Outcome:</dt><dd>${example.outcome || 'N/A'}</dd>`;
       html += '</dl>';
 
-      // Add RDF URI link if available
+      // Add footer with "Try This Example" button and RDF link
+      html += `<div class="usage-example-footer">`;
+
+      // Try This Example button - stores all data needed for session creation
+      const exampleData = JSON.stringify({
+        structureId: sequence.id,
+        category: structureData.category || 'comprehensive',
+        sequenceId: structureData.sequenceId || null,
+        example: example,
+        structureName: sequence.label || sequence.name || sequence.id
+      }).replace(/"/g, '&quot;');
+
+      html += `<button class="try-example-btn" data-example="${exampleData}" title="Create session from this example">▶ Try This Example</button>`;
+
+      // RDF URI link if available
       if (example.uri) {
-        html += `<div class="usage-example-footer">`;
         html += `<a href="${example.uri}" class="rdf-link" target="_blank" title="View in RDF ontology">🔗 Ontology</a>`;
-        html += `</div>`;
       }
+
+      html += `</div>`;
 
       html += '</div>';
     });
