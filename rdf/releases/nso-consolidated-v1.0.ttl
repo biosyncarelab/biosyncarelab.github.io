@@ -106,9 +106,21 @@ bsc:pan a owl:DatatypeProperty ;
   rdfs:domain bsc:Parameter ;
   rdfs:range xsd:decimal .
 
+bsc:carrierFrequency a owl:DatatypeProperty ;
+  rdfs:label "carrier frequency" ;
+  rdfs:comment "Primary oscillator frequency (Hz) used by binaural/isochronic carriers." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
 bsc:frequency a owl:DatatypeProperty ;
   rdfs:label "frequency" ;
   rdfs:comment "Base oscillator or tone frequency in Hertz." ;
+  rdfs:domain bsc:Parameter ;
+  rdfs:range xsd:decimal .
+
+bsc:beatFrequency a owl:DatatypeProperty ;
+  rdfs:label "beat frequency" ;
+  rdfs:comment "Interaural difference that creates the perceived binaural beat (Hz)." ;
   rdfs:domain bsc:Parameter ;
   rdfs:range xsd:decimal .
 
