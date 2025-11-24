@@ -8,7 +8,7 @@
  * JSON files should only be used for performance-critical permutation arrays
  */
 
-import N3 from 'https://cdn.skypack.dev/n3';
+import N3 from 'https://esm.sh/n3@1.17.2';
 
 const { DataFactory } = N3;
 const { namedNode, literal } = DataFactory;
