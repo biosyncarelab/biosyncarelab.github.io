@@ -239,7 +239,7 @@ function renderTracksToDashboard(tracks, structureName) {
   const martigliList = document.getElementById('martigli-dashboard-list');
   const martigliSummary = document.getElementById('martigli-dashboard-summary');
 
-  // Helper to create track item
+  // Helper to create track item with preview button
   const createTrackItem = (track) => {
     const li = document.createElement('li');
     li.className = 'sensory-item';
@@ -249,7 +249,13 @@ function renderTracksToDashboard(tracks, structureName) {
       border: 1px solid var(--border);
       border-radius: 4px;
       margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     `;
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex: 1;';
 
     const label = document.createElement('div');
     label.style.cssText = 'font-weight: 600; margin-bottom: 0.25rem; color: var(--text);';
@@ -262,13 +268,30 @@ function renderTracksToDashboard(tracks, structureName) {
     const params = document.createElement('div');
     params.style.cssText = 'font-size: 0.75rem; color: var(--muted);';
     const paramStrings = Object.entries(track.params || {})
+      .filter(([key, val]) => val !== undefined)
       .map(([key, val]) => `${key}: ${val}`)
       .join(', ');
     params.textContent = paramStrings || 'No parameters';
 
-    li.appendChild(label);
-    li.appendChild(type);
-    li.appendChild(params);
+    info.appendChild(label);
+    info.appendChild(type);
+    info.appendChild(params);
+
+    // Add preview button for audio tracks
+    const actions = document.createElement('div');
+    actions.className = 'sensory-item-actions';
+    actions.style.cssText = 'display: flex; gap: 0.5rem;';
+
+    const previewBtn = document.createElement('button');
+    previewBtn.className = 'ghost tiny preview-track-btn';
+    previewBtn.textContent = 'Preview';
+    previewBtn.dataset.trackId = track.id;
+    previewBtn.dataset.trackData = JSON.stringify(track);
+
+    actions.appendChild(previewBtn);
+
+    li.appendChild(info);
+    li.appendChild(actions);
 
     return li;
   };
@@ -364,7 +387,104 @@ function renderTracksToDashboard(tracks, structureName) {
     }
   }
 
-  console.log('✅ Tracks rendered to dashboard');
+  // Add event listeners for preview buttons
+  document.querySelectorAll('.preview-track-btn').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const track = JSON.parse(button.dataset.trackData);
+
+      // Toggle button state
+      const isActive = button.classList.contains('active');
+
+      if (isActive) {
+        // Stop audio
+        button.classList.remove('active');
+        button.textContent = 'Preview';
+        stopAudioPreview();
+      } else {
+        // Start audio - deactivate other buttons first
+        document.querySelectorAll('.preview-track-btn.active').forEach(btn => {
+          btn.classList.remove('active');
+          btn.textContent = 'Preview';
+        });
+
+        button.classList.add('active');
+        button.textContent = 'Stop';
+        playAudioPreview(track);
+      }
+    });
+  });
+
+  console.log('✅ Tracks rendered to dashboard with preview functionality');
+}
+
+// Simple audio preview using Web Audio API
+let audioContext = null;
+let currentOscillator = null;
+let currentGainNode = null;
+
+function playAudioPreview(track) {
+  stopAudioPreview(); // Stop any existing audio
+
+  // Initialize audio context if needed
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  // Resume audio context (required for user interaction)
+  audioContext.resume();
+
+  const params = track.params || {};
+  const frequency = parseFloat(params.frequency || params.base || 432);
+  const gain = parseFloat(params.gain || 0.3);
+  const beat = parseFloat(params.beat);
+
+  // Create oscillator
+  currentOscillator = audioContext.createOscillator();
+  currentGainNode = audioContext.createGain();
+
+  currentOscillator.frequency.value = frequency;
+  currentOscillator.type = params.waveform || 'sine';
+  currentGainNode.gain.value = gain;
+
+  // Connect nodes
+  currentOscillator.connect(currentGainNode);
+  currentGainNode.connect(audioContext.destination);
+
+  // If binaural beat, create second oscillator
+  if (beat && !isNaN(beat)) {
+    const oscillator2 = audioContext.createOscillator();
+    oscillator2.frequency.value = frequency + beat;
+    oscillator2.type = params.waveform || 'sine';
+    oscillator2.connect(currentGainNode);
+    oscillator2.start();
+
+    // Store reference to stop later
+    currentOscillator.secondOscillator = oscillator2;
+  }
+
+  currentOscillator.start();
+
+  console.log(`▶ Playing audio: ${track.label} (${frequency} Hz, gain: ${gain})`);
+}
+
+function stopAudioPreview() {
+  if (currentOscillator) {
+    try {
+      currentOscillator.stop();
+      if (currentOscillator.secondOscillator) {
+        currentOscillator.secondOscillator.stop();
+      }
+    } catch (e) {
+      // Oscillator may already be stopped
+    }
+    currentOscillator = null;
+  }
+
+  if (currentGainNode) {
+    currentGainNode.disconnect();
+    currentGainNode = null;
+  }
 }
 
 // Tab switching logic
