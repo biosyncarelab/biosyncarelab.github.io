@@ -1191,6 +1191,7 @@ function initCytoscape(elements) {
         },
         duration: 500
       });
+      clearSelection();
       target.select();
       // Trigger selection logic if any
       target.emit('tap');
@@ -1264,6 +1265,7 @@ function focusConceptIfNeeded() {
   if (node && node.length > 0) {
     console.log('Found node:', node.id());
     cy.center(node);
+    clearSelection();
     node.select();
     const resource = node.data("resource");
     if (resource) {
@@ -1299,6 +1301,7 @@ function focusPropertyEdge(edge) {
     },
     duration: 500,
   });
+  clearSelection();
   nodes.select();
   edge.select();
   const resource = edge.data('resource');
@@ -1307,6 +1310,11 @@ function focusPropertyEdge(edge) {
   }
   pendingConceptFocus = null;
   pendingConceptLabel = null;
+}
+
+function clearSelection() {
+  if (!cy) return;
+  cy.elements().unselect();
 }
 
 // Update URL with current state (ontology + concept)
