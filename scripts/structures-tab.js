@@ -104,18 +104,44 @@ function createSessionFromExample(exampleData) {
     // Common patterns: "bells 1-3 map to frequency sweeps", "Structure drives timing"
     const hasFrequencySweep = /frequency|sweep|tone/i.test(trackMapping);
     const hasBinaural = /binaural/i.test(trackMapping);
+    const hasIsochronic = /isochronic|pulse/i.test(trackMapping);
 
-    if (hasFrequencySweep || hasBinaural) {
+    if (hasFrequencySweep || hasBinaural || hasIsochronic || exampleCategory === 'audio') {
+      // Determine track type and parameters based on patterns
+      let trackType, params;
+
+      if (hasBinaural) {
+        trackType = 'BinauralBeatTrack';
+        params = {
+          frequency: 432,
+          gain: 0.3,
+          beat: 8, // 8 Hz alpha waves
+          waveform: 'sine'
+        };
+      } else if (hasIsochronic) {
+        trackType = 'IsochronicTrack';
+        params = {
+          frequency: 432,
+          gain: 0.3,
+          pulseRate: 10, // 10 Hz
+          dutyCycle: 0.5,
+          waveform: 'sine'
+        };
+      } else {
+        trackType = 'SineTrack';
+        params = {
+          frequency: 432,
+          gain: 0.3,
+          waveform: 'sine'
+        };
+      }
+
       tracks.audio.push({
         id: generateTrackId(),
-        label: `${structureName} - Audio`,
-        type: hasBinaural ? 'BinauralBeatTrack' : 'SineTrack',
+        label: `${structureName} - ${trackType.replace('Track', '')}`,
+        type: trackType,
         modality: 'audio',
-        params: {
-          frequency: 432, // Base frequency in Hz
-          gain: 0.3,
-          beat: hasBinaural ? 8 : undefined
-        },
+        params: params,
         bindings: [],
         metadata: {
           structureId,
@@ -437,52 +463,142 @@ function playAudioPreview(track) {
   const params = track.params || {};
   const frequency = parseFloat(params.frequency || params.base || 432);
   const gain = parseFloat(params.gain || 0.3);
-  const beat = parseFloat(params.beat);
+  const waveform = params.waveform || 'sine';
 
-  // Create oscillator
-  currentOscillator = audioContext.createOscillator();
+  // Create main gain node
   currentGainNode = audioContext.createGain();
-
-  currentOscillator.frequency.value = frequency;
-  currentOscillator.type = params.waveform || 'sine';
   currentGainNode.gain.value = gain;
-
-  // Connect nodes
-  currentOscillator.connect(currentGainNode);
   currentGainNode.connect(audioContext.destination);
 
-  // If binaural beat, create second oscillator
-  if (beat && !isNaN(beat)) {
+  // Handle different track types
+  if (track.type === 'BinauralBeatTrack') {
+    // Binaural beat: two oscillators with slight frequency difference
+    const beat = parseFloat(params.beat || 8); // Default to 8 Hz alpha waves
+
+    // Left channel (base frequency)
+    currentOscillator = audioContext.createOscillator();
+    currentOscillator.frequency.value = frequency;
+    currentOscillator.type = waveform;
+
+    // Right channel (base frequency + beat)
     const oscillator2 = audioContext.createOscillator();
     oscillator2.frequency.value = frequency + beat;
-    oscillator2.type = params.waveform || 'sine';
-    oscillator2.connect(currentGainNode);
+    oscillator2.type = waveform;
+
+    // Pan left and right
+    const pannerL = audioContext.createStereoPanner();
+    pannerL.pan.value = -1; // Full left
+
+    const pannerR = audioContext.createStereoPanner();
+    pannerR.pan.value = 1; // Full right
+
+    currentOscillator.connect(pannerL);
+    pannerL.connect(currentGainNode);
+
+    oscillator2.connect(pannerR);
+    pannerR.connect(currentGainNode);
+
+    currentOscillator.start();
     oscillator2.start();
 
     // Store reference to stop later
     currentOscillator.secondOscillator = oscillator2;
+    currentOscillator.pannerL = pannerL;
+    currentOscillator.pannerR = pannerR;
+
+    console.log(`▶ Playing binaural beat: ${track.label} (${frequency} Hz ± ${beat} Hz, ${waveform} wave)`);
+
+  } else if (track.type === 'IsochronicTrack') {
+    // Isochronic tone: pulsing amplitude modulation
+    const pulseRate = parseFloat(params.pulseRate || 10); // Default to 10 Hz
+    const dutyCycle = parseFloat(params.dutyCycle || 0.5);
+
+    currentOscillator = audioContext.createOscillator();
+    currentOscillator.frequency.value = frequency;
+    currentOscillator.type = waveform;
+
+    // Create LFO for amplitude modulation
+    const lfo = audioContext.createOscillator();
+    lfo.frequency.value = pulseRate;
+    lfo.type = 'square'; // Square wave for sharp on/off pulses
+
+    // Create gain for LFO modulation
+    const lfoGain = audioContext.createGain();
+    lfoGain.gain.value = dutyCycle; // Modulation depth
+
+    // Connect: oscillator -> gain (modulated by LFO) -> output
+    lfo.connect(lfoGain);
+    lfoGain.connect(currentGainNode.gain);
+
+    currentOscillator.connect(currentGainNode);
+
+    currentOscillator.start();
+    lfo.start();
+
+    // Store references
+    currentOscillator.lfo = lfo;
+    currentOscillator.lfoGain = lfoGain;
+
+    console.log(`▶ Playing isochronic tone: ${track.label} (${frequency} Hz, ${pulseRate} Hz pulses, ${waveform} wave)`);
+
+  } else {
+    // Simple sine/square/sawtooth wave
+    currentOscillator = audioContext.createOscillator();
+    currentOscillator.frequency.value = frequency;
+    currentOscillator.type = waveform;
+
+    currentOscillator.connect(currentGainNode);
+    currentOscillator.start();
+
+    console.log(`▶ Playing audio: ${track.label} (${frequency} Hz, ${waveform} wave)`);
   }
-
-  currentOscillator.start();
-
-  console.log(`▶ Playing audio: ${track.label} (${frequency} Hz, gain: ${gain})`);
 }
 
 function stopAudioPreview() {
   if (currentOscillator) {
     try {
       currentOscillator.stop();
+
+      // Stop second oscillator (binaural beat)
       if (currentOscillator.secondOscillator) {
         currentOscillator.secondOscillator.stop();
+        currentOscillator.secondOscillator = null;
+      }
+
+      // Stop LFO (isochronic tone)
+      if (currentOscillator.lfo) {
+        currentOscillator.lfo.stop();
+        currentOscillator.lfo = null;
+      }
+
+      // Disconnect panners (binaural beat)
+      if (currentOscillator.pannerL) {
+        currentOscillator.pannerL.disconnect();
+        currentOscillator.pannerL = null;
+      }
+      if (currentOscillator.pannerR) {
+        currentOscillator.pannerR.disconnect();
+        currentOscillator.pannerR = null;
+      }
+
+      // Disconnect LFO gain (isochronic tone)
+      if (currentOscillator.lfoGain) {
+        currentOscillator.lfoGain.disconnect();
+        currentOscillator.lfoGain = null;
       }
     } catch (e) {
       // Oscillator may already be stopped
+      console.warn('Error stopping audio:', e);
     }
     currentOscillator = null;
   }
 
   if (currentGainNode) {
-    currentGainNode.disconnect();
+    try {
+      currentGainNode.disconnect();
+    } catch (e) {
+      // May already be disconnected
+    }
     currentGainNode = null;
   }
 }
