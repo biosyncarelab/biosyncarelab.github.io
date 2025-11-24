@@ -639,20 +639,21 @@ class StructurePlayer {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // Bell-to-note mapping: Pentatonic scale starting from C4 (261.63 Hz)
-    // Using C4, D4, E4, G4, A4, C5, D5, E5, G5, A5 for bells 0-9
-    this.pentatonicScale = [
-      261.63, // C4 (bell 0)
-      293.66, // D4 (bell 1)
-      329.63, // E4 (bell 2)
-      392.00, // G4 (bell 3)
-      440.00, // A4 (bell 4)
-      523.25, // C5 (bell 5)
-      587.33, // D5 (bell 6)
-      659.25, // E5 (bell 7)
-      783.99, // G5 (bell 8)
-      880.00  // A5 (bell 9)
-    ];
+    // Bell-to-frequency mapping using exponential scale
+    // Formula: f_n = f_0 * 2^((n * octaves) / (2 * bells))
+    // Default: 1 octave span for 6 bells, starting at C4 (261.63 Hz)
+    this.baseFrequency = 261.63; // C4
+    this.numberOfOctaves = 1;
+    this.maxBells = 10; // Support up to 10 bells
+  }
+
+  /**
+   * Calculate frequency for a bell using exponential scale
+   */
+  getFrequency(bellNumber) {
+    // f_n = f_0 * 2^((n * octaves) / (2 * bells))
+    const exponent = (bellNumber * this.numberOfOctaves) / (2 * this.maxBells);
+    return this.baseFrequency * Math.pow(2, exponent);
   }
 
   /**
@@ -664,14 +665,23 @@ class StructurePlayer {
     this.isPlaying = true;
     audioContext.resume();
 
-    // Calculate interval between rows (milliseconds per beat)
-    const msPerBeat = 60000 / this.tempo;
-
     // Play first row immediately
     this.playRow(this.currentRow);
 
-    // Set interval for subsequent rows
-    this.intervalId = setInterval(() => {
+    // Schedule next row
+    this.scheduleNextRow();
+  }
+
+  /**
+   * Schedule the next row to play
+   */
+  scheduleNextRow() {
+    if (!this.isPlaying) return;
+
+    // Calculate interval between rows (milliseconds per beat)
+    const msPerBeat = 60000 / this.tempo;
+
+    this.intervalId = setTimeout(() => {
       this.currentRow++;
 
       if (this.currentRow >= this.rows.length) {
@@ -685,6 +695,7 @@ class StructurePlayer {
       }
 
       this.playRow(this.currentRow);
+      this.scheduleNextRow();
     }, msPerBeat);
   }
 
@@ -695,7 +706,7 @@ class StructurePlayer {
     this.isPlaying = false;
 
     if (this.intervalId) {
-      clearInterval(this.intervalId);
+      clearTimeout(this.intervalId);
       this.intervalId = null;
     }
 
@@ -707,47 +718,44 @@ class StructurePlayer {
   }
 
   /**
-   * Set tempo (BPM)
+   * Set tempo (BPM) - changes speed without restarting
    */
   setTempo(tempo) {
-    const wasPlaying = this.isPlaying;
-    if (wasPlaying) {
-      this.stop();
-    }
-
     this.tempo = tempo;
-
-    if (wasPlaying) {
-      this.start();
-    }
+    // The new tempo will take effect on the next scheduled row
   }
 
   /**
-   * Play a single row as a chord
+   * Play a single row as a sequence (one bell at a time)
    */
   playRow(rowIndex) {
     if (rowIndex < 0 || rowIndex >= this.rows.length) return;
 
     const row = this.rows[rowIndex];
 
-    // Stop all currently playing notes
-    this.stopAllNotes();
-
-    // Start notes for each bell in this row
-    row.forEach((bellValue, position) => {
-      this.playNote(bellValue, position);
-    });
-
-    // Trigger UI update
+    // Trigger UI update immediately
     this.onRowChange?.(rowIndex);
+
+    // Calculate timing for each bell in the row
+    const msPerBeat = 60000 / this.tempo;
+    const msPerBell = msPerBeat / row.length;
+
+    // Play each bell in sequence
+    row.forEach((bellValue, position) => {
+      setTimeout(() => {
+        if (this.isPlaying) {
+          this.playNote(bellValue, position);
+        }
+      }, position * msPerBell);
+    });
   }
 
   /**
    * Play a single note (one bell)
    */
   playNote(bellValue, position) {
-    // Get frequency from pentatonic scale
-    const frequency = this.pentatonicScale[bellValue % this.pentatonicScale.length];
+    // Get frequency using exponential scale
+    const frequency = this.getFrequency(bellValue);
 
     // Create oscillator for this bell
     const oscillator = audioContext.createOscillator();
@@ -757,10 +765,10 @@ class StructurePlayer {
     // Create gain node with envelope (ADSR)
     const gainNode = audioContext.createGain();
     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01); // Attack
-    gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.05); // Decay
-    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime + 0.4); // Sustain
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5); // Release
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01); // Attack
+    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.05); // Decay
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.15); // Sustain
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2); // Release
 
     // Connect nodes
     oscillator.connect(gainNode);
@@ -768,7 +776,7 @@ class StructurePlayer {
 
     // Start oscillator
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.5); // Stop after 500ms
+    oscillator.stop(audioContext.currentTime + 0.25); // Stop after 250ms (shorter for sequencing)
 
     // Store references
     this.oscillators.set(position, oscillator);
@@ -778,7 +786,7 @@ class StructurePlayer {
     setTimeout(() => {
       this.oscillators.delete(position);
       this.gainNodes.delete(position);
-    }, 600);
+    }, 300);
   }
 
   /**
@@ -902,11 +910,16 @@ function updatePlaybackUI(sequenceId, rowIndex) {
   if (rowElements[rowIndex]) {
     rowElements[rowIndex].classList.add('playing');
 
-    // Scroll into view if needed
-    rowElements[rowIndex].scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    });
+    // Only scroll if row is completely out of view (don't auto-center)
+    const rowRect = rowElements[rowIndex].getBoundingClientRect();
+    const isOutOfView = rowRect.bottom < 0 || rowRect.top > window.innerHeight;
+
+    if (isOutOfView) {
+      rowElements[rowIndex].scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest'
+      });
+    }
   }
 
   // Update position display
