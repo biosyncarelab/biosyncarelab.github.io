@@ -624,10 +624,11 @@ function stopAudioPreview() {
  * StructurePlayer - Manages playback of structures as musical sequences
  */
 class StructurePlayer {
-  constructor(sequence, tempo = 120) {
+  constructor(sequence, sequenceId, options = {}) {
     this.sequence = sequence;
+    this.sequenceId = sequenceId;
     this.rows = sequence.rowsZeroBased || sequence.rows || [];
-    this.tempo = tempo; // BPM
+    this.tempo = options.tempo || 120; // BPM
     this.currentRow = 0;
     this.isPlaying = false;
     this.intervalId = null;
@@ -639,12 +640,12 @@ class StructurePlayer {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // Bell-to-frequency mapping using exponential scale
-    // Formula: f_n = f_0 * 2^((n * octaves) / (2 * bells))
-    // Default: 1 octave span for 6 bells, starting at C4 (261.63 Hz)
-    this.baseFrequency = 261.63; // C4
-    this.numberOfOctaves = 1;
+    // Synthesis parameters
+    this.baseFrequency = options.baseFrequency || 261.63; // C4
+    this.numberOfOctaves = options.numberOfOctaves || 1;
     this.maxBells = 10; // Support up to 10 bells
+    this.waveform = options.waveform || 'sine';
+    this.overlap = options.overlap || 0; // 0 to 1 (percentage of note duration to overlap)
   }
 
   /**
@@ -654,6 +655,16 @@ class StructurePlayer {
     // f_n = f_0 * 2^((n * octaves) / (2 * bells))
     const exponent = (bellNumber * this.numberOfOctaves) / (2 * this.maxBells);
     return this.baseFrequency * Math.pow(2, exponent);
+  }
+
+  /**
+   * Update synthesis parameters
+   */
+  updateSynthParams(params) {
+    if (params.baseFrequency !== undefined) this.baseFrequency = params.baseFrequency;
+    if (params.numberOfOctaves !== undefined) this.numberOfOctaves = params.numberOfOctaves;
+    if (params.waveform !== undefined) this.waveform = params.waveform;
+    if (params.overlap !== undefined) this.overlap = params.overlap;
   }
 
   /**
@@ -757,18 +768,30 @@ class StructurePlayer {
     // Get frequency using exponential scale
     const frequency = this.getFrequency(bellValue);
 
+    // Calculate note duration based on tempo and overlap
+    const msPerBeat = 60000 / this.tempo;
+    const msPerBell = msPerBeat / this.rows[this.currentRow].length;
+    const noteDuration = msPerBell * (1 + this.overlap); // Extend based on overlap
+    const noteDurationSec = noteDuration / 1000;
+
     // Create oscillator for this bell
     const oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine';
+    oscillator.type = this.waveform;
     oscillator.frequency.value = frequency;
 
     // Create gain node with envelope (ADSR)
     const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01); // Attack
-    gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.05); // Decay
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.15); // Sustain
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2); // Release
+    const now = audioContext.currentTime;
+    const attackTime = Math.min(0.01, noteDurationSec * 0.1);
+    const decayTime = Math.min(0.05, noteDurationSec * 0.2);
+    const releaseTime = Math.min(0.1, noteDurationSec * 0.3);
+    const sustainTime = noteDurationSec - attackTime - decayTime - releaseTime;
+
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.3, now + attackTime); // Attack
+    gainNode.gain.linearRampToValueAtTime(0.2, now + attackTime + decayTime); // Decay
+    gainNode.gain.setValueAtTime(0.2, now + attackTime + decayTime + sustainTime); // Sustain
+    gainNode.gain.linearRampToValueAtTime(0, now + noteDurationSec); // Release
 
     // Connect nodes
     oscillator.connect(gainNode);
@@ -776,7 +799,7 @@ class StructurePlayer {
 
     // Start oscillator
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.25); // Stop after 250ms (shorter for sequencing)
+    oscillator.stop(now + noteDurationSec);
 
     // Store references
     this.oscillators.set(position, oscillator);
@@ -786,7 +809,7 @@ class StructurePlayer {
     setTimeout(() => {
       this.oscillators.delete(position);
       this.gainNodes.delete(position);
-    }, 300);
+    }, noteDuration + 100);
   }
 
   /**
@@ -840,12 +863,23 @@ function startStructurePlayback(sequenceId) {
     return;
   }
 
-  // Get tempo from slider
-  const tempoSlider = document.querySelector('.tempo-slider');
-  const tempo = tempoSlider ? parseInt(tempoSlider.value) : 120;
+  // Get synthesis parameters from controls
+  const tempoSlider = document.querySelector(`.tempo-slider[data-sequence-id="${sequenceId}"]`);
+  const baseFreqInput = document.querySelector(`.base-freq-input[data-sequence-id="${sequenceId}"]`);
+  const octaveSpanInput = document.querySelector(`.octave-span-input[data-sequence-id="${sequenceId}"]`);
+  const waveformSelect = document.querySelector(`.waveform-select[data-sequence-id="${sequenceId}"]`);
+  const overlapSlider = document.querySelector(`.overlap-slider[data-sequence-id="${sequenceId}"]`);
+
+  const options = {
+    tempo: tempoSlider ? parseInt(tempoSlider.value) : 120,
+    baseFrequency: baseFreqInput ? parseFloat(baseFreqInput.value) : 261.63,
+    numberOfOctaves: octaveSpanInput ? parseFloat(octaveSpanInput.value) : 1,
+    waveform: waveformSelect ? waveformSelect.value : 'sine',
+    overlap: overlapSlider ? parseFloat(overlapSlider.value) : 0
+  };
 
   // Create player
-  currentPlayer = new StructurePlayer(sequence, tempo);
+  currentPlayer = new StructurePlayer(sequence, sequenceId, options);
 
   // Set up row change callback for UI updates
   currentPlayer.onRowChange = (rowIndex) => {
@@ -862,14 +896,14 @@ function startStructurePlayback(sequenceId) {
   // Start playback
   currentPlayer.start();
 
-  console.log(`▶ Playing structure: ${sequence.label || sequenceId} at ${tempo} BPM`);
+  console.log(`▶ Playing structure: ${sequence.label || sequenceId} at ${options.tempo} BPM`);
 }
 
 /**
  * Stop structure playback
  */
 function stopStructurePlayback(sequenceId) {
-  if (currentPlayer) {
+  if (currentPlayer && currentPlayer.sequenceId === sequenceId) {
     currentPlayer.stop();
     currentPlayer = null;
   }
@@ -887,9 +921,17 @@ function stopStructurePlayback(sequenceId) {
   });
 
   // Reset position display
-  const positionDisplay = document.querySelector('.playback-position');
+  const positionDisplay = document.querySelector(`.playback-position[data-sequence-id="${sequenceId}"]`);
   if (positionDisplay) {
-    const totalRows = currentPlayer ? currentPlayer.rows.length : 0;
+    // Get total rows from the sequence
+    let totalRows = 0;
+    if (currentData && currentData.sequences) {
+      const sequence = currentData.sequences.find(seq => seq.id === sequenceId);
+      if (sequence) {
+        const rows = sequence.rowsZeroBased || sequence.rows || [];
+        totalRows = rows.length;
+      }
+    }
     positionDisplay.textContent = `Row: 0 / ${totalRows}`;
   }
 
@@ -905,25 +947,14 @@ function updatePlaybackUI(sequenceId, rowIndex) {
     row.classList.remove('playing');
   });
 
-  // Highlight current row
+  // Highlight current row - no scrolling to avoid blocking user
   const rowElements = document.querySelectorAll('.row-line');
   if (rowElements[rowIndex]) {
     rowElements[rowIndex].classList.add('playing');
-
-    // Only scroll if row is completely out of view (don't auto-center)
-    const rowRect = rowElements[rowIndex].getBoundingClientRect();
-    const isOutOfView = rowRect.bottom < 0 || rowRect.top > window.innerHeight;
-
-    if (isOutOfView) {
-      rowElements[rowIndex].scrollIntoView({
-        behavior: 'auto',
-        block: 'nearest'
-      });
-    }
   }
 
-  // Update position display
-  const positionDisplay = document.querySelector('.playback-position');
+  // Update position display for this specific sequence
+  const positionDisplay = document.querySelector(`.playback-position[data-sequence-id="${sequenceId}"]`);
   if (positionDisplay && currentPlayer) {
     positionDisplay.textContent = `Row: ${rowIndex} / ${currentPlayer.rows.length}`;
   }
@@ -932,17 +963,36 @@ function updatePlaybackUI(sequenceId, rowIndex) {
 /**
  * Update tempo for current playback
  */
-function updateTempo(tempo) {
+function updateTempo(sequenceId, tempo) {
   // Update display
-  const tempoValue = document.querySelector('.tempo-value');
+  const tempoValue = document.querySelector(`.tempo-value[data-sequence-id="${sequenceId}"]`);
   if (tempoValue) {
     tempoValue.textContent = `${tempo} BPM`;
   }
 
-  // Update player if playing
-  if (currentPlayer) {
+  // Update player if playing this sequence
+  if (currentPlayer && currentPlayer.sequenceId === sequenceId) {
     currentPlayer.setTempo(tempo);
   }
+}
+
+/**
+ * Update synthesis parameters for current playback
+ */
+function updateSynthParams(sequenceId) {
+  if (!currentPlayer || currentPlayer.sequenceId !== sequenceId) return;
+
+  const baseFreqInput = document.querySelector(`.base-freq-input[data-sequence-id="${sequenceId}"]`);
+  const octaveSpanInput = document.querySelector(`.octave-span-input[data-sequence-id="${sequenceId}"]`);
+  const waveformSelect = document.querySelector(`.waveform-select[data-sequence-id="${sequenceId}"]`);
+  const overlapSlider = document.querySelector(`.overlap-slider[data-sequence-id="${sequenceId}"]`);
+
+  currentPlayer.updateSynthParams({
+    baseFrequency: baseFreqInput ? parseFloat(baseFreqInput.value) : undefined,
+    numberOfOctaves: octaveSpanInput ? parseFloat(octaveSpanInput.value) : undefined,
+    waveform: waveformSelect ? waveformSelect.value : undefined,
+    overlap: overlapSlider ? parseFloat(overlapSlider.value) : undefined
+  });
 }
 
 // Tab switching logic
@@ -1042,11 +1092,34 @@ if (sequenceContainer) {
     }
   });
 
-  // Event delegation for tempo slider
+  // Event delegation for tempo slider and synthesis controls
   sequenceContainer.addEventListener('input', (e) => {
+    const sequenceId = e.target.getAttribute('data-sequence-id');
+    if (!sequenceId) return;
+
     if (e.target.classList.contains('tempo-slider')) {
       const tempo = parseInt(e.target.value);
-      updateTempo(tempo);
+      updateTempo(sequenceId, tempo);
+    } else if (e.target.classList.contains('overlap-slider')) {
+      const overlap = parseFloat(e.target.value);
+      const overlapValue = document.querySelector(`.overlap-value[data-sequence-id="${sequenceId}"]`);
+      if (overlapValue) {
+        overlapValue.textContent = `${Math.round(overlap * 100)}%`;
+      }
+      updateSynthParams(sequenceId);
+    } else if (e.target.classList.contains('base-freq-input') ||
+               e.target.classList.contains('octave-span-input')) {
+      updateSynthParams(sequenceId);
+    }
+  });
+
+  // Event delegation for waveform select
+  sequenceContainer.addEventListener('change', (e) => {
+    const sequenceId = e.target.getAttribute('data-sequence-id');
+    if (!sequenceId) return;
+
+    if (e.target.classList.contains('waveform-select')) {
+      updateSynthParams(sequenceId);
     }
   });
 }
@@ -1317,16 +1390,53 @@ function renderSequenceSection(sequence, index) {
   html += `<button class="share-structure-btn" data-share-url="${shareUrl}" title="Copy shareable link">📋 Share</button>`;
   html += '</div>';
 
-  // Add playback controls
-  html += '<div class="playback-controls">';
+  // Add playback controls with sequence-specific identifiers
+  html += `<div class="playback-controls" data-sequence-id="${sequence.id}">`;
   html += `<button class="play-structure-btn" data-sequence-id="${sequence.id}" title="Play structure as music">▶ Play</button>`;
   html += `<button class="stop-structure-btn" data-sequence-id="${sequence.id}" title="Stop playback" style="display:none;">⏹ Stop</button>`;
   html += '<label class="tempo-control">';
-  html += 'Tempo: <input type="range" class="tempo-slider" min="60" max="300" value="120" step="10" />';
-  html += '<span class="tempo-value">120 BPM</span>';
+  html += `Tempo: <input type="range" class="tempo-slider" data-sequence-id="${sequence.id}" min="30" max="300" value="120" step="5" />`;
+  html += `<span class="tempo-value" data-sequence-id="${sequence.id}">120 BPM</span>`;
   html += '</label>';
-  html += '<span class="playback-position" style="margin-left: 1rem; color: var(--muted); font-size: 0.85rem;">Row: 0 / ' + rows.length + '</span>';
+  html += `<span class="playback-position" data-sequence-id="${sequence.id}" style="margin-left: 1rem; color: var(--muted); font-size: 0.85rem;">Row: 0 / ${rows.length}</span>`;
   html += '</div>';
+
+  // Add synthesis controls
+  html += `<details class="synth-controls" data-sequence-id="${sequence.id}">`;
+  html += '<summary>⚙️ Synthesis Controls</summary>';
+  html += '<div class="synth-controls-grid">';
+
+  // Frequency controls
+  html += '<div class="synth-control-group">';
+  html += '<label>Base Frequency (Hz):</label>';
+  html += `<input type="number" class="base-freq-input" data-sequence-id="${sequence.id}" value="261.63" min="100" max="880" step="0.01" />`;
+  html += '</div>';
+
+  html += '<div class="synth-control-group">';
+  html += '<label>Octave Span:</label>';
+  html += `<input type="number" class="octave-span-input" data-sequence-id="${sequence.id}" value="1" min="0.5" max="3" step="0.25" />`;
+  html += '</div>';
+
+  // Waveform controls
+  html += '<div class="synth-control-group">';
+  html += '<label>Waveform:</label>';
+  html += `<select class="waveform-select" data-sequence-id="${sequence.id}">`;
+  html += '<option value="sine">Sine</option>';
+  html += '<option value="triangle">Triangle</option>';
+  html += '<option value="sawtooth">Sawtooth</option>';
+  html += '<option value="square">Square</option>';
+  html += '</select>';
+  html += '</div>';
+
+  // Note overlap control
+  html += '<div class="synth-control-group">';
+  html += '<label>Note Overlap:</label>';
+  html += `<input type="range" class="overlap-slider" data-sequence-id="${sequence.id}" min="0" max="1" value="0" step="0.1" />`;
+  html += `<span class="overlap-value" data-sequence-id="${sequence.id}">0%</span>`;
+  html += '</div>';
+
+  html += '</div>'; // synth-controls-grid
+  html += '</details>';
 
   html += '</div>';
 

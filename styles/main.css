@@ -1939,8 +1939,83 @@ select {
   background: rgba(56, 189, 248, 0.15);
   border-left: 4px solid var(--primary);
   padding-left: calc(0.5rem - 4px);
-  transform: scale(1.02);
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+/* Synthesis Controls */
+.synth-controls {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(147, 51, 234, 0.05);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.synth-controls summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0.5rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.synth-controls summary:hover {
+  color: var(--primary);
+}
+
+.synth-controls summary::-webkit-details-marker {
+  display: none;
+}
+
+.synth-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.synth-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.synth-control-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.synth-control-group input[type="number"],
+.synth-control-group select {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.synth-control-group input[type="number"]:focus,
+.synth-control-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.synth-control-group input[type="range"] {
+  width: 100%;
+}
+
+.overlap-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #9333ea;
+  font-size: 0.875rem;
 }
 
 .row-index {
@@ -2338,78 +2413,49 @@ select {
   cursor: none;
 }
 
-.track-mod-inline {
-  flex: 1 1 260px;
-  min-width: 220px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 0.65rem;
-  padding: 0.4rem 0.5rem 0.5rem;
-  background: rgba(15, 23, 42, 0.35);
+
+.track-mod-mini {
+  flex: 1 1 280px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.2rem;
 }
 
-.track-mod-inline-head {
+.track-mod-mini-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.35rem;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.track-mod-chip-list {
+.track-mod-mini-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
-.track-mod-inline-empty {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.track-mod-chip {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 0.55rem;
-  padding: 0.4rem;
-  background: rgba(2, 6, 23, 0.42);
-  flex: 1 1 170px;
-  min-width: 170px;
+.track-mod-mini-slot {
+  flex: 0 1 220px;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.45rem;
+  background: rgba(2, 6, 23, 0.28);
 }
 
-.track-mod-chip.active {
+.track-mod-mini-slot.active {
   border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(8, 47, 73, 0.35);
+  background: rgba(8, 47, 73, 0.3);
 }
 
-.track-mod-chip-head {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.track-mod-chip-head .track-modulation-select {
-  flex: 1 1 auto;
-}
-
-.track-mod-chip-body {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.35rem;
-}
-
-.track-mod-chip-body .fine-tune-btn {
-  width: 28px;
-  height: 28px;
-}
-
+.track-mod-mini-select,
 .track-modulation-select,
 .track-param-select {
   width: 100%;
@@ -2424,6 +2470,26 @@ select {
   -moz-appearance: none;
 }
 
+
+.track-mod-mini-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-wrap: nowrap;
+}
+
+.track-mod-mini-controls .fine-tune-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.track-mod-mini-empty {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.add-mod-mini-btn,
+.remove-mod-mini-btn,
 .add-modulator-btn,
 .remove-modulator-btn {
   width: 26px;
