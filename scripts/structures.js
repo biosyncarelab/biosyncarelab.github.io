@@ -974,9 +974,17 @@ const martigliToJsonLd = (osc, rdfLinker) => {
 
 const parameterToJsonLd = (trackId, name, param, rdfLinker) => {
   const paramId = `${ID_BASE}/track/${encodeURIComponent(trackId)}/param/${encodeURIComponent(name)}`;
-  const modulatorId = param?._modulator?.id
-    ? `${ID_BASE}/martigli/${encodeURIComponent(param._modulator.id)}`
-    : null;
+  const modulationRecords = Array.isArray(param?.modulations)
+    ? param.modulations.map((slot) => ({
+        slotId: slot.slotId,
+        type: slot.type,
+        depth: slot.depth,
+        modulator: slot.modulatorId
+          ? `${ID_BASE}/martigli/${encodeURIComponent(slot.modulatorId)}`
+          : null,
+      }))
+    : [];
+  const modulatorId = modulationRecords[0]?.modulator ?? null;
   const links = rdfLinker?.get(`${trackId}#${name}`) ?? [];
   return {
     "@id": paramId,
@@ -985,14 +993,16 @@ const parameterToJsonLd = (trackId, name, param, rdfLinker) => {
     baseValue: param?.base,
     depth: param?.depth,
     modulator: modulatorId,
+    modulators: modulationRecords.length ? modulationRecords : undefined,
     conceptLinks: links.length ? links : undefined,
   };
 };
 
 const trackToJsonLd = (track, rdfLinker, defaultModulatorId = null) => {
   const params = Array.from(track.parameters.entries()).map(([name, param]) => {
-    const modulatorUri = param?._modulator?.id
-      ? `${ID_BASE}/martigli/${encodeURIComponent(param._modulator.id)}`
+    const primarySlot = Array.isArray(param?.modulations) && param.modulations[0];
+    const modulatorUri = primarySlot?.modulatorId
+      ? `${ID_BASE}/martigli/${encodeURIComponent(primarySlot.modulatorId)}`
       : defaultModulatorId;
     const record = parameterToJsonLd(track.id, name, param, rdfLinker);
     if (!record.modulator && modulatorUri) {

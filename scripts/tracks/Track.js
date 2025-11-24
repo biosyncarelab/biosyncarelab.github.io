@@ -1,36 +1,115 @@
 /**
  * Track Architecture
  * Defines the base classes for all Audio, Visual, and Haptic tracks.
- * Implements the core modulation logic: final = base + depth * modulator
+ * Implements the core modulation logic: final = base + Σ(depthᵢ * modᵢ)
  */
+
+const createSlotId = () => (typeof crypto !== 'undefined' && crypto.randomUUID)
+  ? crypto.randomUUID()
+  : `mod-${Math.random().toString(36).slice(2, 9)}`;
 
 export class TrackParameter {
   constructor(name, defaultValue, options = {}) {
     this.name = name;
     this._base = defaultValue;
-    this._depth = options.depth ?? 0;
-    this._modulator = null; // Reference to a MartigliOscillator or similar
     this.min = options.min ?? -Infinity;
     this.max = options.max ?? Infinity;
     this.options = options.options ?? null; // For dropdowns: ['sine', 'square']
+    this.modulations = [];
+
+    const initialDepth = options.depth ?? 0;
+    if (initialDepth !== 0) {
+      this.createModulationSlot({
+        type: options.modulatorType ?? 'martigli',
+        label: options.modulatorLabel ?? 'Modulator',
+        depth: initialDepth,
+      });
+    }
   }
 
   get base() { return this._base; }
   set base(val) { this._base = val; }
 
-  get depth() { return this._depth; }
-  set depth(val) { this._depth = val; }
+  get primaryModulation() {
+    return this.modulations[0] ?? null;
+  }
+
+  get depth() {
+    return this.primaryModulation?.depth ?? 0;
+  }
+
+  set depth(val) {
+    const slot = this.ensurePrimaryModulation();
+    slot.depth = val;
+  }
+
+  ensurePrimaryModulation() {
+    if (!this.primaryModulation) {
+      const slot = this.createModulationSlot({ type: 'martigli', label: 'Modulation', depth: 0 });
+      // Force as first entry
+      this.modulations = [slot, ...this.modulations.filter((entry) => entry !== slot)];
+    }
+    return this.primaryModulation;
+  }
+
+  createModulationSlot({ type = 'martigli', label = 'Modulation', depth = 0, modulator = null, modulatorId = null, slotId = null } = {}) {
+    const entry = {
+      slotId: slotId ?? createSlotId(),
+      type,
+      label,
+      depth,
+      modulatorId: modulator?.id ?? modulatorId ?? null,
+      source: modulator ?? null,
+    };
+    this.modulations.push(entry);
+    return entry;
+  }
+
+  getModulation(slotId) {
+    if (!slotId) return null;
+    return this.modulations.find((entry) => entry.slotId === slotId) ?? null;
+  }
+
+  attachModulator(slotId, modulator, options = {}) {
+    if (!modulator) return null;
+    let entry = slotId ? this.getModulation(slotId) : this.primaryModulation;
+    if (!entry) {
+      entry = this.createModulationSlot({
+        type: options.type ?? 'martigli',
+        label: options.label ?? modulator.label ?? 'Modulator',
+        depth: typeof options.depth === 'number' ? options.depth : 0,
+      });
+      this.modulations = [entry, ...this.modulations.filter((e) => e !== entry)];
+    }
+    entry.source = modulator;
+    entry.modulatorId = modulator.id ?? entry.modulatorId ?? createSlotId();
+    if (options.label) entry.label = options.label;
+    if (options.type) entry.type = options.type;
+    if (typeof options.depth === 'number') entry.depth = options.depth;
+    return entry;
+  }
 
   /**
    * Bind a modulator to this parameter
-   * @param {object} modulator - Object with a getValue(time) or similar method
+   * @param {object} modulator - Object with a getValue/time or valueAt method
+   * @param {object} options - { slotId, depth, label, type }
    */
-  bind(modulator) {
-    this._modulator = modulator;
+  bind(modulator, options = {}) {
+    return this.attachModulator(options.slotId, modulator, options);
   }
 
-  unbind() {
-    this._modulator = null;
+  setModulationDepth(slotId, depth) {
+    const entry = slotId ? this.getModulation(slotId) : this.primaryModulation;
+    if (entry) entry.depth = depth;
+  }
+
+  unbind(slotId = null) {
+    if (!this.modulations.length) return;
+    if (!slotId) {
+      this.modulations = [];
+      return;
+    }
+    this.modulations = this.modulations.filter((entry) => entry.slotId !== slotId);
   }
 
   /**
@@ -41,26 +120,18 @@ export class TrackParameter {
   getValue(time) {
     let val = this._base;
 
-    if (this._modulator) {
-      // Assume modulator has a valueAt(time) or we use its current state
-      // For MartigliOscillator, we might need to access its last computed value
-      // or pass the time to it.
-      // If the modulator is a MartigliOscillator, it might have a `valueAt(time)` method
-      // or we might rely on the kernel to update it.
-
-      // For now, let's assume the modulator provides a normalized value [-1, 1] or [0, 1]
-      // We'll check for common interfaces
+    this.modulations.forEach((entry) => {
+      if (!entry?.source || entry.depth === 0) return;
       let modValue = 0;
-      if (typeof this._modulator.valueAt === 'function') {
-        modValue = this._modulator.valueAt(time);
-      } else if (typeof this._modulator.getValue === 'function') {
-        modValue = this._modulator.getValue(time);
-      } else if (Number.isFinite(this._modulator.value)) {
-        modValue = this._modulator.value;
+      if (typeof entry.source.valueAt === 'function') {
+        modValue = entry.source.valueAt(time);
+      } else if (typeof entry.source.getValue === 'function') {
+        modValue = entry.source.getValue(time);
+      } else if (Number.isFinite(entry.source.value)) {
+        modValue = entry.source.value;
       }
-
-      val += modValue * this._depth;
-    }
+      val += modValue * entry.depth;
+    });
 
     // Clamp
     if (val < this.min) val = this.min;
@@ -70,10 +141,18 @@ export class TrackParameter {
   }
 
   toJSON() {
+    const primary = this.primaryModulation;
     return {
       base: this._base,
-      depth: this._depth,
-      modulatorId: this._modulator?.id ?? null
+      depth: primary?.depth ?? 0,
+      modulatorId: primary?.modulatorId ?? null,
+      modulations: this.modulations.map(({ slotId, type, depth, modulatorId, label }) => ({
+        slotId,
+        type,
+        depth,
+        modulatorId: modulatorId ?? null,
+        label
+      })),
     };
   }
 }
@@ -142,14 +221,40 @@ export class Track {
         const param = this.parameters.get(name);
         if (param) {
           param.base = paramData.base;
-          param.depth = paramData.depth;
-          // Re-binding requires looking up the modulator in the context (e.g. Kernel)
-          if (paramData.modulatorId && context?.resolveModulator) {
-            const modulator = context.resolveModulator(paramData.modulatorId);
-            if (modulator) {
-              param.bind(modulator);
-            } else {
-              console.warn(`[Track] Failed to resolve modulator ${paramData.modulatorId} for param ${name}`);
+          if (Array.isArray(paramData.modulations) && paramData.modulations.length) {
+            param.modulations = [];
+            paramData.modulations.forEach((entry, index) => {
+              const slot = param.createModulationSlot({
+                slotId: entry.slotId,
+                type: entry.type ?? 'martigli',
+                label: entry.label ?? `Modulator ${index + 1}`,
+                depth: entry.depth ?? 0,
+                modulatorId: entry.modulatorId ?? null,
+              });
+              if (entry.modulatorId && context?.resolveModulator) {
+                const resolved = context.resolveModulator(entry.modulatorId);
+                if (resolved) {
+                  param.attachModulator(slot.slotId, resolved, { depth: slot.depth, type: slot.type, label: slot.label });
+                } else {
+                  console.warn(`[Track] Failed to resolve modulator ${entry.modulatorId} for param ${name}`);
+                }
+              }
+            });
+          } else {
+            param.modulations = [];
+            if (typeof paramData.depth === 'number' && paramData.depth !== 0) {
+              const slot = param.createModulationSlot({
+                type: 'martigli',
+                label: paramData.modulatorLabel ?? 'Modulation',
+                depth: paramData.depth,
+                modulatorId: paramData.modulatorId ?? null,
+              });
+              if (paramData.modulatorId && context?.resolveModulator) {
+                const resolved = context.resolveModulator(paramData.modulatorId);
+                if (resolved) {
+                  param.attachModulator(slot.slotId, resolved, { depth: slot.depth });
+                }
+              }
             }
           }
         }

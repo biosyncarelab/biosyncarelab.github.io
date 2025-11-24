@@ -156,6 +156,8 @@ export function initMixerUI() {
   });
 
   document.addEventListener('click', (e) => {
+    const rdfSafeTarget = e.target.closest('.knob-container, .knob-value-input, .track-modulation-select, .track-param-select, .fine-tune-btn, .add-modulator-btn, .remove-modulator-btn, .track-item-actions button');
+    if (rdfSafeTarget) return;
     const rdfInfo = getRdfDataset(e.target);
     if (!rdfInfo) return;
 
@@ -170,29 +172,32 @@ export function initMixerUI() {
 
 function renderTrackList(tracks, container, kernel) {
   container.innerHTML = '';
+  const martigliOscillations = kernel.martigli?.listOscillations?.() ?? [];
+
+  const getAvailableModulators = () => (
+    martigliOscillations.map((osc) => ({
+      id: osc.id,
+      label: osc.label || osc.id,
+      type: 'martigli',
+      source: osc,
+    }))
+  );
 
   tracks.forEach(track => {
     const li = document.createElement('li');
     li.className = 'track-item';
-    li.style.padding = '0.5rem';
-    li.style.borderBottom = '1px solid var(--surface-border)';
 
     const header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.style.marginBottom = '0.75rem';
+    header.className = 'track-item-header';
 
     const label = document.createElement('span');
+    label.className = 'track-item-label';
     label.textContent = track.label;
-    label.style.fontWeight = '600';
-    label.style.fontSize = '0.9rem';
     label.style.cursor = 'help';
     setRdfMetadata(label, getTrackConcept(track));
 
     const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '0.25rem';
+    actions.className = 'track-item-actions';
 
     const muteBtn = document.createElement('button');
     muteBtn.className = 'ghost tiny';
@@ -229,51 +234,29 @@ function renderTrackList(tracks, container, kernel) {
     header.appendChild(actions);
     li.appendChild(header);
 
-    // Parameters
     const paramsDiv = document.createElement('div');
-    paramsDiv.style.display = 'grid';
-    paramsDiv.style.gap = '0.5rem';
-    paramsDiv.style.fontSize = '0.8rem';
+    paramsDiv.className = 'track-param-list';
 
     track.parameters.forEach(param => {
       const row = document.createElement('div');
-      row.style.display = 'grid';
-      row.style.gridTemplateColumns = '60px 1fr 24px 60px 24px'; // Added column for fine-tune button
-      row.style.alignItems = 'center';
-      row.style.gap = '0.5rem';
+      row.className = 'track-param-row';
 
       const paramConcept = getParameterConcept(param.name);
-      const annotateParamElement = (element) => {
-        if (element) setRdfMetadata(element, paramConcept);
-      };
 
       const pLabel = document.createElement('label');
       pLabel.textContent = param.name;
-      pLabel.style.color = 'var(--text-muted)';
-      pLabel.style.overflow = 'hidden';
-      pLabel.style.textOverflow = 'ellipsis';
+      pLabel.className = 'track-param-label';
       pLabel.style.cursor = 'help';
-      annotateParamElement(pLabel);
+      if (paramConcept) setRdfMetadata(pLabel, paramConcept);
 
       let input;
       let valControl;
-      let fineBtn;
+      let fineBtn = null;
+      let knobStack = null;
 
       if (param.options && Array.isArray(param.options)) {
         input = document.createElement('select');
         input.className = 'track-param-select';
-        input.style.width = '100%';
-        input.style.cursor = 'pointer';
-        input.style.fontSize = '0.9rem';
-        input.style.padding = '4px 6px';
-        input.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
-        input.style.color = '#f8fafc';
-        input.style.border = '1px solid rgba(148, 163, 184, 0.4)';
-        input.style.borderRadius = '4px';
-        input.style.height = '28px';
-        input.style.outline = 'none';
-        input.style.gridColumn = '2 / 5';
-        annotateParamElement(input);
 
         param.options.forEach(opt => {
           const option = document.createElement('option');
@@ -289,12 +272,6 @@ function renderTrackList(tracks, container, kernel) {
           param.base = e.target.value;
         };
 
-        fineBtn = document.createElement('span'); // Placeholder
-        fineBtn.style.display = 'none';
-        annotateParamElement(fineBtn);
-        valControl = document.createElement('span'); // Placeholder for grid alignment
-        valControl.style.display = 'none';
-        annotateParamElement(valControl);
       } else {
         const originalMin = param.min !== -Infinity ? param.min : 0;
         const originalMax = param.max !== Infinity ? param.max : 1000;
@@ -305,14 +282,10 @@ function renderTrackList(tracks, container, kernel) {
 
         // Fine-tune Button
         fineBtn = document.createElement('button');
-        fineBtn.className = 'ghost tiny';
+        fineBtn.className = 'ghost tiny fine-tune-btn';
+        fineBtn.type = 'button';
         fineBtn.innerHTML = '🔍';
         fineBtn.title = 'Fine Tune Mode';
-        fineBtn.style.padding = '0';
-        fineBtn.style.width = '24px';
-        fineBtn.style.height = '24px';
-        fineBtn.style.opacity = '0.5';
-        annotateParamElement(fineBtn);
 
         let isZoomed = false;
 
@@ -323,15 +296,7 @@ function renderTrackList(tracks, container, kernel) {
         valControl.max = originalMax;
         valControl.step = fineStep;
         valControl.value = param.base < 10 ? param.base.toFixed(2) : Math.round(param.base);
-        valControl.style.width = '100%';
-        valControl.style.textAlign = 'right';
-        valControl.style.border = '1px solid var(--border)';
-        valControl.style.borderRadius = '4px';
-        valControl.style.padding = '2px';
-        valControl.style.fontSize = '0.8rem';
-        valControl.style.background = 'transparent';
-        valControl.style.color = 'var(--text)';
-        annotateParamElement(valControl);
+        valControl.className = 'knob-value-input';
 
         // Create Knob
         const knob = createKnob(param, originalMin, originalMax, normalStep, (val) => {
@@ -339,13 +304,20 @@ function renderTrackList(tracks, container, kernel) {
             valControl.value = val < 10 ? val.toFixed(2) : Math.round(val);
         });
 
-        input = knob.element; // Assign to input so it gets appended
-        annotateParamElement(input);
+        input = knob.element;
+
+        knobStack = document.createElement('div');
+        knobStack.className = 'knob-stack';
+        knobStack.appendChild(input);
+
+        const knobValueField = document.createElement('div');
+        knobValueField.className = 'knob-value-field';
+        knobValueField.appendChild(valControl);
+        knobStack.appendChild(knobValueField);
 
         fineBtn.onclick = () => {
             isZoomed = !isZoomed;
-            fineBtn.style.opacity = isZoomed ? '1' : '0.5';
-            fineBtn.style.color = isZoomed ? 'var(--primary)' : 'var(--text)';
+          fineBtn.classList.toggle('active', isZoomed);
 
             if (isZoomed) {
                 const currentVal = knob.getValue();
@@ -382,8 +354,21 @@ function renderTrackList(tracks, container, kernel) {
         };
       }
 
-      // Martigli Modulation Depth (Knob replaces toggle)
-      if (typeof param.depth !== 'number') param.depth = 0;
+      const headerRow = document.createElement('div');
+      headerRow.className = 'track-param-header';
+      headerRow.appendChild(pLabel);
+      if (fineBtn) {
+        headerRow.appendChild(fineBtn);
+      }
+
+      const controlsRow = document.createElement('div');
+      controlsRow.className = 'track-param-body';
+
+      if (knobStack) {
+        controlsRow.appendChild(knobStack);
+      } else if (input) {
+        controlsRow.appendChild(input);
+      }
 
       const rawDepthRange = (Number.isFinite(param.max) && Number.isFinite(param.min))
         ? Math.abs(param.max - param.min) / 2
@@ -391,95 +376,159 @@ function renderTrackList(tracks, container, kernel) {
       const depthMax = (!Number.isFinite(rawDepthRange) || rawDepthRange <= 0) ? 100 : rawDepthRange;
       const depthStep = depthMax / 100 || 1;
 
-      const depthWrapper = document.createElement('div');
-      depthWrapper.className = 'mod-depth inactive';
-      depthWrapper.title = 'Martigli modulation depth';
-      annotateParamElement(depthWrapper);
+      const modulationSection = document.createElement('div');
+      modulationSection.className = 'track-param-modulations';
 
-      const depthValue = document.createElement('span');
-      depthValue.className = 'mod-depth-value';
-      depthValue.textContent = param.depth.toFixed(1);
-      annotateParamElement(depthValue);
+      const modHeader = document.createElement('div');
+      modHeader.className = 'track-param-modulations-head';
+      const modLabel = document.createElement('span');
+      modLabel.textContent = 'Modulators';
+      modHeader.appendChild(modLabel);
 
-      let depthKnob;
-      let knobValuePath;
+      const addModBtn = document.createElement('button');
+      addModBtn.type = 'button';
+      addModBtn.className = 'ghost tiny add-modulator-btn';
+      addModBtn.textContent = '+';
+      addModBtn.title = 'Add modulator';
+      modHeader.appendChild(addModBtn);
+      modulationSection.appendChild(modHeader);
 
-      const ensureMartigliBinding = () => {
-        if (param._modulator) return true;
-        if (!kernel.martigli) {
-          console.warn("No Martigli engine available");
-          return false;
-        }
-        const oscId = kernel.martigli.referenceId;
-        const osc = oscId ? kernel.martigli._oscillations.get(oscId) : null;
-        if (!osc) {
-          console.warn("No active Martigli oscillator found");
-          return false;
-        }
+      const modList = document.createElement('div');
+      modList.className = 'track-param-modulation-list';
+      modulationSection.appendChild(modList);
 
-        const modulator = {
-          id: oscId,
-          getValue: (time) => (typeof osc.valueAt === 'function' ? osc.valueAt(time) : 0)
-        };
-
-        param.bind(modulator);
-        return true;
-      };
-
-      const deactivateModulation = () => {
-        if (param._modulator) param.unbind();
-      };
-
-      const updateDepthVisual = (value) => {
-        const isActive = value > 0 && !!param._modulator;
-        depthWrapper.classList.toggle('active', isActive);
-        depthWrapper.classList.toggle('inactive', !isActive);
-        depthValue.style.color = isActive ? 'var(--primary)' : 'var(--muted)';
-        if (knobValuePath) {
-          knobValuePath.style.stroke = isActive ? 'var(--primary)' : 'var(--muted)';
-        }
-      };
-
-      const handleDepthChange = (rawVal) => {
-        const val = Math.max(0, Number(rawVal) || 0);
-
-        if (val === 0) {
-          param.depth = 0;
-          depthValue.textContent = '0.0';
-          deactivateModulation();
-          if (depthKnob) depthKnob.setValue(0);
-          updateDepthVisual(0);
+      const refreshModList = () => {
+        modList.innerHTML = '';
+        if (!Array.isArray(param.modulations) || !param.modulations.length) {
+          const empty = document.createElement('p');
+          empty.className = 'track-param-modulation-empty';
+          empty.textContent = 'No modulators';
+          modList.appendChild(empty);
           return;
         }
 
-        if (!ensureMartigliBinding()) {
-          param.depth = 0;
-          depthValue.textContent = '0.0';
-          if (depthKnob) depthKnob.setValue(0);
-          updateDepthVisual(0);
-          return;
-        }
+        param.modulations.forEach((slot) => {
+          const modRow = document.createElement('div');
+          modRow.className = 'track-param-modulation-row';
+          modRow.dataset.slotId = slot.slotId;
+          const syncRowState = () => {
+            modRow.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
+          };
 
-        param.depth = val;
-        depthValue.textContent = val.toFixed(1);
-        updateDepthVisual(val);
+          const modSelect = document.createElement('select');
+          modSelect.className = 'track-modulation-select';
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = martigliOscillations.length ? 'Select modulator…' : 'No Martigli oscillators';
+          modSelect.appendChild(placeholder);
+
+          const available = getAvailableModulators();
+          available.forEach((entry) => {
+            const option = document.createElement('option');
+            option.value = entry.id;
+            option.textContent = entry.label;
+            if (slot.modulatorId === entry.id) option.selected = true;
+            modSelect.appendChild(option);
+          });
+          modSelect.disabled = !available.length;
+
+          modSelect.onchange = (e) => {
+            const targetId = e.target.value;
+            if (!targetId) {
+              slot.source = null;
+              slot.modulatorId = null;
+              syncRowState();
+              return;
+            }
+            const picked = available.find((entry) => entry.id === targetId);
+            if (picked) {
+              param.attachModulator(slot.slotId, picked.source, { type: picked.type, label: picked.label });
+              syncRowState();
+            }
+          };
+
+          const modControls = document.createElement('div');
+          modControls.className = 'track-modulation-controls';
+
+          const depthStack = document.createElement('div');
+          depthStack.className = 'knob-stack';
+
+          let depthInput;
+          const depthKnob = createKnob({ base: slot.depth }, 0, depthMax, depthStep, (value) => {
+            const nextVal = Math.max(0, value);
+            param.setModulationDepth(slot.slotId, nextVal);
+            if (depthInput) depthInput.value = nextVal.toFixed(2);
+            slot.depth = nextVal;
+            syncRowState();
+          });
+          depthKnob.element.classList.add('mod-depth-knob');
+
+          const depthInputWrapper = document.createElement('div');
+          depthInputWrapper.className = 'knob-value-field';
+          depthInput = document.createElement('input');
+          depthInput.type = 'number';
+          depthInput.className = 'knob-value-input';
+          depthInput.step = depthStep;
+          depthInput.min = 0;
+          depthInput.max = depthMax;
+          depthInput.value = slot.depth.toFixed(2);
+          depthInput.onchange = (e) => {
+            let nextVal = parseFloat(e.target.value);
+            if (!Number.isFinite(nextVal)) nextVal = 0;
+            if (nextVal < 0) nextVal = 0;
+            if (nextVal > depthMax) nextVal = depthMax;
+            param.setModulationDepth(slot.slotId, nextVal);
+            slot.depth = nextVal;
+            depthKnob.setValue(nextVal);
+            depthInput.value = nextVal.toFixed(2);
+            syncRowState();
+          };
+          depthInputWrapper.appendChild(depthInput);
+
+          depthStack.appendChild(depthKnob.element);
+          depthStack.appendChild(depthInputWrapper);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'ghost tiny remove-modulator-btn';
+          removeBtn.textContent = '×';
+          removeBtn.title = 'Remove modulator';
+          removeBtn.onclick = () => {
+            param.unbind(slot.slotId);
+            refreshModList();
+          };
+
+          modControls.appendChild(depthStack);
+          modControls.appendChild(removeBtn);
+
+          modRow.appendChild(modSelect);
+          modRow.appendChild(modControls);
+          syncRowState();
+          modList.appendChild(modRow);
+        });
       };
 
-      depthKnob = createKnob({ base: param.depth }, 0, depthMax, depthStep, handleDepthChange);
-      depthKnob.element.classList.add('mod-depth-knob');
-      knobValuePath = depthKnob.element.querySelector('.knob-value');
-      annotateParamElement(depthKnob.element);
+      addModBtn.onclick = () => {
+        const available = getAvailableModulators();
+        const next = available[0];
+        const slot = param.createModulationSlot({
+          type: next?.type ?? 'martigli',
+          label: next?.label ?? 'Martigli',
+          depth: 0,
+          modulator: next?.source ?? null,
+          modulatorId: next?.id ?? null,
+        });
+        if (next?.source) {
+          param.attachModulator(slot.slotId, next.source, { type: next.type, label: next.label });
+        }
+        refreshModList();
+      };
 
-      depthWrapper.appendChild(depthKnob.element);
-      depthWrapper.appendChild(depthValue);
+      refreshModList();
 
-      updateDepthVisual(param.depth);
-
-      row.appendChild(pLabel);
-      row.appendChild(input);
-      row.appendChild(fineBtn);
-      row.appendChild(valControl);
-      row.appendChild(depthWrapper);
+      row.appendChild(headerRow);
+      row.appendChild(controlsRow);
+      row.appendChild(modulationSection);
       paramsDiv.appendChild(row);
     });
 

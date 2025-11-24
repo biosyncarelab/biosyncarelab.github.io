@@ -466,8 +466,7 @@ select {
   align-items: flex-start;
 }
 
-.stack-list,
-.sensory-list {
+.stack-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -476,12 +475,32 @@ select {
   gap: 0.75rem;
 }
 
-.stack-list li,
-.sensory-list li {
+.sensory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+
+.stack-list li {
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 0.85rem;
   background: rgba(2, 6, 23, 0.45);
+}
+
+.sensory-list li {
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  background: rgba(2, 6, 23, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+  height: 100%;
 }
 
 .sensory-item-head {
@@ -489,6 +508,120 @@ select {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+}
+
+.track-item {
+  list-style: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.track-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.track-item-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.track-item-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.track-param-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.track-param-row {
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  padding-top: 0.55rem;
+}
+
+.track-param-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.track-param-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-param-label {
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-param-body {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.track-param-body .track-param-select {
+  flex: 1 1 240px;
+}
+
+.knob-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 56px;
+}
+
+.knob-value-field {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.knob-value-input {
+  width: 70px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(2, 6, 23, 0.55);
+  color: var(--text);
+  padding: 0.15rem 0.35rem;
+  font-size: 0.8rem;
+}
+
+.fine-tune-btn {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  opacity: 0.65;
+}
+
+.fine-tune-btn.active {
+  opacity: 1;
+  color: var(--primary);
 }
 
 .sensory-item-title {
@@ -2079,61 +2212,81 @@ select {
   cursor: none;
 }
 
+.track-param-modulations {
+  margin-top: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.5rem;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.track-param-modulations-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.track-param-modulation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.track-param-modulation-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(2, 6, 23, 0.35);
+}
+
+.track-param-modulation-row.active {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(8, 47, 73, 0.35);
+}
+
+.track-modulation-select,
 .track-param-select {
-  background: rgba(15, 23, 42, 0.95) !important;
-  color: var(--text) !important;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text);
   border: 1px solid rgba(148, 163, 184, 0.45);
-  border-radius: 4px;
-  font-size: 0.9rem;
-  padding: 0.2rem 0.55rem;
-  height: 32px;
+  border-radius: 0.35rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.45rem;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
 }
 
-.track-param-select option {
-  background: #0f172a;
-  color: var(--text);
-}
-
-.mod-depth {
+.track-modulation-controls {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
-  min-width: 42px;
-  text-align: center;
-  transition: opacity 0.2s ease;
+  gap: 0.45rem;
 }
 
-.mod-depth .knob-container {
-  width: 40px;
-  height: 40px;
+.add-modulator-btn,
+.remove-modulator-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  padding: 0;
 }
 
-.mod-depth .mod-depth-value {
-  font-size: 0.7rem;
+.track-param-modulation-empty {
+  margin: 0;
+  font-size: 0.78rem;
   color: var(--muted);
-}
-
-.mod-depth.inactive {
-  opacity: 0.6;
-}
-
-.mod-depth.inactive .knob-value {
-  stroke: var(--muted);
-}
-
-.mod-depth.inactive .knob-track {
-  stroke: rgba(148, 163, 184, 0.35);
-}
-
-.mod-depth.active .mod-depth-value {
-  color: var(--primary);
-}
-
-.mod-depth.active .knob-value {
-  stroke: var(--primary);
 }
