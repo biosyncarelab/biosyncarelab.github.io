@@ -573,11 +573,17 @@ select {
 }
 
 .track-param-body {
-  margin-top: 0.3rem;
+  margin-top: 0.35rem;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.track-param-body.has-knob {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr);
   align-items: flex-start;
+  column-gap: 0.65rem;
 }
 
 .track-param-body .track-param-select {
@@ -2415,16 +2421,21 @@ select {
 
 
 .track-mod-mini {
-  flex: 1 1 280px;
-  min-width: 200px;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
+}
+
+.track-param-body.has-knob .track-mod-mini {
+  width: 100%;
 }
 
 .track-mod-mini-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.35rem;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -2435,15 +2446,15 @@ select {
 .track-mod-mini-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .track-mod-mini-slot {
-  flex: 0 1 220px;
-  min-width: 180px;
+  flex: 1 1 180px;
+  min-width: 150px;
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.25rem 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 0.45rem;
@@ -2468,6 +2479,30 @@ select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+}
+
+.track-mod-mini-slot .track-mod-mini-select {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+
+.track-mod-mini-slot .knob-stack {
+  flex: 0 0 auto;
+}
+
+.knob-stack--mini {
+  gap: 0.1rem;
+}
+
+.knob-stack--mini .knob-container {
+  width: 32px;
+  height: 32px;
+}
+
+.knob-stack--mini .knob-value-input {
+  width: 55px;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.3rem;
 }
 
 

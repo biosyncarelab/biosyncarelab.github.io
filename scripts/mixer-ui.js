@@ -365,6 +365,7 @@ function renderTrackList(tracks, container, kernel) {
       controlsRow.className = 'track-param-body';
 
       if (knobStack) {
+        controlsRow.classList.add('has-knob');
         controlsRow.appendChild(knobStack);
       } else if (input) {
         controlsRow.appendChild(input);
@@ -376,47 +377,41 @@ function renderTrackList(tracks, container, kernel) {
       const depthMax = (!Number.isFinite(rawDepthRange) || rawDepthRange <= 0) ? 100 : rawDepthRange;
       const depthStep = depthMax / 100 || 1;
 
-      const modInline = document.createElement('div');
-      modInline.className = 'track-mod-inline';
+      const modMini = document.createElement('div');
+      modMini.className = 'track-mod-mini';
 
-      const modInlineHead = document.createElement('div');
-      modInlineHead.className = 'track-mod-inline-head';
-      const modLabel = document.createElement('span');
-      modLabel.textContent = 'mod';
-      modInlineHead.appendChild(modLabel);
+      const modMiniHead = document.createElement('div');
+      modMiniHead.className = 'track-mod-mini-head';
+      const modMiniLabel = document.createElement('span');
+      modMiniLabel.textContent = 'MOD';
+      modMiniHead.appendChild(modMiniLabel);
 
       const addModBtn = document.createElement('button');
       addModBtn.type = 'button';
-      addModBtn.className = 'ghost tiny add-modulator-btn';
+      addModBtn.className = 'ghost tiny add-mod-mini-btn';
       addModBtn.textContent = '+';
-      addModBtn.title = martigliOscillations.length ? 'Add modulator' : 'No Martigli oscillations available';
-      addModBtn.disabled = martigliOscillations.length === 0;
-      modInlineHead.appendChild(addModBtn);
-      modInline.appendChild(modInlineHead);
+      modMiniHead.appendChild(addModBtn);
+      modMini.appendChild(modMiniHead);
 
-      const modChipList = document.createElement('div');
-      modChipList.className = 'track-mod-chip-list';
-      modInline.appendChild(modChipList);
+      const modSlotList = document.createElement('div');
+      modSlotList.className = 'track-mod-mini-slots';
+      modMini.appendChild(modSlotList);
+      controlsRow.appendChild(modMini);
 
-      controlsRow.appendChild(modInline);
+      const renderModSlot = (slot) => {
+        const slotRow = document.createElement('div');
+        slotRow.className = 'track-mod-mini-slot';
+        slotRow.dataset.slotId = slot.slotId;
 
-      const renderModChip = (slot) => {
-        const chip = document.createElement('div');
-        chip.className = 'track-mod-chip';
-        chip.dataset.slotId = slot.slotId;
-
-        const syncChipState = () => {
-          chip.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
+        const syncState = () => {
+          slotRow.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
         };
 
-        const chipHead = document.createElement('div');
-        chipHead.className = 'track-mod-chip-head';
-
         const modSelect = document.createElement('select');
-        modSelect.className = 'track-modulation-select';
+        modSelect.className = 'track-mod-mini-select';
         const placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = martigliOscillations.length ? 'choose mod…' : 'no Martigli waves';
+        placeholder.textContent = martigliOscillations.length ? 'Select…' : 'No Martigli waves';
         modSelect.appendChild(placeholder);
 
         const available = getAvailableModulators();
@@ -433,34 +428,21 @@ function renderTrackList(tracks, container, kernel) {
           if (!targetId) {
             slot.source = null;
             slot.modulatorId = null;
-            syncChipState();
+            syncState();
             return;
           }
           const picked = available.find((entry) => entry.id === targetId);
           if (picked) {
             param.attachModulator(slot.slotId, picked.source, { type: picked.type, label: picked.label });
-            syncChipState();
+            syncState();
           }
         };
 
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'ghost tiny remove-modulator-btn';
-        removeBtn.textContent = '×';
-        removeBtn.title = 'Remove modulator';
-        removeBtn.onclick = () => {
-          param.unbind(slot.slotId);
-          refreshModList();
-        };
-
-        chipHead.appendChild(modSelect);
-        chipHead.appendChild(removeBtn);
-
-        const chipBody = document.createElement('div');
-        chipBody.className = 'track-mod-chip-body';
+        const miniControls = document.createElement('div');
+        miniControls.className = 'track-mod-mini-controls';
 
         const depthStack = document.createElement('div');
-        depthStack.className = 'knob-stack';
+        depthStack.className = 'knob-stack knob-stack--mini';
 
         let depthInput;
         const depthKnob = createKnob({ base: slot.depth }, 0, depthMax, depthStep, (value) => {
@@ -468,10 +450,7 @@ function renderTrackList(tracks, container, kernel) {
           param.setModulationDepth(slot.slotId, nextVal);
           slot.depth = nextVal;
           if (depthInput) depthInput.value = nextVal.toFixed(2);
-          if (isZoomed) {
-            applyDepthZoom();
-          }
-          syncChipState();
+          syncState();
         });
         depthKnob.element.classList.add('mod-depth-knob');
 
@@ -493,10 +472,7 @@ function renderTrackList(tracks, container, kernel) {
           slot.depth = nextVal;
           depthKnob.setValue(nextVal);
           depthInput.value = nextVal.toFixed(2);
-          if (isZoomed) {
-            applyDepthZoom();
-          }
-          syncChipState();
+          syncState();
         };
         depthInputWrapper.appendChild(depthInput);
 
@@ -536,30 +512,42 @@ function renderTrackList(tracks, container, kernel) {
           depthKnob.setValue(slot.depth);
         };
 
-        chipBody.appendChild(depthStack);
-        chipBody.appendChild(modFineBtn);
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'ghost tiny remove-mod-mini-btn';
+        removeBtn.textContent = '×';
+        removeBtn.title = 'Remove modulator';
+        removeBtn.onclick = () => {
+          param.unbind(slot.slotId);
+          refreshModSlots();
+        };
 
-        chip.appendChild(chipHead);
-        chip.appendChild(chipBody);
-        syncChipState();
-        return chip;
+        miniControls.appendChild(depthStack);
+        miniControls.appendChild(modFineBtn);
+        miniControls.appendChild(removeBtn);
+
+        slotRow.appendChild(modSelect);
+        slotRow.appendChild(miniControls);
+        syncState();
+        return slotRow;
       };
 
-      const refreshModList = () => {
-        modChipList.innerHTML = '';
-        addModBtn.disabled = martigliOscillations.length === 0;
+      const refreshModSlots = () => {
+        modSlotList.innerHTML = '';
+        const available = getAvailableModulators();
+        addModBtn.disabled = !available.length;
         addModBtn.title = addModBtn.disabled ? 'No Martigli oscillations available' : 'Add modulator';
 
         if (!Array.isArray(param.modulations) || !param.modulations.length) {
-          const empty = document.createElement('p');
-          empty.className = 'track-mod-inline-empty';
-          empty.textContent = martigliOscillations.length ? 'Add mod' : 'No Martigli waves yet';
-          modChipList.appendChild(empty);
+          const empty = document.createElement('span');
+          empty.className = 'track-mod-mini-empty';
+          empty.textContent = available.length ? 'Add mod' : 'No Martigli waves';
+          modSlotList.appendChild(empty);
           return;
         }
 
         param.modulations.forEach((slot) => {
-          modChipList.appendChild(renderModChip(slot));
+          modSlotList.appendChild(renderModSlot(slot));
         });
       };
 
@@ -576,10 +564,10 @@ function renderTrackList(tracks, container, kernel) {
         if (next?.source) {
           param.attachModulator(slot.slotId, next.source, { type: next.type, label: next.label });
         }
-        refreshModList();
+        refreshModSlots();
       };
 
-      refreshModList();
+      refreshModSlots();
 
       row.appendChild(headerRow);
       row.appendChild(controlsRow);
