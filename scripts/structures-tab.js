@@ -999,13 +999,15 @@ function updateSynthParams(sequenceId) {
 const tabButtons = {
   dashboard: document.getElementById('tab-dashboard'),
   structures: document.getElementById('tab-structures'),
-  nso: document.getElementById('tab-nso')
+  nso: document.getElementById('tab-nso'),
+  docs: document.getElementById('tab-docs')
 };
 
 const tabPanels = {
   dashboard: document.getElementById('panel-dashboard'),
   structures: document.getElementById('panel-structures'),
-  nso: document.getElementById('panel-nso')
+  nso: document.getElementById('panel-nso'),
+  docs: document.getElementById('panel-docs')
 };
 
 const labTabs = document.getElementById('lab-tabs');

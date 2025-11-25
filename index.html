@@ -93,6 +93,9 @@
         <button type="button" id="tab-nso" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-nso">
           NSO Navigator
         </button>
+        <button type="button" id="tab-docs" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-docs">
+          Docs
+        </button>
       </nav>
 
       <main id="panel-dashboard" class="lab-main lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-dashboard" aria-live="polite">
@@ -517,6 +520,72 @@
             </div>
         </div>
       </div>
+
+      <!-- Documentation Panel -->
+      <div id="panel-docs" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-docs">
+        <div class="docs-container">
+          <header class="docs-header">
+            <h2>Documentation</h2>
+            <p class="muted-text">Guides, references, and tutorials for BioSynCare Lab</p>
+          </header>
+
+          <div id="docs-grid" class="docs-grid">
+            <section class="docs-section">
+              <h3>Getting Started</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="quick-start">Quick Start Guide</a></li>
+                <li><a href="#" data-doc="features">Features Overview</a></li>
+              </ul>
+            </section>
+
+            <section class="docs-section">
+              <h3>Structure Explorer</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="structures-playback">Structure Playback & Synthesis</a></li>
+                <li><a href="#" data-doc="rdf-enrichment">RDF Enrichment</a></li>
+              </ul>
+            </section>
+
+            <section class="docs-section">
+              <h3>Architecture</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="pod-architecture">POD Architecture</a></li>
+                <li><a href="#" data-doc="refactoring">Refactoring Summary</a></li>
+              </ul>
+            </section>
+
+            <section class="docs-section">
+              <h3>NSO & RDF</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="nso-navigator">NSO Navigator</a></li>
+                <li><a href="#" data-doc="ontology-linking">Ontology Linking</a></li>
+                <li><a href="#" data-doc="rdf-quality">RDF Quality Strategy</a></li>
+              </ul>
+            </section>
+
+            <section class="docs-section">
+              <h3>Migration Guides</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="migration-guide">SSO/ONC to NSO Migration</a></li>
+                <li><a href="#" data-doc="appstate-migration">AppState Migration</a></li>
+              </ul>
+            </section>
+
+            <section class="docs-section">
+              <h3>Development</h3>
+              <ul class="docs-list">
+                <li><a href="#" data-doc="agents">Agent System</a></li>
+                <li><a href="#" data-doc="kernel-architecture">Kernel Architecture</a></li>
+              </ul>
+            </section>
+          </div>
+
+          <div id="doc-viewer" class="doc-viewer hidden">
+            <button id="close-doc-viewer" class="ghost small">← Back to Docs</button>
+            <article id="doc-content" class="doc-content"></article>
+          </div>
+        </div>
+      </div>
     </div>
 
     <section id="detail-modal" class="modal hidden" aria-hidden="true">
@@ -624,7 +693,9 @@
       </div>
     </section>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="scripts/auth.js"></script>
     <script type="module" src="scripts/nso-navigator.js"></script>
+    <script type="module" src="scripts/docs-tab.js"></script>
   </body>
 </html>
