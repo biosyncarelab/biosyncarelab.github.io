@@ -14,8 +14,7 @@ export {
   AudioTrack, BinauralBeatTrack, IsochronicTrack, SineTrack,
   VisualTrack, GeometryVisualTrack, ParticleVisualTrack,
   HapticTrack, VibrationTrack,
-  AudioEngine, VideoEngine, HapticEngine,
-  StructureControlState, StructureControl
+  AudioEngine, VideoEngine, HapticEngine
 };
 
 const noop = () => {};
@@ -718,6 +717,57 @@ export class StructureControl {
     this.loop = Boolean(shouldLoop);
   }
 
+  sample(timeSec = nowSeconds()) {
+    if (!this.rows.length) {
+      return {
+        value: 0,
+        rowIndex: 0,
+        bellIndex: 0,
+        rowLength: this.orderDimension ?? 1,
+        running: false,
+        stepPosition: 0,
+        stepCount: 0,
+      };
+    }
+
+    if (!this.running || !Number.isFinite(this.startTime) || this.tempo <= 0) {
+      const rowLength = this.rows[0]?.length || this.orderDimension || 1;
+      return {
+        value: this.lastValue ?? 0,
+        rowIndex: 0,
+        bellIndex: 0,
+        rowLength,
+        running: false,
+        stepPosition: 0,
+        stepCount: this.rows.length,
+      };
+    }
+
+    const beatsPerSecond = this.tempo / 60;
+    const elapsed = Math.max(0, timeSec - this.startTime);
+    const rowCount = this.rows.length;
+    const maxPosition = Math.max(rowCount - Number.EPSILON, 0);
+    const position = this.loop ? (rowCount ? elapsed * beatsPerSecond % rowCount : 0) : Math.min(elapsed * beatsPerSecond, maxPosition);
+    const rowIndex = Math.min(rowCount - 1, Math.floor(position));
+    const row = this.rows[rowIndex] ?? [0];
+    const rowLength = row.length || this.orderDimension || 1;
+    const fractional = position - Math.floor(position);
+    const bellIndex = Math.min(rowLength - 1, Math.floor(fractional * rowLength));
+    const rawValue = row[bellIndex] ?? 0;
+    const denom = Math.max(1, (this.orderDimension || rowLength) - 1);
+    const normalized = denom > 0 ? rawValue / denom : rawValue;
+    this.lastValue = normalized;
+    return {
+      value: normalized,
+      rowIndex,
+      bellIndex,
+      rowLength,
+      running: true,
+      stepPosition: position,
+      stepCount: rowCount,
+    };
+  }
+
   start(now = nowSeconds()) {
     if (!this.rows.length) return;
     this.running = true;
@@ -731,29 +781,7 @@ export class StructureControl {
   }
 
   valueAt(timeSec = nowSeconds()) {
-    if (!this.rows.length) return 0;
-    if (!this.running || !Number.isFinite(this.startTime) || this.tempo <= 0) {
-      return this.lastValue ?? 0;
-    }
-
-    const beatsPerSecond = this.tempo / 60;
-    const elapsed = Math.max(0, timeSec - this.startTime);
-    const virtualPosition = elapsed * beatsPerSecond;
-    const rowCount = this.rows.length;
-    if (!rowCount) return 0;
-
-    const maxPosition = Math.max(rowCount - Number.EPSILON, 0);
-    const position = this.loop ? (rowCount ? virtualPosition % rowCount : 0) : Math.min(virtualPosition, maxPosition);
-    const rowIndex = Math.min(rowCount - 1, Math.floor(position));
-    const row = this.rows[rowIndex] ?? [0];
-    const rowLength = row.length || this.orderDimension || 1;
-    const fractional = position - Math.floor(position);
-    const bellIndex = Math.min(rowLength - 1, Math.floor(fractional * rowLength));
-    const rawValue = row[bellIndex] ?? 0;
-    const denom = Math.max(1, (this.orderDimension || rowLength) - 1);
-    const normalized = denom > 0 ? rawValue / denom : rawValue;
-    this.lastValue = normalized;
-    return normalized;
+    return this.sample(timeSec).value;
   }
 
   toJSON() {

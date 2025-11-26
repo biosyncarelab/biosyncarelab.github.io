@@ -363,6 +363,223 @@ body {
   gap: 0.75rem;
 }
 
+.control-panel {
+  border-color: rgba(74, 222, 128, 0.35);
+  background: linear-gradient(120deg, rgba(22, 163, 74, 0.08), rgba(14, 165, 233, 0.04));
+}
+
+.control-split {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 900px) {
+  .control-split {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+.control-block {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(2, 6, 23, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.martigli-block {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.control-builder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.control-field select,
+.control-field input {
+  width: 100%;
+}
+
+.control-tempo-input {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(2, 6, 23, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.control-tempo-input input {
+  margin: 0;
+  border: none;
+  background: transparent;
+  width: 80px;
+  color: var(--text);
+  padding: 0.25rem 0;
+}
+
+.control-tempo-unit {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.control-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 0.65rem;
+  padding: 0.65rem;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.control-track-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.35rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.control-track-item {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-left: 3px solid #4ade80;
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.control-track-item.running {
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.18);
+}
+
+.control-track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-track-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.control-track-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.control-track-name {
+  font-weight: 600;
+}
+
+.control-track-chip {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.chip-live {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+}
+
+.chip-idle {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+.control-track-meta {
+  margin: 0;
+}
+
+.control-track-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.control-tempo-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.control-tempo-field input {
+  width: 90px;
+}
+
+.control-tempo-suffix {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.control-button-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.control-track-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.control-meter {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+
+.control-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width 0.12s ease-out;
+}
+
+.control-preview-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.control-preview-value {
+  color: #bbf7d0;
+  font-weight: 700;
+}
+
 .lab-main.hidden {
   display: none;
 }
@@ -2714,6 +2931,16 @@ select {
 .track-mod-mini-slot.active {
   border-color: rgba(56, 189, 248, 0.45);
   background: rgba(8, 47, 73, 0.3);
+}
+
+.track-mod-mini-slot[data-mod-type="structure"] {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(22, 163, 74, 0.12);
+}
+
+.track-mod-mini-slot[data-mod-type="structure"].active {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(21, 128, 61, 0.22);
 }
 
 .track-mod-mini-select,

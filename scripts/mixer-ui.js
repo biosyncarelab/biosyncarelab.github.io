@@ -417,6 +417,9 @@ function renderTrackList(tracks, container, kernel) {
         const slotRow = document.createElement('div');
         slotRow.className = 'track-mod-mini-slot';
         slotRow.dataset.slotId = slot.slotId;
+        if (slot.type) {
+          slotRow.dataset.modType = slot.type;
+        }
 
         const syncState = () => {
           slotRow.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
@@ -426,14 +429,16 @@ function renderTrackList(tracks, container, kernel) {
         modSelect.className = 'track-mod-mini-select';
         const placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = martigliOscillations.length ? 'Select…' : 'No Martigli waves';
+        const available = getAvailableModulators();
+        placeholder.textContent = available.length ? 'Select…' : 'No modulators yet';
         modSelect.appendChild(placeholder);
 
-        const available = getAvailableModulators();
         available.forEach((entry) => {
           const option = document.createElement('option');
           option.value = entry.id;
-          option.textContent = entry.label;
+          option.textContent = entry.type === 'structure'
+            ? `Structure · ${entry.label}`
+            : `Martigli · ${entry.label}`;
           if (slot.modulatorId === entry.id) option.selected = true;
           modSelect.appendChild(option);
         });
@@ -443,12 +448,17 @@ function renderTrackList(tracks, container, kernel) {
           if (!targetId) {
             slot.source = null;
             slot.modulatorId = null;
+            delete slot.type;
             syncState();
             return;
           }
           const picked = available.find((entry) => entry.id === targetId);
           if (picked) {
-            param.attachModulator(slot.slotId, picked.source, { type: picked.type, label: picked.label });
+            slotRow.dataset.modType = picked.type;
+            param.attachModulator(slot.slotId, picked.source, {
+              type: picked.type,
+              label: picked.type === 'structure' ? `Structure · ${picked.label}` : picked.label,
+            });
             syncState();
           }
         };
@@ -551,12 +561,12 @@ function renderTrackList(tracks, container, kernel) {
         modSlotList.innerHTML = '';
         const available = getAvailableModulators();
         addModBtn.disabled = !available.length;
-        addModBtn.title = addModBtn.disabled ? 'No Martigli oscillations available' : 'Add modulator';
+        addModBtn.title = addModBtn.disabled ? 'No modulators available' : 'Add modulator';
 
         if (!Array.isArray(param.modulations) || !param.modulations.length) {
           const empty = document.createElement('span');
           empty.className = 'track-mod-mini-empty';
-          empty.textContent = available.length ? 'Add mod' : 'No Martigli waves';
+          empty.textContent = available.length ? 'Add mod' : 'No modulators yet';
           modSlotList.appendChild(empty);
           return;
         }
@@ -571,7 +581,9 @@ function renderTrackList(tracks, container, kernel) {
         const next = available[0];
         const slot = param.createModulationSlot({
           type: next?.type ?? 'martigli',
-          label: next?.label ?? 'Martigli',
+          label: next
+            ? `${next.type === 'structure' ? 'Structure · ' : 'Martigli · '}${next.label}`
+            : 'Martigli',
           depth: 0,
           modulator: next?.source ?? null,
           modulatorId: next?.id ?? null,

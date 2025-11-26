@@ -69,6 +69,7 @@ import { BSCLabKernel } from "./structures.js";
 import { STRUCTURE_MANIFEST } from "./structures-loader.js";
 import { initMixerUI } from "./mixer-ui.js";
 import "./structures-tab.js";
+import { initStructureControlPanel } from "./auth/structure-control-ui.js";
 
 const ui = {
   state: document.getElementById("auth-state"),
@@ -186,6 +187,18 @@ const kernel = new BSCLabKernel({ onInteraction: logInteraction });
 kernel.init();
 appState.setKernel(kernel);
 initMixerUI();
+initStructureControlPanel({
+  kernel,
+  elements: {
+    datasetSelect: ui.structureControlDataset,
+    sequenceSelect: ui.structureControlSequence,
+    tempoInput: ui.structureControlTempo,
+    addButton: ui.structureControlAdd,
+    listEl: ui.structureControlList,
+    statusEl: ui.structureControlStatus,
+    emptyEl: ui.structureControlEmpty,
+  },
+});
 
 // Wire up reactive UI via state subscriptions
 appState.subscribe((state) => {

@@ -134,18 +134,65 @@
             </div>
           </div>
           <div class="track-grid">
-            <section class="track-panel martigli-panel" id="dashboard-martigli-card">
+            <section class="track-panel control-panel" id="dashboard-control-card">
               <div class="section-headline">
-                <h3>Martigli tracks</h3>
-                <p id="martigli-dashboard-preview" class="muted-text small">
-                  Live Martigli widget syncs with your current dashboard session.
+                <h3>Control tracks</h3>
+                <p class="muted-text small">
+                  Martigli oscillators and structure sequences, all available as modulators.
                 </p>
               </div>
-              <div class="panel-actions">
-                <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add oscillation</button>
+              <div class="control-split">
+                <div class="control-block martigli-block" id="dashboard-martigli-card">
+                  <div class="section-headline">
+                    <h4>Martigli tracks</h4>
+                    <p id="martigli-dashboard-preview" class="muted-text small">
+                      Live Martigli widget syncs with your current dashboard session.
+                    </p>
+                  </div>
+                  <div class="panel-actions">
+                    <button type="button" id="martigli-add-dashboard" class="ghost tiny">Add oscillation</button>
+                  </div>
+                  <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
+                  <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
+                </div>
+                <div class="control-block structure-block">
+                  <div class="section-headline">
+                    <h4>Structure controls</h4>
+                    <p id="structure-control-status" class="muted-text small">
+                      Use structure sequences as modulators for any mixer parameter.
+                    </p>
+                  </div>
+                  <div class="control-builder">
+                    <label class="control-field">
+                      Dataset
+                      <select id="control-structure-dataset" class="tiny">
+                        <option value="">Loading datasets…</option>
+                      </select>
+                    </label>
+                    <label class="control-field">
+                      Sequence
+                      <select id="control-structure-sequence" class="tiny" disabled>
+                        <option value="">Choose a dataset first</option>
+                      </select>
+                    </label>
+                    <label class="control-field control-field--tempo">
+                      Tempo
+                      <div class="control-tempo-input">
+                        <input type="number" id="control-structure-tempo" min="10" max="360" step="1" value="60" />
+                        <span class="control-tempo-unit">BPM</span>
+                      </div>
+                    </label>
+                    <button type="button" id="structure-control-add" class="primary tiny">Create control</button>
+                  </div>
+                  <p class="muted-text small">
+                    Structure controls output a normalized bell index (0–1) as the modulation signal. Looping sequences stay tempo-locked.
+                  </p>
+                  <div id="structure-control-empty" class="control-empty">
+                    <p class="muted-text small">No structure controls yet. Build one above to start modulating tracks.</p>
+                  </div>
+                  <ul id="structure-control-list" class="control-track-list"></ul>
+                </div>
               </div>
-              <p id="martigli-dashboard-summary" class="muted-text small">No oscillations yet.</p>
-              <div id="martigli-dashboard-list" class="martigli-dashboard-list" aria-live="polite"></div>
             </section>
             <section class="track-panel">
               <div class="section-headline">
