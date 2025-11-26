@@ -182,6 +182,8 @@ function renderTrackList(tracks, container, kernel) {
   container.innerHTML = '';
   const martigliOscillations = kernel.martigli?.listOscillations?.() ?? [];
   const structureControls = kernel.controlTracks?.listControls?.() ?? [];
+  const foldState = renderTrackList._foldState || new Map();
+  renderTrackList._foldState = foldState;
 
   const getAvailableModulators = () => ([
     ...martigliOscillations.map((osc) => ({
@@ -202,8 +204,16 @@ function renderTrackList(tracks, container, kernel) {
     const li = document.createElement('li');
     li.className = 'track-item';
 
+    const isCollapsed = foldState.get(track.id) === true;
+    const foldTargets = [];
+
     const header = document.createElement('div');
     header.className = 'track-item-header';
+
+    const foldBtn = document.createElement('button');
+    foldBtn.className = 'ghost tiny fold-toggle';
+    foldBtn.type = 'button';
+    foldBtn.textContent = isCollapsed ? '▶' : '▼';
 
     const label = document.createElement('span');
     label.className = 'track-item-label';
@@ -245,12 +255,22 @@ function renderTrackList(tracks, container, kernel) {
     actions.appendChild(muteBtn);
     actions.appendChild(removeBtn);
 
+    header.appendChild(foldBtn);
     header.appendChild(label);
     header.appendChild(actions);
     li.appendChild(header);
 
+    const collapsedPreview = document.createElement('div');
+    collapsedPreview.className = 'track-fold-preview';
+    const modSlotCount = Array.from(track.parameters?.values?.() ?? []).reduce((sum, p) => {
+      return sum + (Array.isArray(p?.modulations) ? p.modulations.length : 0);
+    }, 0);
+    collapsedPreview.innerHTML = `<span class="fold-pill">${track.type}</span><span class="fold-meta">Mod slots: ${modSlotCount}</span>`;
+    li.appendChild(collapsedPreview);
+
     const paramsDiv = document.createElement('div');
     paramsDiv.className = 'track-param-list';
+    foldTargets.push(paramsDiv);
 
     track.parameters.forEach(param => {
       const row = document.createElement('div');
@@ -721,6 +741,7 @@ function renderTrackList(tracks, container, kernel) {
             ctx.restore();
         };
         requestAnimationFrame(renderPreview);
+        foldTargets.push(previewContainer);
     }
 
     // Haptic Preview (Visual Indicator)
@@ -758,9 +779,20 @@ function renderTrackList(tracks, container, kernel) {
         requestAnimationFrame(animateHaptic);
 
         li.appendChild(hapticPreview);
+        foldTargets.push(hapticPreview);
     }
 
     li.appendChild(paramsDiv);
+
+    const applyFold = (collapsed) => {
+      foldState.set(track.id, collapsed);
+      foldBtn.textContent = collapsed ? '▶' : '▼';
+      collapsedPreview.classList.toggle('hidden', !collapsed);
+      foldTargets.forEach((node) => node.classList.toggle('hidden', collapsed));
+      li.classList.toggle('track-collapsed', collapsed);
+    };
+    foldBtn.onclick = () => applyFold(!foldState.get(track.id));
+    applyFold(isCollapsed);
     container.appendChild(li);
   });
 }
