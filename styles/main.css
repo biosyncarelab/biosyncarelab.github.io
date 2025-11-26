@@ -2851,6 +2851,11 @@ select {
   justify-content: center;
 }
 
+.knob-container.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .knob-svg {
   width: 100%;
   height: 100%;
@@ -2943,6 +2948,11 @@ select {
   background: rgba(21, 128, 61, 0.22);
 }
 
+.track-mod-mini-slot.disabled {
+  opacity: 0.65;
+  border-style: dashed;
+}
+
 .track-mod-mini-select,
 .track-modulation-select,
 .track-param-select {
@@ -2993,6 +3003,20 @@ select {
 .track-mod-mini-controls .fine-tune-btn {
   width: 26px;
   height: 26px;
+}
+
+.mod-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.mod-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 .track-mod-mini-empty {

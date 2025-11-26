@@ -422,7 +422,9 @@ function renderTrackList(tracks, container, kernel) {
         }
 
         const syncState = () => {
-          slotRow.classList.toggle('active', !!slot.modulatorId && slot.depth > 0);
+          const isActive = !!slot.modulatorId && slot.depth > 0 && slot.enabled !== false;
+          slotRow.classList.toggle('active', isActive);
+          slotRow.classList.toggle('disabled', slot.enabled === false);
         };
 
         const modSelect = document.createElement('select');
@@ -548,6 +550,27 @@ function renderTrackList(tracks, container, kernel) {
         };
 
         miniControls.appendChild(depthStack);
+        const toggleWrap = document.createElement('label');
+        toggleWrap.className = 'mod-toggle';
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = slot.enabled !== false;
+        const toggleLabel = document.createElement('span');
+        toggleLabel.textContent = toggle.checked ? 'On' : 'Off';
+        const applyEnabled = (isOn) => {
+          slot.enabled = isOn;
+          param.setModulationEnabled(slot.slotId, isOn);
+          depthInput.disabled = !isOn;
+          depthKnob.element.classList.toggle('disabled', !isOn);
+          toggle.checked = isOn;
+          toggleLabel.textContent = isOn ? 'On' : 'Off';
+          syncState();
+        };
+        toggle.onchange = (e) => applyEnabled(e.target.checked);
+        applyEnabled(toggle.checked);
+        toggleWrap.appendChild(toggle);
+        toggleWrap.appendChild(toggleLabel);
+        miniControls.appendChild(toggleWrap);
         miniControls.appendChild(modFineBtn);
         miniControls.appendChild(removeBtn);
 

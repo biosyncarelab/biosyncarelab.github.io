@@ -52,12 +52,13 @@ export class TrackParameter {
     return this.primaryModulation;
   }
 
-  createModulationSlot({ type = 'martigli', label = 'Modulation', depth = 0, modulator = null, modulatorId = null, slotId = null } = {}) {
+  createModulationSlot({ type = 'martigli', label = 'Modulation', depth = 0, modulator = null, modulatorId = null, slotId = null, enabled = true } = {}) {
     const entry = {
       slotId: slotId ?? createSlotId(),
       type,
       label,
       depth,
+      enabled: enabled !== false,
       modulatorId: modulator?.id ?? modulatorId ?? null,
       source: modulator ?? null,
     };
@@ -78,6 +79,7 @@ export class TrackParameter {
         type: options.type ?? 'martigli',
         label: options.label ?? modulator.label ?? 'Modulator',
         depth: typeof options.depth === 'number' ? options.depth : 0,
+        enabled: options.enabled !== false,
       });
       this.modulations = [entry, ...this.modulations.filter((e) => e !== entry)];
     }
@@ -85,6 +87,7 @@ export class TrackParameter {
     entry.modulatorId = modulator.id ?? entry.modulatorId ?? createSlotId();
     if (options.label) entry.label = options.label;
     if (options.type) entry.type = options.type;
+    if (typeof options.enabled === 'boolean') entry.enabled = options.enabled;
     if (typeof options.depth === 'number') entry.depth = options.depth;
     return entry;
   }
@@ -101,6 +104,11 @@ export class TrackParameter {
   setModulationDepth(slotId, depth) {
     const entry = slotId ? this.getModulation(slotId) : this.primaryModulation;
     if (entry) entry.depth = depth;
+  }
+
+  setModulationEnabled(slotId, enabled) {
+    const entry = slotId ? this.getModulation(slotId) : this.primaryModulation;
+    if (entry) entry.enabled = enabled;
   }
 
   unbind(slotId = null) {
@@ -121,7 +129,7 @@ export class TrackParameter {
     let val = this._base;
 
     this.modulations.forEach((entry) => {
-      if (!entry?.source || entry.depth === 0) return;
+      if (!entry?.source || entry.depth === 0 || entry.enabled === false) return;
       let modValue = 0;
       if (typeof entry.source.valueAt === 'function') {
         modValue = entry.source.valueAt(time);
@@ -146,12 +154,13 @@ export class TrackParameter {
       base: this._base,
       depth: primary?.depth ?? 0,
       modulatorId: primary?.modulatorId ?? null,
-      modulations: this.modulations.map(({ slotId, type, depth, modulatorId, label }) => ({
+      modulations: this.modulations.map(({ slotId, type, depth, modulatorId, label, enabled }) => ({
         slotId,
         type,
         depth,
         modulatorId: modulatorId ?? null,
-        label
+        label,
+        enabled: enabled !== false,
       })),
     };
   }
@@ -229,12 +238,13 @@ export class Track {
                 type: entry.type ?? 'martigli',
                 label: entry.label ?? `Modulator ${index + 1}`,
                 depth: entry.depth ?? 0,
+                enabled: entry.enabled !== false,
                 modulatorId: entry.modulatorId ?? null,
               });
               if (entry.modulatorId && context?.resolveModulator) {
                 const resolved = context.resolveModulator(entry.modulatorId);
                 if (resolved) {
-                  param.attachModulator(slot.slotId, resolved, { depth: slot.depth, type: slot.type, label: slot.label });
+                  param.attachModulator(slot.slotId, resolved, { depth: slot.depth, type: slot.type, label: slot.label, enabled: slot.enabled });
                 } else {
                   console.warn(`[Track] Failed to resolve modulator ${entry.modulatorId} for param ${name}`);
                 }
