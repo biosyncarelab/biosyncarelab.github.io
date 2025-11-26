@@ -94,11 +94,21 @@ export class TrackManager {
           // We pass the kernel as context so tracks can find modulators (Martigli oscillators)
           const context = {
             resolveModulator: (id) => {
-              const osc = this.kernel.martigli.getOscillator(id);
-              if (!osc) {
-                console.warn(`[TrackManager] Could not resolve modulator ID: ${id}. Available:`, this.kernel.martigli.listOscillations().map(o => o.id));
+              if (!id) return null;
+              if (typeof this.kernel.resolveModulator === "function") {
+                const resolved = this.kernel.resolveModulator(id);
+                if (!resolved) {
+                  console.warn(`[TrackManager] Could not resolve modulator ID: ${id}.`);
+                }
+                return resolved;
               }
-              return osc;
+              const fallback = this.kernel.martigli.getOscillator(id)
+                ?? this.kernel.controlTracks?.getControl?.(id)
+                ?? null;
+              if (!fallback) {
+                console.warn(`[TrackManager] Could not resolve modulator ID: ${id}. Available Martigli:`, this.kernel.martigli.listOscillations().map(o => o.id));
+              }
+              return fallback;
             }
           };
           track.fromJSON(trackData, context);

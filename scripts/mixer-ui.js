@@ -120,6 +120,14 @@ export function initMixerUI() {
     updateLists();
   }
 
+  if (kernel.martigli?.subscribe) {
+    kernel.martigli.subscribe(() => updateLists());
+  }
+
+  if (kernel.controlTracks?.subscribe) {
+    kernel.controlTracks.subscribe(() => updateLists());
+  }
+
   // RDF Tooltip Logic
   const tooltip = document.getElementById('rdf-tooltip');
   const tooltipTerm = document.getElementById('rdf-tooltip-term');
@@ -173,15 +181,22 @@ export function initMixerUI() {
 function renderTrackList(tracks, container, kernel) {
   container.innerHTML = '';
   const martigliOscillations = kernel.martigli?.listOscillations?.() ?? [];
+  const structureControls = kernel.controlTracks?.listControls?.() ?? [];
 
-  const getAvailableModulators = () => (
-    martigliOscillations.map((osc) => ({
+  const getAvailableModulators = () => ([
+    ...martigliOscillations.map((osc) => ({
       id: osc.id,
       label: osc.label || osc.id,
       type: 'martigli',
       source: osc,
-    }))
-  );
+    })),
+    ...structureControls.map((control) => ({
+      id: control.id,
+      label: control.label || control.sequenceLabel || control.id,
+      type: 'structure',
+      source: control,
+    })),
+  ]);
 
   tracks.forEach(track => {
     const li = document.createElement('li');

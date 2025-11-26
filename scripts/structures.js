@@ -14,7 +14,8 @@ export {
   AudioTrack, BinauralBeatTrack, IsochronicTrack, SineTrack,
   VisualTrack, GeometryVisualTrack, ParticleVisualTrack,
   HapticTrack, VibrationTrack,
-  AudioEngine, VideoEngine, HapticEngine
+  AudioEngine, VideoEngine, HapticEngine,
+  StructureControlState, StructureControl
 };
 
 const noop = () => {};
@@ -61,6 +62,13 @@ const createMartigliId = () => {
     return `martigli-${crypto.randomUUID()}`;
   }
   return `martigli-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const createStructureControlId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `structure-${crypto.randomUUID()}`;
+  }
+  return `structure-${Math.random().toString(36).slice(2, 10)}`;
 };
 
 export class MartigliOscillator {
@@ -652,6 +660,229 @@ export class StructureStore {
   }
 }
 
+export class StructureControl {
+  constructor(config = {}, sequenceRecord = {}) {
+    this.id = config.id ?? createStructureControlId();
+    this.datasetId = config.datasetId ?? sequenceRecord.datasetId ?? null;
+    this.sequenceId = config.sequenceId ?? sequenceRecord.id ?? null;
+    this.datasetLabel = config.datasetLabel ?? sequenceRecord.datasetLabel ?? this.datasetId;
+    this.sequenceLabel = config.sequenceLabel ?? sequenceRecord.label ?? this.sequenceId;
+    this.label = config.label ?? this.sequenceLabel ?? "Structure Control";
+    this.loop = config.loop !== false;
+    this.tempo = this._sanitizeTempo(config.tempo ?? 60);
+    this.orderDimension = sequenceRecord.orderDimension ?? this._inferOrderDimension(sequenceRecord);
+    this.rows = this._prepareRows(sequenceRecord);
+    this.running = false;
+    this.startTime = null;
+    this.lastValue = 0;
+  }
+
+  _inferOrderDimension(sequence) {
+    if (Array.isArray(sequence?.rowsZeroBased) && sequence.rowsZeroBased[0]?.length) {
+      return sequence.rowsZeroBased[0].length;
+    }
+    if (Array.isArray(sequence?.rows) && sequence.rows[0]?.length) {
+      return sequence.rows[0].length;
+    }
+    return 1;
+  }
+
+  _prepareRows(sequence) {
+    if (Array.isArray(sequence?.rowsZeroBased) && sequence.rowsZeroBased.length) {
+      return sequence.rowsZeroBased.map((row) => (Array.isArray(row) ? row.slice() : []));
+    }
+    if (Array.isArray(sequence?.rows) && sequence.rows.length) {
+      return sequence.rows.map((row) => row.map((value) => (Number.isFinite(value) ? value - 1 : 0)));
+    }
+    return [];
+  }
+
+  _sanitizeTempo(value) {
+    const tempo = Number(value);
+    if (!Number.isFinite(tempo)) return 60;
+    return clamp(tempo, 10, 360);
+  }
+
+  setTempo(nextTempo) {
+    this.tempo = this._sanitizeTempo(nextTempo);
+  }
+
+  rename(label) {
+    const trimmed = typeof label === "string" ? label.trim() : "";
+    if (trimmed) {
+      this.label = trimmed;
+    }
+  }
+
+  setLoop(shouldLoop) {
+    this.loop = Boolean(shouldLoop);
+  }
+
+  start(now = nowSeconds()) {
+    if (!this.rows.length) return;
+    this.running = true;
+    this.startTime = now;
+    this.lastValue = 0;
+  }
+
+  stop() {
+    this.running = false;
+    this.startTime = null;
+  }
+
+  valueAt(timeSec = nowSeconds()) {
+    if (!this.rows.length) return 0;
+    if (!this.running || !Number.isFinite(this.startTime) || this.tempo <= 0) {
+      return this.lastValue ?? 0;
+    }
+
+    const beatsPerSecond = this.tempo / 60;
+    const elapsed = Math.max(0, timeSec - this.startTime);
+    const virtualPosition = elapsed * beatsPerSecond;
+    const rowCount = this.rows.length;
+    if (!rowCount) return 0;
+
+    const maxPosition = Math.max(rowCount - Number.EPSILON, 0);
+    const position = this.loop ? (rowCount ? virtualPosition % rowCount : 0) : Math.min(virtualPosition, maxPosition);
+    const rowIndex = Math.min(rowCount - 1, Math.floor(position));
+    const row = this.rows[rowIndex] ?? [0];
+    const rowLength = row.length || this.orderDimension || 1;
+    const fractional = position - Math.floor(position);
+    const bellIndex = Math.min(rowLength - 1, Math.floor(fractional * rowLength));
+    const rawValue = row[bellIndex] ?? 0;
+    const denom = Math.max(1, (this.orderDimension || rowLength) - 1);
+    const normalized = denom > 0 ? rawValue / denom : rawValue;
+    this.lastValue = normalized;
+    return normalized;
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      label: this.label,
+      datasetId: this.datasetId,
+      datasetLabel: this.datasetLabel,
+      sequenceId: this.sequenceId,
+      sequenceLabel: this.sequenceLabel,
+      tempo: this.tempo,
+      loop: this.loop,
+      running: this.running,
+      orderDimension: this.orderDimension,
+      stepCount: this.rows.length,
+    };
+  }
+}
+
+export class StructureControlState {
+  constructor(structureStore) {
+    this.store = structureStore;
+    this.controls = new Map();
+    this.listeners = new Set();
+  }
+
+  listControls() {
+    return Array.from(this.controls.values());
+  }
+
+  getControl(id) {
+    if (!id) return null;
+    return this.controls.get(id) ?? null;
+  }
+
+  addControl(config = {}) {
+    const datasetId = config.datasetId ?? null;
+    const sequenceId = config.sequenceId ?? null;
+    if (!datasetId || !sequenceId) {
+      throw new Error("Structure control requires datasetId and sequenceId");
+    }
+
+    const dataset = typeof this.store?.getDataset === "function" ? this.store.getDataset(datasetId) : null;
+    if (!dataset) {
+      throw new Error(`Dataset ${datasetId} not found in StructureStore`);
+    }
+    const sequence = dataset.sequences?.find((seq) => seq.id === sequenceId);
+    if (!sequence) {
+      throw new Error(`Sequence ${sequenceId} not found in dataset ${datasetId}`);
+    }
+
+    const control = new StructureControl(
+      {
+        ...config,
+        datasetId,
+        sequenceId,
+        datasetLabel: dataset.label ?? datasetId,
+        sequenceLabel: sequence.label ?? sequenceId,
+      },
+      { ...sequence, datasetId, datasetLabel: dataset.label }
+    );
+
+    this.controls.set(control.id, control);
+    if (config.autoStart !== false) {
+      control.start();
+    }
+    this._emit();
+    return control;
+  }
+
+  removeControl(id) {
+    if (!id || !this.controls.has(id)) return;
+    this.controls.delete(id);
+    this._emit();
+  }
+
+  startControl(id) {
+    const control = this.controls.get(id);
+    if (!control) return;
+    control.start();
+    this._emit();
+  }
+
+  stopControl(id) {
+    const control = this.controls.get(id);
+    if (!control) return;
+    control.stop();
+    this._emit();
+  }
+
+  setTempo(id, tempo) {
+    const control = this.controls.get(id);
+    if (!control) return;
+    control.setTempo(tempo);
+    this._emit();
+  }
+
+  renameControl(id, label) {
+    const control = this.controls.get(id);
+    if (!control) return;
+    control.rename(label);
+    this._emit();
+  }
+
+  snapshot() {
+    return {
+      controls: this.listControls().map((control) => control.toJSON()),
+    };
+  }
+
+  subscribe(listener) {
+    if (typeof listener !== "function") return noop;
+    this.listeners.add(listener);
+    listener(this.snapshot());
+    return () => this.listeners.delete(listener);
+  }
+
+  _emit() {
+    const snap = this.snapshot();
+    this.listeners.forEach((listener) => {
+      try {
+        listener(snap);
+      } catch (err) {
+        console.warn("StructureControlState listener failed", err);
+      }
+    });
+  }
+}
+
 export class MartigliState {
   constructor(initial = {}) {
     this.listeners = new Set();
@@ -1050,6 +1281,7 @@ export class BSCLabKernel {
   constructor(options = {}) {
     this.structures = options.structuresStore ?? new StructureStore(options.structures ?? {});
     this.martigli = options.martigliState ?? new MartigliState(options.martigli);
+    this.controlTracks = options.controlState ?? new StructureControlState(this.structures);
     this.tracks = options.trackManager ?? new TrackManager(this);
     this.audio = options.audioEngine ?? new AudioEngine(this);
     this.video = options.videoEngine ?? new VideoEngine(this);
@@ -1107,6 +1339,13 @@ export class BSCLabKernel {
     } catch (err) {
       console.warn("Interaction logger failed", err);
     }
+  }
+
+  resolveModulator(id) {
+    if (!id) return null;
+    return this.martigli.getOscillator(id)
+      ?? this.controlTracks.getControl(id)
+      ?? null;
   }
 }
 
