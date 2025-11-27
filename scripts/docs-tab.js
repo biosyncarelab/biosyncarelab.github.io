@@ -29,6 +29,7 @@ const DOC_FILES = {
   // Development
   'agents': 'docs/Agents.md',
   'kernel-architecture': 'docs/KERNEL-ARCHITECTURE.md',
+  'ai-pod-guide': 'docs/AI-POD-GUIDE.md',
 };
 
 // DOM elements
