@@ -200,6 +200,16 @@ const getTrackCount = (entry) => {
   return 0;
 };
 
+const summarizeTracks = (tracks = []) => {
+  const counts = { audio: 0, visual: 0, haptic: 0, other: 0 };
+  tracks.forEach((t) => {
+    const key = (t.modality ?? t.type ?? "other").toLowerCase();
+    if (counts[key] !== undefined) counts[key] += 1;
+    else counts.other += 1;
+  });
+  return counts;
+};
+
 const createDashboardCard = (item, kind, callbacks = {}, rdfLinker) => {
   const li = document.createElement("li");
   li.className = "dashboard-item";
@@ -229,14 +239,51 @@ const createDashboardCard = (item, kind, callbacks = {}, rdfLinker) => {
     ]),
   );
 
+  const detail = document.createElement("div");
+  detail.className = "session-detail hidden";
+  const tracks = Array.isArray(item.tracks) ? item.tracks : [];
+  const counts = summarizeTracks(tracks);
+  const martigliCount = item.martigli?.oscillations?.length ?? 0;
+  const detailList = document.createElement("ul");
+  detailList.className = "session-detail-list";
+  const trackLabels = tracks.slice(0, 4).map((t) => t.label ?? t.name ?? t.class ?? t.type ?? "Track");
+  if (trackLabels.length) {
+    const liTracks = document.createElement("li");
+    liTracks.textContent = `Tracks: ${trackLabels.join(", ")}${tracks.length > 4 ? `, +${tracks.length - 4} more` : ""}`;
+    detailList.appendChild(liTracks);
+  }
+  const liCounts = document.createElement("li");
+  liCounts.textContent = `Types — Audio: ${counts.audio}, Visual: ${counts.visual}, Haptic: ${counts.haptic}`;
+  detailList.appendChild(liCounts);
+  const liMartigli = document.createElement("li");
+  liMartigli.textContent = `Martigli oscillations: ${martigliCount}`;
+  detailList.appendChild(liMartigli);
+  detail.appendChild(detailList);
+  li.appendChild(detail);
+
   const footer = document.createElement("div");
   footer.className = "card-footer";
-  const openBtn = document.createElement("button");
-  openBtn.type = "button";
-  openBtn.className = "primary small";
-  openBtn.textContent = "Open";
-  openBtn.addEventListener("click", () => callbacks.onOpen?.(item, kind));
-  footer.appendChild(openBtn);
+  const loadBtn = document.createElement("button");
+  loadBtn.type = "button";
+  loadBtn.className = "primary small";
+  loadBtn.textContent = "Load";
+  loadBtn.addEventListener("click", () => callbacks.onLoad?.(item, kind));
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "ghost small";
+  addBtn.textContent = "Add";
+  addBtn.addEventListener("click", () => callbacks.onAdd?.(item, kind));
+  const detailBtn = document.createElement("button");
+  detailBtn.type = "button";
+  detailBtn.className = "ghost small";
+  detailBtn.textContent = "Details";
+  detailBtn.addEventListener("click", () => {
+    detail.classList.toggle("hidden");
+    detailBtn.textContent = detail.classList.contains("hidden") ? "Details" : "Hide details";
+  });
+  footer.appendChild(loadBtn);
+  footer.appendChild(addBtn);
+  footer.appendChild(detailBtn);
   footer.appendChild(createOntologySlot(kind, item.id, rdfLinker));
   li.appendChild(footer);
 
@@ -251,7 +298,7 @@ const createDashboardCard = (item, kind, callbacks = {}, rdfLinker) => {
  * @param {Function} onSessionClick - Callback when session is clicked
  * @param {object} rdfLinker - RDF Linker instance
  */
-export function renderSessionList(listEl, statusEl, sessions, onSessionClick, rdfLinker) {
+export function renderSessionList(listEl, statusEl, sessions, callbacks = {}, rdfLinker) {
   if (!listEl || !statusEl) return;
 
   clearList(listEl);
@@ -264,7 +311,7 @@ export function renderSessionList(listEl, statusEl, sessions, onSessionClick, rd
   statusEl.textContent = `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
 
   sessions.forEach(session => {
-    const card = createDashboardCard(session, 'session', { onOpen: onSessionClick }, rdfLinker);
+    const card = createDashboardCard(session, 'session', callbacks, rdfLinker);
     listEl.appendChild(card);
   });
 }

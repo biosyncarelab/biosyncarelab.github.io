@@ -34,30 +34,20 @@ let visualizerUI = {
 
 // Helper to serialize track state for preview
 export const serializeTrackState = (track) => {
-  const entry = trackBindingRegistry.get(track.id);
-  const params = { ...(track.params ?? {}) };
-  let bindings = [...(track.bindings ?? [])];
-  if (entry?.state?.oscillatorId) {
-    bindings = bindings.filter((binding) => binding.type !== "martigli");
-    bindings.unshift({
-      type: "martigli",
-      oscillatorId: entry.state.oscillatorId,
-      target: "frequency",
-      depth: entry.state.depth,
-      base: entry.state.base,
-    });
-    params.frequency = entry.state.base;
-    params.martigliDepth = entry.state.depth;
-  }
-  return {
+  const base = typeof track.toJSON === "function" ? track.toJSON() : {
     id: track.id,
     label: track.label,
     type: track.type,
     modality: track.modality,
-    params,
-    bindings,
-    isMartigli: Boolean(track.isMartigli),
-    martigli: track.martigli ?? null,
+    enabled: track.enabled,
+  };
+
+  return {
+    ...base,
+    class: track.constructor?.name ?? base.class ?? null,
+    modality: track.modality ?? base.modality ?? base.type ?? null,
+    isMartigli: Boolean(track.isMartigli ?? base.isMartigli),
+    martigli: track.martigli ?? base.martigli ?? null,
   };
 };
 

@@ -206,7 +206,17 @@ appState.subscribe((state) => {
   if (ui.sessionList && ui.sessionStatus) {
     const sessions = state.sessions || [];
     if (sessions.length > 0) {
-      renderSessionList(ui.sessionList, ui.sessionStatus, sessions, (session) => openDetailModal(session, "session"), rdfLinker);
+      renderSessionList(
+        ui.sessionList,
+        ui.sessionStatus,
+        sessions,
+        {
+          onLoad: (session) => handleSessionLoadAction(session, "replace"),
+          onAdd: (session) => handleSessionLoadAction(session, "append"),
+          onOpen: (session) => openDetailModal(session, "session"),
+        },
+        rdfLinker
+      );
     } else if (!state.isFetchingDashboard) {
       ui.sessionStatus.textContent = state.currentUser ? "No sessions found." : "Sign in to load sessions.";
       clearList(ui.sessionList);
@@ -758,6 +768,59 @@ const applyMartigliFromRecord = (record) => {
   return true;
 };
 
+const loadSessionTracks = (record, mode = "replace") => {
+  const tracks = Array.isArray(record?.tracks) ? record.tracks : [];
+  const manager = kernel.tracks;
+  const payload = tracks.map((t) => ({ ...t }));
+
+  if (mode === "replace") {
+    manager.clear();
+  }
+
+  if (mode === "append") {
+    const existingIds = new Set(manager.getAll().map((t) => t.id));
+    payload.forEach((track) => {
+      if (existingIds.has(track.id)) {
+        track.id = `${track.id}-${Date.now().toString(36)}`;
+      }
+      existingIds.add(track.id);
+    });
+  }
+
+  manager.load(payload);
+};
+
+const handleSessionLoadAction = async (record, mode = "replace") => {
+  if (!record) return;
+  setBusy(true);
+  try {
+    if (record.controlTracks?.controls?.length && kernel.structures?.load) {
+      await kernel.structures.load();
+      kernel.controlTracks?.loadSnapshot?.(record.controlTracks, { mode });
+    } else if (mode === "replace" && kernel.controlTracks?.clearAll) {
+      kernel.controlTracks.clearAll();
+    }
+
+    if (record.martigli) {
+      martigliState.loadSnapshot(normalizeMartigliSnapshot(record.martigli));
+    }
+    loadSessionTracks(record, mode);
+    noteActiveSessionRecord(record);
+
+    const verb = mode === "append" ? "added" : "loaded";
+    setMessage(`Session "${record.label ?? record.id}" ${verb} into the mixer.`, "success");
+    kernel.recordInteraction(`session.${verb}`, {
+      sessionId: record.id ?? null,
+      mode,
+    });
+  } catch (err) {
+    console.error("Session load failed", err);
+    setMessage("Failed to load session.", "error");
+  } finally {
+    setBusy(false);
+  }
+};
+
 const collectSessionDraft = (record) => {
   const reference = martigliState.getReference ? martigliState.getReference() : null;
   const martigliPayload = reference?.toJSON?.() ?? martigliState.snapshot?.().oscillations?.[0] ?? null;
@@ -839,7 +902,7 @@ const handleSessionSave = async () => {
     label: currentLabel
   };
 
-  const draft = collectSessionDraft(contextRecord);
+  const draft = collectSessionDraft(appState, contextRecord);
 
   // Ensure we capture the actual current tracks from the kernel
   // collectSessionDraft might rely on the record passed to it, let's verify.
@@ -849,6 +912,26 @@ const handleSessionSave = async () => {
 
   // Let's override tracks with live kernel tracks
   draft.tracks = kernel.tracks.getAll().map(t => serializeTrackState(t));
+
+  // Save structure controls
+  if (kernel.controlTracks?.snapshot) {
+    draft.controlTracks = kernel.controlTracks.snapshot();
+  }
+
+  // Strip UI-only fields from bindings if present
+  if (Array.isArray(draft.trackBindings)) {
+    draft.trackBindings = draft.trackBindings.map(({ elements, ...rest }) => rest);
+  }
+
+  // Prompt user for session label
+  const desiredLabel = typeof window !== "undefined"
+    ? window.prompt("Name this session preset:", draft.label ?? currentLabel)
+    : draft.label;
+  if (desiredLabel === null) {
+    setMessage("Save cancelled.", "info");
+    return;
+  }
+  draft.label = (desiredLabel || "").trim() || draft.label || currentLabel;
 
   if (!draft.martigli) {
     // Try to get live martigli state
@@ -864,6 +947,31 @@ const handleSessionSave = async () => {
     }
   }
 
+  const sanitizeForFirestore = (value) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const isDomNode = (typeof Element !== "undefined" && value instanceof Element) || (value && value.nodeType === 1);
+    if (isDomNode) return undefined;
+    if (typeof value === "function") return undefined;
+    if (Array.isArray(value)) {
+      const cleaned = value
+        .map((item) => sanitizeForFirestore(item))
+        .filter((item) => item !== undefined);
+      return cleaned;
+    }
+    if (value && typeof value === "object") {
+      const cleaned = {};
+      Object.entries(value).forEach(([key, val]) => {
+        const next = sanitizeForFirestore(val);
+        if (next !== undefined) cleaned[key] = next;
+      });
+      return cleaned;
+    }
+    return value;
+  };
+
+  const cleanDraft = sanitizeForFirestore(draft);
+
   setBusy(true);
   try {
     // Save to Firestore using session-manager
@@ -873,7 +981,7 @@ const handleSessionSave = async () => {
     // Given the button says "Save current state", it implies a snapshot.
 
     // Let's create a new session for now to be safe
-    const savedSession = await createSession(user.uid, draft);
+    const savedSession = await createSession(user.uid, cleanDraft);
 
     // Update appState with new session
     const state = appState.snapshot();

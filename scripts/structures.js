@@ -858,6 +858,39 @@ export class StructureControlState {
     this._emit();
   }
 
+  clearAll() {
+    if (!this.controls.size) return;
+    this.controls.clear();
+    this._emit();
+  }
+
+  loadSnapshot(snapshot = {}, options = {}) {
+    const mode = options.mode ?? "replace";
+    const controls = Array.isArray(snapshot.controls) ? snapshot.controls : [];
+    if (mode === "replace") {
+      this.controls.clear();
+    }
+    controls.forEach((entry) => {
+      try {
+        const control = this.addControl({
+          ...entry,
+          autoStart: false,
+          label: entry.label ?? entry.sequenceLabel ?? entry.sequenceId,
+        });
+        if (typeof entry.tempo === "number") {
+          control.setTempo(entry.tempo);
+        }
+        control.setLoop(entry.loop !== false);
+        if (entry.running) {
+          control.start();
+        }
+      } catch (err) {
+        console.warn("Failed to restore structure control", entry, err);
+      }
+    });
+    this._emit();
+  }
+
   startControl(id) {
     const control = this.controls.get(id);
     if (!control) return;

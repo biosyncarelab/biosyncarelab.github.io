@@ -343,7 +343,7 @@ appState.subscribe((state) => {
     ui.sessionList,
     ui.sessionStatus,
     state.sessions,
-    handleSessionClick
+    { onOpen: handleSessionClick }
   );
 
   // Update Martigli dashboard
