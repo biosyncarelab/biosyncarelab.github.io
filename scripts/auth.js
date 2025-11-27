@@ -1110,19 +1110,35 @@ const handleSessionShareLink = async () => {
 
 const handleSessionDelete = async (session) => {
   const user = getCurrentUser();
-  if (!user || session.createdBy !== user.uid) {
+  const sessionId = session?.id
+    ?? session?.uid
+    ?? session?.sessionId
+    ?? session?.docId
+    ?? session?.referenceId
+    ?? session?.ref?.id
+    ?? session?.data?.id
+    ?? null;
+  if (!sessionId) {
+    setMessage("Cannot delete this session because it has no ID.", "error");
+    return;
+  }
+  const ownerId = session?.createdBy ?? session?.ownerId ?? session?.userId ?? null;
+  if (!user || (ownerId && ownerId !== user.uid)) {
     setMessage("You can only delete your own sessions.", "error");
     return;
   }
   const confirmed = typeof window !== "undefined"
-    ? window.confirm(`Delete session "${session.label ?? session.id}"?`)
+    ? window.confirm(`Delete session "${session.label ?? sessionId}"?`)
     : true;
   if (!confirmed) return;
   try {
     setBusy(true);
-    await deleteSession(session.id);
+    await deleteSession(sessionId);
     const state = appState.snapshot();
-    appState.setSessions(state.sessions.filter((s) => s.id !== session.id));
+    appState.setSessions(state.sessions.filter((s) => s.id !== sessionId));
+    if (state.activeSessionId === sessionId) {
+      appState.setActiveSession(null, null);
+    }
     setMessage("Session deleted.", "success");
   } catch (err) {
     console.error("Delete failed", err);
