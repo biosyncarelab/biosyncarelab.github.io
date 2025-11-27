@@ -77,6 +77,22 @@ body {
   color: rgba(226, 232, 240, 0.92);
 }
 
+.lab-audio-master {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.lab-audio-master input[type="range"] {
+  width: 180px;
+  accent-color: var(--primary);
+}
+
 .lab-auth {
   display: grid;
   gap: 1rem;
@@ -400,6 +416,12 @@ body {
   align-items: end;
 }
 
+.control-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .control-field {
   display: flex;
   flex-direction: column;
@@ -709,6 +731,7 @@ select {
 }
 
 .sensory-list li {
+  list-style: none;
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   padding: 0.75rem;

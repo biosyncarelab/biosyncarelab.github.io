@@ -101,6 +101,8 @@ const ui = {
   sessionShareLink: document.getElementById("session-share-link"),
   snapshotDownload: document.getElementById("snapshot-download"),
   sessionShareIndicator: document.getElementById("session-share-indicator"),
+  sessionFolderFilter: document.getElementById("session-folder-filter"),
+  sessionDropdown: document.getElementById("session-dropdown"),
   sessionHint: document.getElementById("session-card-hint"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
   martigliDashboardSummary: document.getElementById("martigli-dashboard-summary"),
@@ -200,26 +202,88 @@ initStructureControlPanel({
   },
 });
 
+const masterVolume = document.getElementById("master-volume");
+if (masterVolume) {
+  const applyVolume = (value) => {
+    if (kernel.audio?.masterGain) {
+      kernel.audio.masterGain.gain.value = value;
+    }
+  };
+  masterVolume.addEventListener("input", (e) => {
+    const val = parseFloat(e.target.value) || 0;
+    applyVolume(val);
+  });
+  applyVolume(parseFloat(masterVolume.value) || 0.8);
+}
+
 // Wire up reactive UI via state subscriptions
 appState.subscribe((state) => {
   // Update session list when sessions change
   if (ui.sessionList && ui.sessionStatus) {
     const sessions = state.sessions || [];
+    const selectedFolder = ui.sessionFolderFilter?.value ?? "";
+    const visibleSessions = selectedFolder
+      ? sessions.filter((s) => (s.folderId || s.folder || "") === selectedFolder)
+      : sessions;
     if (sessions.length > 0) {
       renderSessionList(
         ui.sessionList,
         ui.sessionStatus,
-        sessions,
+        visibleSessions,
         {
           onLoad: (session) => handleSessionLoadAction(session, "replace"),
           onAdd: (session) => handleSessionLoadAction(session, "append"),
           onOpen: (session) => openDetailModal(session, "session"),
+          onDelete: handleSessionDelete,
+          currentUser: getCurrentUser()?.uid ?? null,
         },
         rdfLinker
       );
     } else if (!state.isFetchingDashboard) {
       ui.sessionStatus.textContent = state.currentUser ? "No sessions found." : "Sign in to load sessions.";
       clearList(ui.sessionList);
+    }
+
+    // Build folder filter and dropdown
+    const folderSelect = ui.sessionFolderFilter;
+    const dropdown = ui.sessionDropdown;
+    if (folderSelect && dropdown) {
+      const folders = Array.from(new Set(sessions.map((s) => s.folderId || s.folder).filter(Boolean)));
+      folderSelect.innerHTML = '<option value="">All folders</option>';
+      folders.forEach((folder) => {
+        const opt = document.createElement("option");
+        opt.value = folder;
+        opt.textContent = folder;
+        folderSelect.appendChild(opt);
+      });
+
+      dropdown.innerHTML = '<option value="">Select a session…</option>';
+      const grouped = sessions.reduce((acc, session) => {
+        const key = session.folderId || session.folder || "";
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(session);
+        return acc;
+      }, {});
+      Object.entries(grouped).forEach(([folder, list]) => {
+        if (folder) {
+          const group = document.createElement("optgroup");
+          group.label = folder;
+          list.forEach((session) => {
+            const opt = document.createElement("option");
+            opt.value = session.id;
+            opt.textContent = session.label ?? session.id;
+            group.appendChild(opt);
+          });
+          dropdown.appendChild(group);
+        } else {
+          list.forEach((session) => {
+            const opt = document.createElement("option");
+            opt.value = session.id;
+            opt.textContent = session.label ?? session.id;
+            dropdown.appendChild(opt);
+          });
+        }
+      });
     }
   }
 
@@ -813,6 +877,9 @@ const handleSessionLoadAction = async (record, mode = "replace") => {
       sessionId: record.id ?? null,
       mode,
     });
+    if (kernel.audio) {
+      kernel.audio.resume();
+    }
   } catch (err) {
     console.error("Session load failed", err);
     setMessage("Failed to load session.", "error");
@@ -1038,6 +1105,30 @@ const handleSessionShareLink = async () => {
   } catch (err) {
     console.error("Share link failed", err);
     setMessage("Unable to generate shareable link.", "error");
+  }
+};
+
+const handleSessionDelete = async (session) => {
+  const user = getCurrentUser();
+  if (!user || session.createdBy !== user.uid) {
+    setMessage("You can only delete your own sessions.", "error");
+    return;
+  }
+  const confirmed = typeof window !== "undefined"
+    ? window.confirm(`Delete session "${session.label ?? session.id}"?`)
+    : true;
+  if (!confirmed) return;
+  try {
+    setBusy(true);
+    await deleteSession(session.id);
+    const state = appState.snapshot();
+    appState.setSessions(state.sessions.filter((s) => s.id !== session.id));
+    setMessage("Session deleted.", "success");
+  } catch (err) {
+    console.error("Delete failed", err);
+    setMessage("Failed to delete session.", "error");
+  } finally {
+    setBusy(false);
   }
 };
 
@@ -1694,6 +1785,41 @@ const downloadSnapshot = () => {
 
 if (ui.snapshotDownload) {
   ui.snapshotDownload.addEventListener("click", downloadSnapshot);
+}
+
+if (ui.sessionFolderFilter) {
+  ui.sessionFolderFilter.addEventListener("change", () => {
+    const state = appState.snapshot();
+    const selectedFolder = ui.sessionFolderFilter.value;
+    const sessions = state.sessions || [];
+    const visibleSessions = selectedFolder
+      ? sessions.filter((s) => (s.folderId || s.folder || "") === selectedFolder)
+      : sessions;
+    renderSessionList(
+      ui.sessionList,
+      ui.sessionStatus,
+      visibleSessions,
+      {
+        onLoad: (session) => handleSessionLoadAction(session, "replace"),
+        onAdd: (session) => handleSessionLoadAction(session, "append"),
+        onOpen: (session) => openDetailModal(session, "session"),
+        onDelete: handleSessionDelete,
+        currentUser: getCurrentUser()?.uid ?? null,
+      },
+      rdfLinker
+    );
+  });
+}
+
+if (ui.sessionDropdown) {
+  ui.sessionDropdown.addEventListener("change", (e) => {
+    const sessionId = e.target.value;
+    const state = appState.snapshot();
+    const session = (state.sessions || []).find((s) => s.id === sessionId);
+    if (session) {
+      openDetailModal(session, "session");
+    }
+  });
 }
 
 if (ui.martigliOscillationSelect) {

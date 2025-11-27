@@ -52,6 +52,9 @@ export function initStructureControlPanel(options = {}) {
   const listEl = elements.listEl ?? null;
   const statusEl = elements.statusEl ?? null;
   const emptyEl = elements.emptyEl ?? null;
+  const typeSelect = document.getElementById("control-track-type");
+  const martigliBlock = document.getElementById("dashboard-martigli-card");
+  const structureBlock = listEl?.closest(".control-block");
 
   if (!datasetSelect || !sequenceSelect || !tempoInput || !addButton || !listEl) {
     console.warn("[StructureControlUI] Required DOM nodes missing");
@@ -336,6 +339,16 @@ export function initStructureControlPanel(options = {}) {
   });
   sequenceSelect.addEventListener("change", updateAddState);
   addButton.addEventListener("click", handleAdd);
+
+  if (typeSelect) {
+    const syncTypeVisibility = () => {
+      const type = typeSelect.value;
+      if (martigliBlock) martigliBlock.classList.toggle("hidden", type !== "martigli");
+      if (structureBlock) structureBlock.classList.toggle("hidden", type !== "symmetry");
+    };
+    typeSelect.addEventListener("change", syncTypeVisibility);
+    syncTypeVisibility();
+  }
 
   if (tempoInput && !tempoInput.value) {
     tempoInput.value = 60;

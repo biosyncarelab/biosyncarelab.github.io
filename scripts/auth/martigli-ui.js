@@ -24,7 +24,7 @@ const getDevicePixelRatio = () => {
     : 1;
 };
 
-const createChartCanvas = (width = 360, height = 150) => {
+const createChartCanvas = (width = 400, height = 200) => {
   const ratio = getDevicePixelRatio();
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * ratio);

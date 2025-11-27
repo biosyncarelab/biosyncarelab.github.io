@@ -284,6 +284,15 @@ const createDashboardCard = (item, kind, callbacks = {}, rdfLinker) => {
   footer.appendChild(loadBtn);
   footer.appendChild(addBtn);
   footer.appendChild(detailBtn);
+  if (callbacks.currentUser && item.createdBy && item.createdBy === callbacks.currentUser) {
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "ghost small";
+    delBtn.style.color = "var(--text-error)";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", () => callbacks.onDelete?.(item, kind));
+    footer.appendChild(delBtn);
+  }
   footer.appendChild(createOntologySlot(kind, item.id, rdfLinker));
   li.appendChild(footer);
 

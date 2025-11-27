@@ -5,13 +5,30 @@
 
 // Documentation file mapping
 const DOC_FILES = {
+  // Getting Started
+  'quick-start': 'docs/QUICK-START.md',
+  'features': 'docs/Features.md',
+
+  // Structure Explorer
   'structures-playback': 'docs/STRUCTURES-PLAYBACK.md',
-  'structures-sharing': 'docs/STRUCTURES-SHARING.md',
-  'architecture': 'docs/ARCHITECTURE.md',
-  'nso-overview': 'docs/NSO-OVERVIEW.md',
-  'rdf-integration': 'docs/RDF-INTEGRATION.md',
-  'migration-v2': 'docs/MIGRATION-V2.md',
-  'development-setup': 'docs/DEVELOPMENT-SETUP.md',
+  'rdf-enrichment': 'docs/RDF-ENRICHMENT.md',
+
+  // Architecture
+  'pod-architecture': 'docs/POD-ARCHITECTURE-GUIDE.md',
+  'refactoring': 'docs/REFACTORING-SUMMARY.md',
+
+  // NSO & RDF
+  'nso-navigator': 'docs/NSO-Navigator.md',
+  'ontology-linking': 'docs/Ontology-Linking-Strategy.md',
+  'rdf-quality': 'docs/RDF-Quality-Strategy.md',
+
+  // Migration Guides
+  'migration-guide': 'docs/Migration-Guide-SSO-ONC-to-NSO.md',
+  'appstate-migration': 'docs/COMPLETE-APPSTATE-MIGRATION.md',
+
+  // Development
+  'agents': 'docs/Agents.md',
+  'kernel-architecture': 'docs/KERNEL-ARCHITECTURE.md',
 };
 
 // DOM elements

@@ -25,6 +25,10 @@
           <h1>BioSynCare Lab</h1>
           <p class="brand-tagline">Sync presets, sessions, tracks, and Martigli telemetry across devices.</p>
         </div>
+        <div class="lab-audio-master">
+          <label for="master-volume" class="muted-text small">Master Volume</label>
+          <input type="range" id="master-volume" min="0" max="1" step="0.01" value="0.8" />
+        </div>
         <div class="lab-auth" id="lab-auth">
           <div id="auth-chip" class="auth-chip hidden" aria-live="polite">
             <div class="auth-chip-details">
@@ -107,6 +111,12 @@
               <p id="session-status" class="muted-text">Sign in to load sessions.</p>
             </div>
             <div class="panel-actions">
+              <select id="session-folder-filter" class="tiny" title="Filter by folder">
+                <option value="">All folders</option>
+              </select>
+              <select id="session-dropdown" class="tiny" title="Quick select session">
+                <option value="">Select a session…</option>
+              </select>
               <button type="button" id="session-apply" class="ghost tiny">Apply session</button>
               <button type="button" id="session-save" class="ghost tiny">Save current state</button>
               <button type="button" id="session-share-link" class="ghost tiny">Copy share link</button>
@@ -140,6 +150,15 @@
                 <p class="muted-text small">
                   Martigli oscillators and structure sequences, all available as modulators.
                 </p>
+              </div>
+              <div class="control-type-row">
+                <label class="control-field">
+                  Control type
+                  <select id="control-track-type" class="tiny">
+                    <option value="martigli">Martigli</option>
+                    <option value="symmetry" selected>Symmetry</option>
+                  </select>
+                </label>
               </div>
               <div class="control-split">
                 <div class="control-block martigli-block" id="dashboard-martigli-card">
