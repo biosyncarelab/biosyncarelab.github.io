@@ -107,32 +107,28 @@
           <div class="panel-head">
             <div>
               <p class="panel-eyebrow">Sessions</p>
-              <h2>Session library</h2>
+              <h2>Session presets</h2>
               <p id="session-status" class="muted-text">Sign in to load sessions.</p>
             </div>
             <div class="panel-actions">
               <select id="session-folder-filter" class="tiny" title="Filter by folder">
                 <option value="">All folders</option>
               </select>
-              <select id="session-dropdown" class="tiny" title="Quick select session">
+              <select id="session-dropdown" class="tiny" title="Select a session">
                 <option value="">Select a session…</option>
               </select>
-              <button type="button" id="session-apply" class="ghost tiny">Apply session</button>
-              <button type="button" id="session-save" class="ghost tiny">Save current state</button>
-              <button type="button" id="session-share-link" class="ghost tiny">Copy share link</button>
-              <button type="button" id="snapshot-download" class="ghost tiny">Download snapshot</button>
-              <span id="session-share-indicator" class="badge tiny hidden" aria-live="polite">State in URL</span>
+              <button type="button" id="session-load-selected" class="primary tiny">Load selected</button>
             </div>
           </div>
-          <p id="session-card-hint" class="muted-text small">
-            Select a record to hydrate Martigli and sensory controls.
-          </p>
-          <ul id="session-list" class="stack-list"></ul>
-          <footer class="panel-footer">
-            <button type="button" id="session-navigator" class="ghost small" disabled>
-              Open Session Class Navigator
-            </button>
-          </footer>
+          <div class="session-actions">
+            <button type="button" id="session-save" class="ghost tiny">Save current state</button>
+            <button type="button" id="session-share-link" class="ghost tiny">Copy share link</button>
+            <button type="button" id="snapshot-download" class="ghost tiny">Download snapshot</button>
+            <span id="session-share-indicator" class="badge tiny hidden" aria-live="polite">State in URL</span>
+          </div>
+          <div id="session-info" class="session-info muted-text small">
+            Select a session to view details.
+          </div>
         </section>
 
         <section class="lab-panel sensory-panel" id="dashboard-sensory-card">
@@ -589,6 +585,11 @@
 
       <!-- Documentation Panel -->
       <div id="panel-docs" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-docs">
+        <!-- Draggable AI Draft Strip -->
+        <div id="ai-draft-strip" class="ai-draft-strip">
+          <span>🤖 Draft by AI</span>
+        </div>
+
         <div class="docs-container">
           <header class="docs-header">
             <h2>Documentation</h2>
