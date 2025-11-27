@@ -1579,10 +1579,12 @@ function openDetailModal(record, kind, options = {}) {
   }
   renderStructurePreview(record);
   activeVideoLayerId = record.id ?? `layer-${Date.now()}`;
-  videoEngine.registerLayer(activeVideoLayerId, {
-    kind: normalizedKind,
-    trackCount: getTrackCount(record),
-  });
+  if (typeof videoEngine?.registerLayer === "function") {
+    videoEngine.registerLayer(activeVideoLayerId, {
+      kind: normalizedKind,
+      trackCount: getTrackCount(record),
+    });
+  }
   if (videoCanvasController?.setLayer) {
     videoCanvasController.setLayer(activeVideoLayerId);
     videoCanvasController.refresh?.();
