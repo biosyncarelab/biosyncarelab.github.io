@@ -37,26 +37,35 @@ bsc:Waveform a owl:Class ;
 # WAVEFORM INDIVIDUALS
 # ============================================================================
 
-bsc:SineWave a bsc:Waveform ;
+bsc:SineWave a owl:Class ;
   rdfs:label "Sine Wave" ;
-  rdfs:comment "A smooth, periodic oscillation. In Martigli context, it may be skewed by the inhale ratio." .
+  rdfs:comment "A smooth, periodic oscillation. In Martigli context, it may be skewed by the inhale ratio." ;
+  rdfs:subClassOf bsc:Waveform .
 
-bsc:TriangleWave a bsc:Waveform ;
+bsc:TriangleWave a owl:Class ;
   rdfs:label "Triangle Wave" ;
-  rdfs:comment "A linear rise and fall. In Martigli context, the peak position is determined by the inhale ratio." .
+  rdfs:comment "A linear rise and fall. In Martigli context, the peak position is determined by the inhale ratio." ;
+  rdfs:subClassOf bsc:Waveform .
 
-bsc:SquareWave a bsc:Waveform ;
+bsc:SquareWave a owl:Class ;
   rdfs:label "Square Wave" ;
-  rdfs:comment "An abrupt switch between high and low states. Useful for 'box breathing' or hold-based patterns." .
+  rdfs:comment "An abrupt switch between high and low states. Useful for 'box breathing' or hold-based patterns." ;
+  rdfs:subClassOf bsc:Waveform .
 
-bsc:SawtoothWave a bsc:Waveform ;
+bsc:SawtoothWave a owl:Class ;
   rdfs:label "Sawtooth Wave" ;
-  rdfs:comment "A linear rise followed by an instant drop (or vice versa)." .
+  rdfs:comment "A linear rise followed by an instant drop (or vice versa)." ;
+  rdfs:subClassOf bsc:Waveform .
 
-bsc:BreathWave a bsc:Waveform ;
+bsc:BreathWave a owl:Class ;
   rdfs:label "Breath Wave" ;
   rdfs:comment "A specialized asymmetric curve designed to mimic natural respiratory flow, with a rounded inhale and a relaxed exhale." ;
-  owl:sameAs bsc:MartigliWave .
+  rdfs:subClassOf bsc:Waveform .
+
+bsc:MartigliWave a owl:Class ;
+  rdfs:label "Martigli Wave" ;
+  rdfs:comment "Low-frequency oscillator with a frequency trajectory, commonly used to guide breathing cadence." ;
+  rdfs:subClassOf bsc:BreathWave .
 
 # ============================================================================
 # PROPERTIES

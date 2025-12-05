@@ -11,6 +11,7 @@ import {
 } from "./auth/auth-manager.js";
 import {
   fetchSessions,
+  fetchSession,
   createSession,
   updateSession,
   deleteSession,
@@ -148,15 +149,98 @@ const ui = {
   visualizerSummary: document.getElementById("visualizer-summary"),
   visualizerTitle: document.getElementById("visualizer-title"),
 };
+const getMartigliSnapshotFromRecord = (record) => {
+  if (!record) return null;
+  const direct = record.martigli ?? null;
+  if (Array.isArray(direct?.oscillations)) {
+    return direct;
+  }
+  if (Array.isArray(direct)) {
+    return { oscillations: direct };
+  }
+  if (Array.isArray(record.voices)) {
+    for (const voice of record.voices) {
+      if (Array.isArray(voice?.martigli?.oscillations)) {
+        return voice.martigli;
+      }
+      if (Array.isArray(voice?.martigli)) {
+        return { oscillations: voice.martigli };
+      }
+    }
+  }
+  return null;
+};
+
+const getMartigliCountFromRecord = (record) => {
+  const snapshot = getMartigliSnapshotFromRecord(record);
+  return Array.isArray(snapshot?.oscillations) ? snapshot.oscillations.length : 0;
+};
+
+const formatSessionOptionLabel = (session) => {
+  const trackCount = Array.isArray(session?.tracks) ? session.tracks.length : 0;
+  const martigliCount = getMartigliCountFromRecord(session);
+  const displayName = session?.label ?? session?.legacyId ?? session?.id ?? "Session";
+  return `${displayName} (${trackCount} tracks, ${martigliCount} martigli)`;
+};
+
+const sessionRecordCache = new Map();
+
+const cacheSessionRecords = (records = []) => {
+  sessionRecordCache.clear();
+  records.forEach((record) => {
+    if (record?.id) {
+      sessionRecordCache.set(record.id, record);
+    }
+  });
+};
+
+const upsertSessionRecordInCache = (record) => {
+  if (!record?.id) return;
+  sessionRecordCache.set(record.id, record);
+};
+
+const ensureSessionInAppState = (record) => {
+  if (!record?.id) return;
+  const state = appState.snapshot();
+  if (state.sessions.some((s) => s.id === record.id)) return;
+  appState.setSessions([...state.sessions, record]);
+};
+
+const resolveSessionRecord = async (sessionId) => {
+  if (!sessionId) return null;
+  if (sessionRecordCache.has(sessionId)) {
+    return sessionRecordCache.get(sessionId);
+  }
+  try {
+    const remote = await fetchSession(sessionId);
+    if (remote) {
+      upsertSessionRecordInCache(remote);
+      ensureSessionInAppState(remote);
+    }
+    return remote;
+  } catch (err) {
+    console.warn("Failed to fetch session", err);
+    return null;
+  }
+};
 
 const summarizeSession = (session) => {
   if (!session) return "Select a session to view details.";
   const tracks = Array.isArray(session.tracks) ? session.tracks : [];
   const controls = session.controlTracks?.controls ?? [];
-  const martigliCount = session.martigli?.oscillations?.length ?? 0;
-  const martigliOscillations = session.martigli?.oscillations ?? [];
+  const martigliSnapshot = getMartigliSnapshotFromRecord(session);
+  const martigliCount = Array.isArray(martigliSnapshot?.oscillations)
+    ? martigliSnapshot.oscillations.length
+    : 0;
+  const martigliOscillations = Array.isArray(martigliSnapshot?.oscillations)
+    ? martigliSnapshot.oscillations
+    : [];
   const lines = [];
-  lines.push(`<strong>${session.label ?? session.id}</strong>`);
+  const title = session.label ?? session.legacyId ?? session.id;
+  lines.push(`<strong>${title}</strong>`);
+  if (session.legacyId) {
+    lines.push(`Alias: ${session.legacyId}`);
+  }
   if (session.folderId || session.folder) {
     lines.push(`📁 Folder: <em>${session.folderId ?? session.folder}</em>`);
   }
@@ -277,6 +361,7 @@ if (masterVolume) {
 appState.subscribe((state) => {
   // Session dropdowns and info panel
   const sessions = state.sessions || [];
+  cacheSessionRecords(sessions);
   if (ui.sessionStatus) {
     ui.sessionStatus.textContent = sessions.length
       ? `${sessions.length} session${sessions.length > 1 ? "s" : ""}`
@@ -313,9 +398,7 @@ appState.subscribe((state) => {
         list.forEach((session) => {
           const opt = document.createElement("option");
           opt.value = session.id;
-          const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
-          const martigliCount = session.martigli?.oscillations?.length ?? 0;
-          opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+          opt.textContent = formatSessionOptionLabel(session);
           group.appendChild(opt);
         });
         dropdown.appendChild(group);
@@ -323,9 +406,7 @@ appState.subscribe((state) => {
         list.forEach((session) => {
           const opt = document.createElement("option");
           opt.value = session.id;
-          const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
-          const martigliCount = session.martigli?.oscillations?.length ?? 0;
-          opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+          opt.textContent = formatSessionOptionLabel(session);
           dropdown.appendChild(opt);
         });
       }
@@ -377,6 +458,15 @@ const videoCanvasController =
     ? videoEngine.attachCanvas(ui.martigliCanvas, { color: "#38bdf8" })
     : null;
 
+const captureLiveMartigliSnapshot = () => {
+  if (!martigliState?.snapshot) return null;
+  const snapshot = martigliState.snapshot();
+  if (Array.isArray(snapshot?.oscillations) && snapshot.oscillations.length) {
+    return JSON.parse(JSON.stringify(snapshot));
+  }
+  return null;
+};
+
 // Binding registry moved to track-ui.js
 
 const normalizeMartigliSnapshot = (source) => {
@@ -390,10 +480,7 @@ const normalizeMartigliSnapshot = (source) => {
   return { oscillations: [source] };
 };
 
-const extractMartigliParams = (record) => {
-  if (record?.martigli) return record.martigli;
-  return record?.voices?.find((voice) => voice?.martigli)?.martigli;
-};
+const extractMartigliParams = (record) => getMartigliSnapshotFromRecord(record);
 
 const normalizeTrackBindings = (bindings = []) => {
   if (!Array.isArray(bindings)) return [];
@@ -926,8 +1013,9 @@ const handleSessionLoadAction = async (record, mode = "replace") => {
       kernel.controlTracks?.loadSnapshot?.(record.controlTracks, { mode: "append" });
     }
 
-    if (record.martigli) {
-      martigliState.loadSnapshot(normalizeMartigliSnapshot(record.martigli));
+    const martigliPayload = extractMartigliParams(record);
+    if (martigliPayload) {
+      martigliState.loadSnapshot(normalizeMartigliSnapshot(martigliPayload));
     }
     loadSessionTracks(record, mode);
     noteActiveSessionRecord(record);
@@ -1061,18 +1149,21 @@ const handleSessionSave = async () => {
   }
   draft.label = (desiredLabel || "").trim() || draft.label || currentLabel;
 
-  if (!draft.martigli) {
-    // Try to get live martigli state
-    const martigliSnapshot = kernel.martigli.snapshot();
-    if (martigliSnapshot && martigliSnapshot.oscillations.length > 0) {
-        draft.martigli = {
-            oscillations: martigliSnapshot.oscillations,
-            referenceId: martigliSnapshot.referenceId
-        };
-    } else {
-        setMessage("Adjust the Martigli widget before saving a session.", "error");
-        return;
+  const ensureMartigliState = () => {
+    if (Array.isArray(draft.martigli?.oscillations) && draft.martigli.oscillations.length) {
+      return true;
     }
+    const liveSnapshot = captureLiveMartigliSnapshot();
+    if (liveSnapshot) {
+      draft.martigli = liveSnapshot;
+      return true;
+    }
+    setMessage("Adjust the Martigli widget before saving a session.", "error");
+    return false;
+  };
+
+  if (!ensureMartigliState()) {
+    return;
   }
 
   const sanitizeForFirestore = (value) => {
@@ -1098,7 +1189,11 @@ const handleSessionSave = async () => {
     return value;
   };
 
-  const cleanDraft = sanitizeForFirestore(draft);
+  const cleanDraft = sanitizeForFirestore(draft) || {};
+  if (!cleanDraft.legacyId && activeModalData?.legacyId) {
+    cleanDraft.legacyId = activeModalData.legacyId;
+  }
+  delete cleanDraft.id;
 
   setBusy(true);
   try {
@@ -1860,7 +1955,7 @@ if (ui.snapshotDownload) {
 }
 
 if (ui.sessionLoadSelected) {
-  ui.sessionLoadSelected.addEventListener("click", () => {
+  ui.sessionLoadSelected.addEventListener("click", async () => {
     const state = appState.snapshot();
     const sessions = state.sessions || [];
     const dropdown = ui.sessionDropdown;
@@ -1881,11 +1976,19 @@ if (ui.sessionLoadSelected) {
       }
     }
 
-    const session = sessions.find((s) => s.id === sessionId);
+    let session = sessions.find((s) => s.id === sessionId) ?? sessionRecordCache.get(sessionId);
+    if (!session && sessionId) {
+      session = await resolveSessionRecord(sessionId);
+    }
     if (!session) {
       setMessage("Selected session not found.", "error");
       return;
     }
+    upsertSessionRecordInCache(session);
+    if (dropdown) {
+      dropdown.dataset.selectedId = session.id;
+    }
+    updateSessionInfoPanel(session);
     handleSessionLoadAction(session, "replace");
   });
 }
@@ -1913,9 +2016,7 @@ if (ui.sessionFolderFilter) {
           list.forEach((session) => {
             const opt = document.createElement("option");
             opt.value = session.id;
-            const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
-            const martigliCount = session.martigli?.oscillations?.length ?? 0;
-            opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+            opt.textContent = formatSessionOptionLabel(session);
             group.appendChild(opt);
           });
           ui.sessionDropdown.appendChild(group);
@@ -1923,9 +2024,7 @@ if (ui.sessionFolderFilter) {
           list.forEach((session) => {
             const opt = document.createElement("option");
             opt.value = session.id;
-            const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
-            const martigliCount = session.martigli?.oscillations?.length ?? 0;
-            opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+            opt.textContent = formatSessionOptionLabel(session);
             ui.sessionDropdown.appendChild(opt);
           });
         }
@@ -1945,12 +2044,20 @@ if (ui.sessionFolderFilter) {
 }
 
 if (ui.sessionDropdown) {
-  ui.sessionDropdown.addEventListener("change", (e) => {
+  ui.sessionDropdown.addEventListener("change", async (e) => {
     const sessionId = e.target.value;
-    ui.sessionDropdown.dataset.selectedId = sessionId;
-    const state = appState.snapshot();
-    const session = (state.sessions || []).find((s) => s.id === sessionId);
-    updateSessionInfoPanel(session);
+    ui.sessionDropdown.dataset.selectedId = sessionId || "";
+    if (!sessionId) {
+      updateSessionInfoPanel(null);
+      return;
+    }
+    const cached = sessionRecordCache.get(sessionId) ?? (await resolveSessionRecord(sessionId));
+    if (cached) {
+      updateSessionInfoPanel(cached);
+    } else {
+      updateSessionInfoPanel(null);
+      setMessage("Selected session not found. Try refreshing sessions.", "error");
+    }
   });
 }
 

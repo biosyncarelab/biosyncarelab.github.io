@@ -410,7 +410,15 @@ bsc:Waveform            a owl:Class ; rdfs:label "Waveform" .
 bsc:SineWave            a owl:Class ; rdfs:label "Sine Wave" ; rdfs:subClassOf bsc:Waveform .
 bsc:TriangleWave        a owl:Class ; rdfs:label "Triangle Wave" ; rdfs:subClassOf bsc:Waveform .
 bsc:SquareWave          a owl:Class ; rdfs:label "Square Wave" ; rdfs:subClassOf bsc:Waveform .
-bsc:SawWave             a owl:Class ; rdfs:label "Saw Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:SawtoothWave        a owl:Class ; rdfs:label "Sawtooth Wave" ; rdfs:subClassOf bsc:Waveform .
+bsc:BreathWave          a owl:Class ;
+  rdfs:label "Breath Wave" ;
+  rdfs:comment "Asymmetric curve designed to mirror natural respiratory flow (rounded inhale, relaxed exhale)." ;
+  rdfs:subClassOf bsc:Waveform .
+bsc:MartigliWave        a owl:Class ;
+  rdfs:label "Martigli Wave" ;
+  rdfs:comment "Low-frequency oscillator with a frequency trajectory, commonly used to guide breathing cadence." ;
+  rdfs:subClassOf bsc:BreathWave .
 bsc:SineWave owl:sameAs dbr:Sine_wave .
 
 bsc:waveform            a owl:ObjectProperty ;

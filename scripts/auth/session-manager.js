@@ -21,6 +21,16 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js';
 import { FIRESTORE_COLLECTIONS } from '../constants.js';
 
+const normalizeSessionRecord = (docId, data = {}) => {
+  const { id: rawId, legacyId: storedLegacyId, ...rest } = data;
+  const legacyId = storedLegacyId ?? (rawId && rawId !== docId ? rawId : null);
+  return {
+    ...rest,
+    id: docId,
+    legacyId: legacyId ?? null,
+  };
+};
+
 // Re-export validation functions (no Firebase dependencies)
 export { collectSessionDraft, validateSessionData } from './session-validator.js';
 
@@ -44,10 +54,7 @@ export async function fetchSessions(userId) {
 
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    return snapshot.docs.map((doc) => normalizeSessionRecord(doc.id, doc.data()));
   } catch (err) {
     console.error('Failed to fetch sessions:', err);
     throw new Error(`Failed to fetch sessions: ${err.message}`);
@@ -72,10 +79,7 @@ export async function fetchSession(sessionId) {
       return null;
     }
 
-    return {
-      id: snapshot.id,
-      ...snapshot.data(),
-    };
+    return normalizeSessionRecord(snapshot.id, snapshot.data());
   } catch (err) {
     console.error('Failed to fetch session:', err);
     throw new Error(`Failed to fetch session: ${err.message}`);
@@ -100,8 +104,12 @@ export async function createSession(userId, sessionData) {
   try {
     const sessionsRef = collection(db, FIRESTORE_COLLECTIONS.SESSIONS);
 
+    const { id: discardedId, legacyId: providedLegacyId, ...rest } = sessionData;
+    const legacyId = providedLegacyId ?? (typeof discardedId === 'string' ? discardedId : null);
+
     const payload = {
-      ...sessionData,
+      ...rest,
+      ...(legacyId ? { legacyId } : {}),
       createdBy: userId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -110,12 +118,14 @@ export async function createSession(userId, sessionData) {
 
     const docRef = await addDoc(sessionsRef, payload);
 
-    return {
-      id: docRef.id,
-      ...payload,
-      createdAt: new Date(), // Approximate for immediate return
+    return normalizeSessionRecord(docRef.id, {
+      ...rest,
+      ...(legacyId ? { legacyId } : {}),
+      createdBy: userId,
+      createdAt: new Date(),
       updatedAt: new Date(),
-    };
+      version: '1.0',
+    });
   } catch (err) {
     console.error('Failed to create session:', err);
     throw new Error(`Failed to create session: ${err.message}`);
@@ -141,20 +151,21 @@ export async function updateSession(sessionId, updates) {
     const sessionRef = doc(db, FIRESTORE_COLLECTIONS.SESSIONS, sessionId);
 
     // Remove fields that shouldn't be updated
-    const { id, createdBy, createdAt, ...safeUpdates } = updates;
+    const { id, createdBy, createdAt, legacyId: providedLegacyId, ...safeUpdates } = updates;
 
     const payload = {
       ...safeUpdates,
+      ...(providedLegacyId !== undefined ? { legacyId: providedLegacyId } : {}),
       updatedAt: serverTimestamp(),
     };
 
     await updateDoc(sessionRef, payload);
 
-    return {
-      id: sessionId,
-      ...updates,
+    return normalizeSessionRecord(sessionId, {
+      ...safeUpdates,
+      ...(providedLegacyId !== undefined ? { legacyId: providedLegacyId } : {}),
       updatedAt: new Date(),
-    };
+    });
   } catch (err) {
     console.error('Failed to update session:', err);
     throw new Error(`Failed to update session: ${err.message}`);

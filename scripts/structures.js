@@ -162,7 +162,7 @@ export class MartigliOscillator {
     const id = this.id;
     const label = this.label || "Martigli Oscillation";
     const waveform = this.config.waveform || "sine";
-    const waveformClass = `bsc:${waveform.charAt(0).toUpperCase() + waveform.slice(1)}Wave`;
+    const waveformClass = waveformClassFor(waveform);
 
     return `
 @prefix bsc: <https://biosyncarelab.github.io/ont#> .
@@ -1218,14 +1218,16 @@ const waveformClassFor = (waveform = "sine") => {
   const wf = waveform.toLowerCase();
   switch (wf) {
     case "triangle":
-    case "breath":
-    case "martigli":
       return "bsc:TriangleWave";
+    case "breath":
+      return "bsc:BreathWave";
+    case "martigli":
+      return "bsc:MartigliWave";
     case "square":
       return "bsc:SquareWave";
     case "saw":
     case "sawtooth":
-      return "bsc:SawWave";
+      return "bsc:SawtoothWave";
     case "sine":
     default:
       return "bsc:SineWave";
