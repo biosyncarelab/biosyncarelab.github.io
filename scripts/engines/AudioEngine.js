@@ -206,6 +206,19 @@ export class AudioEngine {
       if (nodes.lfo) nodes.lfo.stop();
       if (nodes.leftOsc) nodes.leftOsc.stop();
       if (nodes.rightOsc) nodes.rightOsc.stop();
+
+      // Stop all active isochronic voices
+      if (nodes.activeVoices) {
+        nodes.activeVoices.forEach(voice => {
+          try {
+            voice.osc.stop();
+            voice.gain.disconnect();
+          } catch (e) { /* ignore */ }
+        });
+        nodes.activeVoices = [];
+      }
+
+      if (nodes.panner) nodes.panner.disconnect();
     } catch (e) { /* ignore */ }
   }
 
@@ -272,20 +285,11 @@ export class AudioEngine {
       nodes.leftOsc = leftOsc;
       nodes.rightOsc = rightOsc;
     } else if (track.constructor.name === 'IsochronicTrack') {
-      // Isochronic: Continuous tone with ADSR-shaped pulses
-      const pulseGain = this.ctx.createGain();
-      pulseGain.gain.value = 0; // Start at zero, ADSR will control
-      pulseGain.connect(panner);
-
-      const osc = this.ctx.createOscillator();
-      osc.type = track.getParameter('waveform')?.base ?? 'sine';
-      osc.connect(pulseGain);
-      osc.start();
-
-      nodes.osc = osc;
-      nodes.pulseGain = pulseGain;
+      // Isochronic: Polyphonic ADSR pulses (allows overlap for granular synthesis)
+      // Each pulse creates its own oscillator + gain pair for true polyphony
+      nodes.panner = panner; // Store reference for pulse creation
       nodes.lastPulseTime = 0; // Track when last pulse was triggered
-      nodes.pulseIntervalId = null; // Will be set in update
+      nodes.activeVoices = []; // Track active pulse voices for cleanup
     }
 
     this.nodes.set(track.id, nodes);
@@ -338,15 +342,7 @@ export class AudioEngine {
       }
     } else if (track.constructor.name === 'IsochronicTrack') {
       const waveform = track.getParameter('waveform')?.base ?? 'sine';
-
-      // Update carrier frequency
-      this._applyParamAutomation(
-        nodes.osc.frequency,
-        (t) => track.getParameter('frequency')?.getValue(t) ?? 200,
-        time
-      );
-
-      if (nodes.osc.type !== waveform) nodes.osc.type = waveform;
+      const frequency = track.getParameter('frequency')?.getValue(time) ?? 200;
 
       // Get ADSR and pulse parameters
       const pulseRate = track.getParameter('pulseRate')?.getValue(time) ?? 10;
@@ -365,7 +361,7 @@ export class AudioEngine {
 
       const timeSinceLastPulse = ctxTime - nodes.lastPulseTime;
       if (timeSinceLastPulse >= pulseInterval) {
-        // Trigger new ADSR pulse
+        // Trigger new polyphonic pulse voice
         const startTime = ctxTime;
         const peakTime = startTime + attackTime;
         const sustainStartTime = peakTime + decayTime;
@@ -374,30 +370,50 @@ export class AudioEngine {
         const endTime = releaseStartTime + releaseTime;
 
         try {
-          const pulseGain = nodes.pulseGain.gain;
-          pulseGain.cancelScheduledValues(startTime);
+          // Create new oscillator + gain for this pulse (polyphonic)
+          const osc = this.ctx.createOscillator();
+          osc.type = waveform;
+          osc.frequency.value = frequency;
 
-          // Attack: ramp from silence to peak (1.0)
-          pulseGain.setValueAtTime(0.001, startTime);
-          pulseGain.exponentialRampToValueAtTime(1.0, peakTime);
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(nodes.panner);
 
-          // Decay: ramp from peak to sustain level
+          // Schedule ADSR envelope
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(1.0, peakTime);
+
           if (decayTime > 0) {
-            pulseGain.exponentialRampToValueAtTime(Math.max(0.001, sustainLevel), sustainStartTime);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.001, sustainLevel), sustainStartTime);
           }
 
-          // Sustain: hold at sustain level
           if (sustainDuration > 0) {
-            pulseGain.setValueAtTime(Math.max(0.001, sustainLevel), releaseStartTime);
+            gain.gain.setValueAtTime(Math.max(0.001, sustainLevel), releaseStartTime);
           }
 
-          // Release: ramp back to silence
-          pulseGain.exponentialRampToValueAtTime(0.001, endTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+
+          // Start oscillator and schedule cleanup
+          osc.start(startTime);
+          osc.stop(endTime + 0.1); // Stop slightly after release for safety
+
+          // Track voice for cleanup
+          const voice = { osc, gain, endTime };
+          nodes.activeVoices.push(voice);
+
+          // Schedule cleanup
+          setTimeout(() => {
+            try {
+              gain.disconnect();
+              const index = nodes.activeVoices.indexOf(voice);
+              if (index > -1) nodes.activeVoices.splice(index, 1);
+            } catch (e) { /* ignore */ }
+          }, (endTime - ctxTime + 0.2) * 1000);
 
           // Update last pulse time
           nodes.lastPulseTime = ctxTime;
         } catch (e) {
-          console.warn('[AudioEngine] ADSR scheduling error:', e);
+          console.warn('[AudioEngine] Pulse voice creation error:', e);
         }
       }
     }
