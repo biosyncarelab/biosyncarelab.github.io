@@ -31,6 +31,26 @@ service cloud.firestore {
                        resource.data.createdBy == request.auth.uid;
     }
 
+    // Workspace States Collection
+    // Stores full-app snapshots that users can keep private or share as read-only links
+    match /states/{stateId} {
+      allow read: if (isAuthenticated() && resource.data.ownerUid == request.auth.uid) ||
+                     (resource.data.isReadOnly == true && resource.data.shareCode != null);
+
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerUid == request.auth.uid &&
+                       request.resource.data.createdAt is timestamp &&
+                       request.resource.data.updatedAt is timestamp &&
+                       request.resource.data.statePayload != null;
+
+      allow update: if isAuthenticated() &&
+                       resource.data.ownerUid == request.auth.uid &&
+                       request.resource.data.ownerUid == resource.data.ownerUid;
+
+      allow delete: if isAuthenticated() &&
+                       resource.data.ownerUid == request.auth.uid;
+    }
+
     // Telemetry Collection
     // Any authenticated user can write telemetry
     // Only admins can read (for privacy)

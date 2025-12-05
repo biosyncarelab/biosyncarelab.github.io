@@ -1,5 +1,5 @@
-@prefix bsc:   <https://biosyncare.github.io/ont#> .
-@prefix id:    <https://biosyncare.github.io/id/> .
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix id:    <https://biosyncarelab.github.io/id/> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
@@ -68,3 +68,43 @@ id:CognitiveEnhancement a skos:Concept ;
 id:Wellbeing a skos:Concept ;
   skos:inScheme id:BSC-Vocabulary ; skos:broader id:Outcomes ;
   skos:prefLabel "Well-being"@en .
+
+# Waveform vocabulary (SKOS layer aligned to OWL classes)
+id:Waveforms a skos:ConceptScheme ;
+  dct:title "BioSynCare Waveforms" ;
+  dct:description "SKOS concepts aligned with waveform OWL classes used by Martigli oscillators and audio engines." ;
+  dct:created "2025-11-27"^^xsd:date .
+
+id:SineWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Sine wave"@en ;
+  skos:exactMatch bsc:SineWave .
+
+id:TriangleWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Triangle wave"@en ;
+  skos:exactMatch bsc:TriangleWave .
+
+id:SquareWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Square wave"@en ;
+  skos:exactMatch bsc:SquareWave .
+
+id:SawtoothWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Sawtooth wave"@en ;
+  skos:altLabel "Saw wave"@en ;
+  skos:exactMatch bsc:SawtoothWave .
+
+id:BreathWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Breath wave"@en ;
+  skos:definition "Asymmetric curve mirroring natural inhale/exhale flow."@en ;
+  skos:exactMatch bsc:BreathWave .
+
+id:MartigliWave a skos:Concept ;
+  skos:inScheme id:Waveforms ;
+  skos:prefLabel "Martigli wave"@en ;
+  skos:definition "Low-frequency breathing guide with a frequency trajectory (LFO) for cadence pacing."@en ;
+  skos:broader id:BreathWave ;
+  skos:exactMatch bsc:MartigliWave .

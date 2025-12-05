@@ -52,35 +52,85 @@ bsh:MartigliOscillationShape a sh:NodeShape ;
   sh:property [
     sh:path bsc:waveform ;
     sh:minCount 1 ;
+    sh:class bsc:Waveform ;
+    sh:in ( bsc:SineWave bsc:TriangleWave bsc:SquareWave bsc:SawtoothWave bsc:BreathWave bsc:MartigliWave ) ;
     sh:message "Waveform must be provided (e.g., bsc:SineWave)." ;
   ] ;
   sh:property [
     sh:path bsc:startPeriod ;
     sh:datatype xsd:decimal ;
     sh:minCount 1 ;
+    sh:minInclusive 0.1 ;
     sh:message "Start period (seconds) is required." ;
   ] ;
   sh:property [
     sh:path bsc:endPeriod ;
     sh:datatype xsd:decimal ;
     sh:minCount 1 ;
+    sh:minInclusive 0.1 ;
     sh:message "End period (seconds) is required." ;
   ] ;
   sh:property [
     sh:path bsc:transitionDuration ;
     sh:datatype xsd:decimal ;
     sh:minCount 1 ;
+    sh:minInclusive 0 ;
     sh:message "Transition duration (seconds) is required." ;
   ] ;
   sh:property [
     sh:path bsc:inhaleRatio ;
     sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 1 ;
     sh:message "Inhale ratio should be a decimal between 0 and 1." ;
   ] ;
   sh:property [
     sh:path bsc:amplitude ;
     sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 1.5 ;
     sh:message "Amplitude should be a decimal value." ;
+  ] .
+
+# Audio / Visual / Haptic tracks
+bsh:AudioTrackShape a sh:NodeShape ;
+  sh:targetClass bsc:AudioTrack ;
+  sh:property [
+    sh:path bsc:waveform ;
+    sh:class bsc:Waveform ;
+    sh:in ( bsc:SineWave bsc:TriangleWave bsc:SquareWave bsc:SawtoothWave bsc:BreathWave bsc:MartigliWave ) ;
+    sh:message "Audio tracks should reference a waveform class (e.g., bsc:SineWave)." ;
+  ] ;
+  sh:property [
+    sh:path bsc:gain ;
+    sh:datatype xsd:decimal ;
+    sh:message "Audio gain should be a decimal (0-1)." ;
+  ] .
+
+bsh:VisualTrackShape a sh:NodeShape ;
+  sh:targetClass bsc:VisualTrack ;
+  sh:property [
+    sh:path bsc:opacity ;
+    sh:datatype xsd:decimal ;
+    sh:message "Visual opacity should be a decimal (0-1) when present." ;
+  ] ;
+  sh:property [
+    sh:path bsc:scaleFactor ;
+    sh:datatype xsd:decimal ;
+    sh:message "Visual scale should be a decimal when present." ;
+  ] .
+
+bsh:HapticTrackShape a sh:NodeShape ;
+  sh:targetClass bsc:HapticTrack ;
+  sh:property [
+    sh:path bsc:intensity ;
+    sh:datatype xsd:decimal ;
+    sh:message "Haptic intensity should be a decimal when present." ;
+  ] ;
+  sh:property [
+    sh:path bsc:vibrationPattern ;
+    sh:datatype xsd:string ;
+    sh:message "Haptic tracks may specify a vibration pattern identifier." ;
   ] .
 
 bsh:TrackShape a sh:NodeShape ;

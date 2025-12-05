@@ -1,5 +1,5 @@
-@prefix bsc:   <https://biosyncare.github.io/ont#> .
-@prefix id:    <https://biosyncare.github.io/id/> .
+@prefix bsc:   <https://biosyncarelab.github.io/ont#> .
+@prefix id:    <https://biosyncarelab.github.io/id/> .
 @prefix owl:   <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
@@ -14,12 +14,12 @@ id:HistoryGraph_20251105 a prov:Entity ;
   dct:title "BioSynCare History (triplified)"@en ;
   dct:description "Key claims and structures from docs/history.md represented as RDF instances."@en ;
   dct:created "2025-11-05"^^xsd:date ;
-  prov:wasDerivedFrom <https://biosyncare.github.io/docs/history.md> .
+  prov:wasDerivedFrom <https://biosyncarelab.github.io/docs/history.md> .
 
 # Source document as an artifact
 id:HistoryDoc a schema:CreativeWork, bsc:Report ;
   dct:title "History – key events and outcomes"@en ;
-  dct:source <https://biosyncare.github.io/docs/history.md> ;
+  dct:source <https://biosyncarelab.github.io/docs/history.md> ;
   prov:wasAttributedTo id:BioSynCareLab ;
   prov:generatedAtTime "2025-11-05"^^xsd:date .
 

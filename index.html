@@ -97,6 +97,9 @@
         <button type="button" id="tab-nso" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-nso">
           NSO Navigator
         </button>
+        <button type="button" id="tab-state" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-state">
+          State Manager
+        </button>
         <button type="button" id="tab-docs" class="lab-tab" role="tab" aria-selected="false" aria-controls="panel-docs">
           Docs
         </button>
@@ -583,6 +586,77 @@
         </div>
       </div>
 
+      <div id="panel-state" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-state">
+        <section class="lab-panel state-manager-panel">
+          <header class="panel-head">
+            <div>
+              <p class="panel-eyebrow">Workspace</p>
+              <h2>State Manager</h2>
+              <p id="state-manager-status" class="muted-text">Sign in to capture and restore full workspaces.</p>
+            </div>
+            <div class="panel-actions">
+              <button type="button" id="state-manager-refresh" class="ghost small" disabled>Refresh list</button>
+            </div>
+          </header>
+
+          <div class="state-manager-grid">
+            <form id="state-manager-form" class="state-card state-card--save" autocomplete="off">
+              <div class="state-card-head">
+                <div>
+                  <h3>Save current workspace</h3>
+                  <p class="muted-text small">Snapshot active tab, Martigli oscillations, tracks, structures, and NSO context.</p>
+                </div>
+                <span id="state-manager-form-hint" class="state-chip">Live</span>
+              </div>
+              <label>
+                Label
+                <input type="text" id="state-label" name="state-label" placeholder="Session + structure + time" maxlength="120" />
+              </label>
+              <label>
+                Description
+                <textarea id="state-description" name="state-description" rows="2" maxlength="280" placeholder="What makes this workspace special?" spellcheck="false"></textarea>
+              </label>
+              <label>
+                Tags (comma separated)
+                <input type="text" id="state-tags" name="state-tags" placeholder="alpha, martigli, nso" />
+              </label>
+              <div class="state-capture-preview" id="state-capture-preview" aria-live="polite"></div>
+              <button type="submit" id="state-save-button" class="primary small" disabled>Save workspace</button>
+            </form>
+
+            <section class="state-card state-card--list" aria-live="polite">
+              <div class="state-card-head">
+                <div>
+                  <h3>Saved workspaces</h3>
+                  <p id="state-manager-count" class="muted-text small">0 saved</p>
+                </div>
+              </div>
+              <div id="state-manager-empty" class="state-empty">
+                <p class="muted-text">No saved workspaces yet. Capture one from the form on the left.</p>
+              </div>
+              <ul id="state-manager-list" class="state-list" role="listbox"></ul>
+            </section>
+
+            <section class="state-card state-card--detail">
+              <div class="state-card-head">
+                <div>
+                  <h3>Selected workspace</h3>
+                  <p class="muted-text small">Preview details before loading.</p>
+                </div>
+              </div>
+              <div id="state-manager-detail" class="state-detail">
+                <p class="muted-text small">Select a saved workspace to inspect version, tracks, and structures.</p>
+              </div>
+              <div class="state-detail-actions">
+                <button type="button" id="state-load-button" class="primary small" disabled>Load workspace</button>
+                <button type="button" id="state-delete-button" class="ghost small" disabled>Delete</button>
+              </div>
+              <div id="state-manager-toast" class="state-toast" aria-live="polite"></div>
+            </section>
+          </div>
+        </section>
+      </div>
+
       <!-- Documentation Panel -->
       <div id="panel-docs" class="lab-tab-panel hidden" role="tabpanel" aria-labelledby="tab-docs">
         <!-- Draggable AI Draft Strip -->
@@ -765,5 +839,6 @@
     <script type="module" src="scripts/auth.js"></script>
     <script type="module" src="scripts/nso-navigator.js"></script>
     <script type="module" src="scripts/docs-tab.js"></script>
+    <script type="module" src="scripts/state/state-manager-tab.js"></script>
   </body>
 </html>

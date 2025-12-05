@@ -204,6 +204,7 @@ export const FIRESTORE_COLLECTIONS = {
   SHARED_STATES: 'shared-states',
   USER_PROFILES: 'user-profiles',
   PRESETS: 'presets',
+  STATES: 'states',
 };
 
 /**
