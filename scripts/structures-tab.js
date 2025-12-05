@@ -646,6 +646,12 @@ class StructurePlayer {
     this.maxBells = 10; // Support up to 10 bells
     this.waveform = options.waveform || 'sine';
     this.overlap = options.overlap || 0; // 0 to 1 (percentage of note duration to overlap)
+
+    // ADSR envelope parameters (in milliseconds and 0-1 for sustain level)
+    this.attackTime = options.attackTime || 10;
+    this.decayTime = options.decayTime || 50;
+    this.sustainLevel = options.sustainLevel || 0.7;
+    this.releaseTime = options.releaseTime || 100;
   }
 
   /**
@@ -665,6 +671,10 @@ class StructurePlayer {
     if (params.numberOfOctaves !== undefined) this.numberOfOctaves = params.numberOfOctaves;
     if (params.waveform !== undefined) this.waveform = params.waveform;
     if (params.overlap !== undefined) this.overlap = params.overlap;
+    if (params.attackTime !== undefined) this.attackTime = params.attackTime;
+    if (params.decayTime !== undefined) this.decayTime = params.decayTime;
+    if (params.sustainLevel !== undefined) this.sustainLevel = params.sustainLevel;
+    if (params.releaseTime !== undefined) this.releaseTime = params.releaseTime;
   }
 
   /**
@@ -779,27 +789,46 @@ class StructurePlayer {
     oscillator.type = this.waveform;
     oscillator.frequency.value = frequency;
 
-    // Create gain node with envelope (ADSR)
+    // Create gain node with ADSR envelope
     const gainNode = audioContext.createGain();
     const now = audioContext.currentTime;
-    const attackTime = Math.min(0.01, noteDurationSec * 0.1);
-    const decayTime = Math.min(0.05, noteDurationSec * 0.2);
-    const releaseTime = Math.min(0.1, noteDurationSec * 0.3);
-    const sustainTime = noteDurationSec - attackTime - decayTime - releaseTime;
 
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.3, now + attackTime); // Attack
-    gainNode.gain.linearRampToValueAtTime(0.2, now + attackTime + decayTime); // Decay
-    gainNode.gain.setValueAtTime(0.2, now + attackTime + decayTime + sustainTime); // Sustain
-    gainNode.gain.linearRampToValueAtTime(0, now + noteDurationSec); // Release
+    // Convert milliseconds to seconds
+    const attackSec = this.attackTime / 1000;
+    const decaySec = this.decayTime / 1000;
+    const releaseSec = this.releaseTime / 1000;
+
+    // Calculate sustain duration (what's left after attack and decay, before release)
+    const minNoteDuration = attackSec + decaySec + releaseSec;
+    const actualNoteDuration = Math.max(noteDurationSec, minNoteDuration);
+    const sustainDuration = actualNoteDuration - attackSec - decaySec - releaseSec;
+
+    // Peak amplitude (at end of attack)
+    const peakGain = 0.3;
+
+    // Apply ADSR envelope with exponential curves for more natural sound
+    gainNode.gain.setValueAtTime(0.001, now); // Start near zero (can't be exactly zero for exponential)
+
+    // Attack: exponential rise to peak
+    gainNode.gain.exponentialRampToValueAtTime(peakGain, now + attackSec);
+
+    // Decay: exponential fall to sustain level
+    const sustainGain = Math.max(0.001, peakGain * this.sustainLevel); // Ensure > 0 for exponential
+    gainNode.gain.exponentialRampToValueAtTime(sustainGain, now + attackSec + decaySec);
+
+    // Sustain: hold at sustain level
+    gainNode.gain.setValueAtTime(sustainGain, now + attackSec + decaySec + sustainDuration);
+
+    // Release: exponential fall to zero
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + actualNoteDuration);
 
     // Connect nodes
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Start oscillator
-    oscillator.start();
-    oscillator.stop(now + noteDurationSec);
+    // Start and stop oscillator
+    oscillator.start(now);
+    oscillator.stop(now + actualNoteDuration);
 
     // Store references
     this.oscillators.set(position, oscillator);
@@ -809,7 +838,7 @@ class StructurePlayer {
     setTimeout(() => {
       this.oscillators.delete(position);
       this.gainNodes.delete(position);
-    }, noteDuration + 100);
+    }, actualNoteDuration * 1000 + 100);
   }
 
   /**
@@ -869,13 +898,21 @@ function startStructurePlayback(sequenceId) {
   const octaveSpanInput = document.querySelector(`.octave-span-input[data-sequence-id="${sequenceId}"]`);
   const waveformSelect = document.querySelector(`.waveform-select[data-sequence-id="${sequenceId}"]`);
   const overlapSlider = document.querySelector(`.overlap-slider[data-sequence-id="${sequenceId}"]`);
+  const attackSlider = document.querySelector(`.attack-slider[data-sequence-id="${sequenceId}"]`);
+  const decaySlider = document.querySelector(`.decay-slider[data-sequence-id="${sequenceId}"]`);
+  const sustainSlider = document.querySelector(`.sustain-slider[data-sequence-id="${sequenceId}"]`);
+  const releaseSlider = document.querySelector(`.release-slider[data-sequence-id="${sequenceId}"]`);
 
   const options = {
     tempo: tempoSlider ? parseInt(tempoSlider.value) : 120,
     baseFrequency: baseFreqInput ? parseFloat(baseFreqInput.value) : 261.63,
     numberOfOctaves: octaveSpanInput ? parseFloat(octaveSpanInput.value) : 1,
     waveform: waveformSelect ? waveformSelect.value : 'sine',
-    overlap: overlapSlider ? parseFloat(overlapSlider.value) : 0
+    overlap: overlapSlider ? parseFloat(overlapSlider.value) : 0,
+    attackTime: attackSlider ? parseFloat(attackSlider.value) : 10,
+    decayTime: decaySlider ? parseFloat(decaySlider.value) : 50,
+    sustainLevel: sustainSlider ? parseFloat(sustainSlider.value) : 0.7,
+    releaseTime: releaseSlider ? parseFloat(releaseSlider.value) : 100
   };
 
   // Create player
@@ -986,12 +1023,20 @@ function updateSynthParams(sequenceId) {
   const octaveSpanInput = document.querySelector(`.octave-span-input[data-sequence-id="${sequenceId}"]`);
   const waveformSelect = document.querySelector(`.waveform-select[data-sequence-id="${sequenceId}"]`);
   const overlapSlider = document.querySelector(`.overlap-slider[data-sequence-id="${sequenceId}"]`);
+  const attackSlider = document.querySelector(`.attack-slider[data-sequence-id="${sequenceId}"]`);
+  const decaySlider = document.querySelector(`.decay-slider[data-sequence-id="${sequenceId}"]`);
+  const sustainSlider = document.querySelector(`.sustain-slider[data-sequence-id="${sequenceId}"]`);
+  const releaseSlider = document.querySelector(`.release-slider[data-sequence-id="${sequenceId}"]`);
 
   currentPlayer.updateSynthParams({
     baseFrequency: baseFreqInput ? parseFloat(baseFreqInput.value) : undefined,
     numberOfOctaves: octaveSpanInput ? parseFloat(octaveSpanInput.value) : undefined,
     waveform: waveformSelect ? waveformSelect.value : undefined,
-    overlap: overlapSlider ? parseFloat(overlapSlider.value) : undefined
+    overlap: overlapSlider ? parseFloat(overlapSlider.value) : undefined,
+    attackTime: attackSlider ? parseFloat(attackSlider.value) : undefined,
+    decayTime: decaySlider ? parseFloat(decaySlider.value) : undefined,
+    sustainLevel: sustainSlider ? parseFloat(sustainSlider.value) : undefined,
+    releaseTime: releaseSlider ? parseFloat(releaseSlider.value) : undefined
   });
 }
 
@@ -1107,6 +1152,34 @@ if (sequenceContainer) {
       const overlapValue = document.querySelector(`.overlap-value[data-sequence-id="${sequenceId}"]`);
       if (overlapValue) {
         overlapValue.textContent = `${Math.round(overlap * 100)}%`;
+      }
+      updateSynthParams(sequenceId);
+    } else if (e.target.classList.contains('attack-slider')) {
+      const attack = parseFloat(e.target.value);
+      const attackValue = document.querySelector(`.attack-value[data-sequence-id="${sequenceId}"]`);
+      if (attackValue) {
+        attackValue.textContent = `${attack}ms`;
+      }
+      updateSynthParams(sequenceId);
+    } else if (e.target.classList.contains('decay-slider')) {
+      const decay = parseFloat(e.target.value);
+      const decayValue = document.querySelector(`.decay-value[data-sequence-id="${sequenceId}"]`);
+      if (decayValue) {
+        decayValue.textContent = `${decay}ms`;
+      }
+      updateSynthParams(sequenceId);
+    } else if (e.target.classList.contains('sustain-slider')) {
+      const sustain = parseFloat(e.target.value);
+      const sustainValue = document.querySelector(`.sustain-value[data-sequence-id="${sequenceId}"]`);
+      if (sustainValue) {
+        sustainValue.textContent = `${Math.round(sustain * 100)}%`;
+      }
+      updateSynthParams(sequenceId);
+    } else if (e.target.classList.contains('release-slider')) {
+      const release = parseFloat(e.target.value);
+      const releaseValue = document.querySelector(`.release-value[data-sequence-id="${sequenceId}"]`);
+      if (releaseValue) {
+        releaseValue.textContent = `${release}ms`;
       }
       updateSynthParams(sequenceId);
     } else if (e.target.classList.contains('base-freq-input') ||
@@ -1435,6 +1508,31 @@ function renderSequenceSection(sequence, index) {
   html += '<label>Note Overlap:</label>';
   html += `<input type="range" class="overlap-slider" data-sequence-id="${sequence.id}" min="0" max="1" value="0" step="0.1" />`;
   html += `<span class="overlap-value" data-sequence-id="${sequence.id}">0%</span>`;
+  html += '</div>';
+
+  // ADSR Envelope Controls
+  html += '<div class="synth-control-group synth-control-separator">';
+  html += '<label>Attack (ms):</label>';
+  html += `<input type="range" class="attack-slider" data-sequence-id="${sequence.id}" min="1" max="200" value="10" step="1" />`;
+  html += `<span class="attack-value" data-sequence-id="${sequence.id}">10ms</span>`;
+  html += '</div>';
+
+  html += '<div class="synth-control-group">';
+  html += '<label>Decay (ms):</label>';
+  html += `<input type="range" class="decay-slider" data-sequence-id="${sequence.id}" min="0" max="500" value="50" step="10" />`;
+  html += `<span class="decay-value" data-sequence-id="${sequence.id}">50ms</span>`;
+  html += '</div>';
+
+  html += '<div class="synth-control-group">';
+  html += '<label>Sustain Level:</label>';
+  html += `<input type="range" class="sustain-slider" data-sequence-id="${sequence.id}" min="0" max="1" value="0.7" step="0.05" />`;
+  html += `<span class="sustain-value" data-sequence-id="${sequence.id}">70%</span>`;
+  html += '</div>';
+
+  html += '<div class="synth-control-group">';
+  html += '<label>Release (ms):</label>';
+  html += `<input type="range" class="release-slider" data-sequence-id="${sequence.id}" min="10" max="1000" value="100" step="10" />`;
+  html += `<span class="release-value" data-sequence-id="${sequence.id}">100ms</span>`;
   html += '</div>';
 
   html += '</div>'; // synth-controls-grid

@@ -2624,11 +2624,22 @@ select {
   width: 100%;
 }
 
-.overlap-value {
+.overlap-value,
+.attack-value,
+.decay-value,
+.sustain-value,
+.release-value {
   font-family: 'Courier New', monospace;
   font-weight: 600;
   color: #9333ea;
   font-size: 0.875rem;
+}
+
+/* ADSR Section Separator */
+.synth-control-separator {
+  border-top: 1px solid rgba(147, 51, 234, 0.3);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .row-index {
