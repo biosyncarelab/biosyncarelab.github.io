@@ -272,35 +272,20 @@ export class AudioEngine {
       nodes.leftOsc = leftOsc;
       nodes.rightOsc = rightOsc;
     } else if (track.constructor.name === 'IsochronicTrack') {
-      // Isochronic: Tone -> Pulse Gain -> Panner -> Output
+      // Isochronic: Continuous tone with ADSR-shaped pulses
       const pulseGain = this.ctx.createGain();
-      pulseGain.gain.value = 0.5; // Base gain for modulation
+      pulseGain.gain.value = 0; // Start at zero, ADSR will control
       pulseGain.connect(panner);
 
       const osc = this.ctx.createOscillator();
-      osc.type = 'sine'; // Carrier
+      osc.type = track.getParameter('waveform')?.base ?? 'sine';
       osc.connect(pulseGain);
       osc.start();
 
-      // LFO for pulsing
-      // To support duty cycle, we can use a Pulse Width Modulation technique or a WaveShaper
-      // Simple approach: Sawtooth LFO -> WaveShaper (Threshold) -> Gain
-
-      const lfo = this.ctx.createOscillator();
-      lfo.type = 'sawtooth'; // Sawtooth is good for PWM
-
-      // WaveShaper to convert Sawtooth to Pulse with variable width
-      const shaper = this.ctx.createWaveShaper();
-      // Curve will be calculated in update based on duty cycle
-      shaper.curve = new Float32Array([0, 1]); // Placeholder
-
-      lfo.connect(shaper).connect(pulseGain.gain);
-      lfo.start();
-
       nodes.osc = osc;
-      nodes.lfo = lfo;
-      nodes.shaper = shaper;
       nodes.pulseGain = pulseGain;
+      nodes.lastPulseTime = 0; // Track when last pulse was triggered
+      nodes.pulseIntervalId = null; // Will be set in update
     }
 
     this.nodes.set(track.id, nodes);
@@ -354,6 +339,7 @@ export class AudioEngine {
     } else if (track.constructor.name === 'IsochronicTrack') {
       const waveform = track.getParameter('waveform')?.base ?? 'sine';
 
+      // Update carrier frequency
       this._applyParamAutomation(
         nodes.osc.frequency,
         (t) => track.getParameter('frequency')?.getValue(t) ?? 200,
@@ -362,24 +348,57 @@ export class AudioEngine {
 
       if (nodes.osc.type !== waveform) nodes.osc.type = waveform;
 
-      this._applyParamAutomation(
-        nodes.lfo.frequency,
-        (t) => track.getParameter('pulseRate')?.getValue(t) ?? 10,
-        time
-      );
-
-      // Update WaveShaper curve for Duty Cycle (PWM)
+      // Get ADSR and pulse parameters
+      const pulseRate = track.getParameter('pulseRate')?.getValue(time) ?? 10;
       const dutyCycle = track.getParameter('dutyCycle')?.getValue(time) ?? 0.5;
+      const attackTime = (track.getParameter('attackTime')?.getValue(time) ?? 10) / 1000; // Convert to seconds
+      const decayTime = (track.getParameter('decayTime')?.getValue(time) ?? 20) / 1000;
+      const sustainLevel = track.getParameter('sustainLevel')?.getValue(time) ?? 0.7;
+      const releaseTime = (track.getParameter('releaseTime')?.getValue(time) ?? 50) / 1000;
 
-      if (Math.abs((nodes.lastDuty ?? -1) - dutyCycle) > 0.01) {
-        nodes.lastDuty = dutyCycle;
-        const curve = new Float32Array(256);
-        const threshold = 1 - (2 * dutyCycle);
-        for (let i = 0; i < 256; i++) {
-          const x = (i / 255) * 2 - 1;
-          curve[i] = x > threshold ? 1 : 0;
+      const pulseInterval = 1 / pulseRate; // seconds between pulses
+      const pulseDuration = pulseInterval * dutyCycle;
+
+      // Check if it's time to trigger a new pulse
+      const ctxTime = this.ctx.currentTime;
+      if (!nodes.lastPulseTime) nodes.lastPulseTime = ctxTime;
+
+      const timeSinceLastPulse = ctxTime - nodes.lastPulseTime;
+      if (timeSinceLastPulse >= pulseInterval) {
+        // Trigger new ADSR pulse
+        const startTime = ctxTime;
+        const peakTime = startTime + attackTime;
+        const sustainStartTime = peakTime + decayTime;
+        const sustainDuration = Math.max(0, pulseDuration - attackTime - decayTime - releaseTime);
+        const releaseStartTime = sustainStartTime + sustainDuration;
+        const endTime = releaseStartTime + releaseTime;
+
+        try {
+          const pulseGain = nodes.pulseGain.gain;
+          pulseGain.cancelScheduledValues(startTime);
+
+          // Attack: ramp from silence to peak (1.0)
+          pulseGain.setValueAtTime(0.001, startTime);
+          pulseGain.exponentialRampToValueAtTime(1.0, peakTime);
+
+          // Decay: ramp from peak to sustain level
+          if (decayTime > 0) {
+            pulseGain.exponentialRampToValueAtTime(Math.max(0.001, sustainLevel), sustainStartTime);
+          }
+
+          // Sustain: hold at sustain level
+          if (sustainDuration > 0) {
+            pulseGain.setValueAtTime(Math.max(0.001, sustainLevel), releaseStartTime);
+          }
+
+          // Release: ramp back to silence
+          pulseGain.exponentialRampToValueAtTime(0.001, endTime);
+
+          // Update last pulse time
+          nodes.lastPulseTime = ctxTime;
+        } catch (e) {
+          console.warn('[AudioEngine] ADSR scheduling error:', e);
         }
-        nodes.shaper.curve = curve;
       }
     }
   }
