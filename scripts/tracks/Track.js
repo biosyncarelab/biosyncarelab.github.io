@@ -204,6 +204,17 @@ export class Track {
     }
   }
 
+  /**
+   * Get a flat params object with base values (for audio playback)
+   */
+  get params() {
+    const result = {};
+    for (const [name, param] of this.parameters) {
+      result[name] = param.base;
+    }
+    return result;
+  }
+
   toJSON() {
     const params = {};
     for (const [name, param] of this.parameters) {
@@ -214,7 +225,8 @@ export class Track {
       type: this.type,
       label: this.label,
       enabled: this.enabled,
-      parameters: params
+      parameters: params,
+      params: this.params  // Also include flattened params for backwards compatibility
     };
   }
 
