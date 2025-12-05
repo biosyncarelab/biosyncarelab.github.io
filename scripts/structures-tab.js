@@ -126,7 +126,11 @@ function createSessionFromExample(exampleData) {
           gain: 0.3,
           pulseRate: 10, // 10 Hz
           dutyCycle: 0.5,
-          waveform: 'sine'
+          waveform: 'sine',
+          attackTime: 10,    // 10ms attack
+          decayTime: 20,     // 20ms decay
+          sustainLevel: 0.7, // 70% sustain
+          releaseTime: 50    // 50ms release
         };
       } else if (exampleCategory === 'mixed') {
         // Mixed examples default to binaural beats (audiovisual entrainment)
@@ -145,7 +149,11 @@ function createSessionFromExample(exampleData) {
           gain: 0.3,
           pulseRate: 4, // 4 Hz theta waves
           dutyCycle: 0.5,
-          waveform: 'sine'
+          waveform: 'sine',
+          attackTime: 10,    // 10ms attack
+          decayTime: 20,     // 20ms decay
+          sustainLevel: 0.7, // 70% sustain
+          releaseTime: 50    // 50ms release
         };
       }
 
@@ -522,37 +530,65 @@ function playAudioPreview(track) {
     console.log(`▶ Playing binaural beat: ${track.label} (${frequency} Hz ± ${beat} Hz, ${waveform} wave)`);
 
   } else if (track.type === 'IsochronicTrack') {
-    // Isochronic tone: pulsing amplitude modulation
+    // Isochronic tone: rhythmic pulses with ADSR envelopes
     const pulseRate = parseFloat(params.pulseRate || 10); // Default to 10 Hz
     const dutyCycle = parseFloat(params.dutyCycle || 0.5);
 
+    // ADSR parameters for each pulse (in milliseconds)
+    const attackTime = parseFloat(params.attackTime || 10);
+    const decayTime = parseFloat(params.decayTime || 20);
+    const sustainLevel = parseFloat(params.sustainLevel || 0.7);
+    const releaseTime = parseFloat(params.releaseTime || 50);
+
+    // Create main oscillator (continuous)
     currentOscillator = audioContext.createOscillator();
     currentOscillator.frequency.value = frequency;
     currentOscillator.type = waveform;
-
-    // Create LFO for amplitude modulation
-    const lfo = audioContext.createOscillator();
-    lfo.frequency.value = pulseRate;
-    lfo.type = 'square'; // Square wave for sharp on/off pulses
-
-    // Create gain for LFO modulation
-    const lfoGain = audioContext.createGain();
-    lfoGain.gain.value = dutyCycle; // Modulation depth
-
-    // Connect: oscillator -> gain (modulated by LFO) -> output
-    lfo.connect(lfoGain);
-    lfoGain.connect(currentGainNode.gain);
-
     currentOscillator.connect(currentGainNode);
-
     currentOscillator.start();
-    lfo.start();
 
-    // Store references
-    currentOscillator.lfo = lfo;
-    currentOscillator.lfoGain = lfoGain;
+    // Calculate timing for pulses
+    const pulseInterval = 1000 / pulseRate; // ms per pulse
+    const pulseDuration = pulseInterval * dutyCycle; // Duration of each pulse
 
-    console.log(`▶ Playing isochronic tone: ${track.label} (${frequency} Hz, ${pulseRate} Hz pulses, ${waveform} wave)`);
+    // Store pulse data for cleanup
+    currentOscillator.pulseIntervalId = null;
+    currentOscillator.pulseRate = pulseRate;
+
+    // Function to trigger a single pulse with ADSR
+    const triggerPulse = () => {
+      const now = audioContext.currentTime;
+
+      // Convert ms to seconds
+      const attackSec = attackTime / 1000;
+      const decaySec = decayTime / 1000;
+      const releaseSec = releaseTime / 1000;
+      const pulseDurationSec = pulseDuration / 1000;
+
+      // Calculate sustain duration
+      const minPulseDuration = attackSec + decaySec + releaseSec;
+      const actualPulseDuration = Math.max(pulseDurationSec, minPulseDuration);
+      const sustainDuration = actualPulseDuration - attackSec - decaySec - releaseSec;
+
+      const peakGain = gain;
+      const sustainGain = Math.max(0.001, peakGain * sustainLevel);
+
+      // Cancel any existing scheduled changes
+      currentGainNode.gain.cancelScheduledValues(now);
+
+      // Apply ADSR envelope
+      currentGainNode.gain.setValueAtTime(0.001, now);
+      currentGainNode.gain.exponentialRampToValueAtTime(peakGain, now + attackSec);
+      currentGainNode.gain.exponentialRampToValueAtTime(sustainGain, now + attackSec + decaySec);
+      currentGainNode.gain.setValueAtTime(sustainGain, now + attackSec + decaySec + sustainDuration);
+      currentGainNode.gain.exponentialRampToValueAtTime(0.001, now + actualPulseDuration);
+    };
+
+    // Start pulsing
+    triggerPulse(); // First pulse immediately
+    currentOscillator.pulseIntervalId = setInterval(triggerPulse, pulseInterval);
+
+    console.log(`▶ Playing isochronic tone: ${track.label} (${frequency} Hz, ${pulseRate} Hz pulses, ADSR: ${attackTime}/${decayTime}/${sustainLevel}/${releaseTime})`);
 
   } else {
     // Simple sine/square/sawtooth wave
@@ -578,7 +614,13 @@ function stopAudioPreview() {
         currentOscillator.secondOscillator = null;
       }
 
-      // Stop LFO (isochronic tone)
+      // Stop pulse interval (isochronic tone)
+      if (currentOscillator.pulseIntervalId) {
+        clearInterval(currentOscillator.pulseIntervalId);
+        currentOscillator.pulseIntervalId = null;
+      }
+
+      // Stop LFO (legacy - no longer used for isochronic)
       if (currentOscillator.lfo) {
         currentOscillator.lfo.stop();
         currentOscillator.lfo = null;
