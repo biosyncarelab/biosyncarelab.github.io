@@ -104,6 +104,8 @@ const ui = {
   sessionFolderFilter: document.getElementById("session-folder-filter"),
   sessionDropdown: document.getElementById("session-dropdown"),
   sessionHint: document.getElementById("session-card-hint"),
+  sessionLoadSelected: document.getElementById("session-load-selected"),
+  sessionInfo: document.getElementById("session-info"),
   martigliDashboardPreview: document.getElementById("martigli-dashboard-preview"),
   martigliDashboardSummary: document.getElementById("martigli-dashboard-summary"),
   martigliDashboardList: document.getElementById("martigli-dashboard-list"),
@@ -145,6 +147,61 @@ const ui = {
   visualizerCanvas: document.getElementById("visualizer-canvas"),
   visualizerSummary: document.getElementById("visualizer-summary"),
   visualizerTitle: document.getElementById("visualizer-title"),
+};
+
+const summarizeSession = (session) => {
+  if (!session) return "Select a session to view details.";
+  const tracks = Array.isArray(session.tracks) ? session.tracks : [];
+  const controls = session.controlTracks?.controls ?? [];
+  const martigliCount = session.martigli?.oscillations?.length ?? 0;
+  const martigliOscillations = session.martigli?.oscillations ?? [];
+  const lines = [];
+  lines.push(`<strong>${session.label ?? session.id}</strong>`);
+  if (session.folderId || session.folder) {
+    lines.push(`📁 Folder: <em>${session.folderId ?? session.folder}</em>`);
+  }
+  if (session.kind) {
+    lines.push(`🏷️ Kind: <em>${session.kind}</em>`);
+  }
+  lines.push(`🎵 <strong>Tracks:</strong> ${tracks.length}`);
+  if (tracks.length) {
+    const audioTracks = tracks.filter((t) => t.class === "audio" || t.type === "audio");
+    const videoTracks = tracks.filter((t) => t.class === "video" || t.type === "video");
+    const hapticTracks = tracks.filter((t) => t.class === "haptic" || t.type === "haptic");
+    const breakdown = [];
+    if (audioTracks.length) breakdown.push(`${audioTracks.length} audio`);
+    if (videoTracks.length) breakdown.push(`${videoTracks.length} video`);
+    if (hapticTracks.length) breakdown.push(`${hapticTracks.length} haptic`);
+    if (breakdown.length) {
+      lines.push(`   ↳ ${breakdown.join(", ")}`);
+    }
+    const preview = tracks.slice(0, 3).map((t) => t.label ?? t.name ?? t.type ?? "Track").join(", ");
+    if (tracks.length <= 3) {
+      lines.push(`   ↳ ${preview}`);
+    } else {
+      lines.push(`   ↳ ${preview}, +${tracks.length - 3} more`);
+    }
+  }
+  lines.push(`🌊 <strong>Martigli oscillations:</strong> ${martigliCount}`);
+  if (martigliOscillations.length) {
+    martigliOscillations.slice(0, 3).forEach((osc, idx) => {
+      const label = osc.label || `Oscillation ${idx + 1}`;
+      const freq = osc.frequency ? ` (${osc.frequency.toFixed(2)} Hz)` : "";
+      lines.push(`   ↳ ${label}${freq}`);
+    });
+    if (martigliOscillations.length > 3) {
+      lines.push(`   ↳ +${martigliOscillations.length - 3} more`);
+    }
+  }
+  if (controls.length) {
+    lines.push(`🎛️ <strong>Control tracks:</strong> ${controls.length}`);
+  }
+  return lines.map((l) => `<div style="margin: 0.15rem 0;">${l}</div>`).join("");
+};
+
+const updateSessionInfoPanel = (session) => {
+  if (!ui.sessionInfo) return;
+  ui.sessionInfo.innerHTML = summarizeSession(session);
 };
 
 const defaultDashboardCopy = {
@@ -218,74 +275,77 @@ if (masterVolume) {
 
 // Wire up reactive UI via state subscriptions
 appState.subscribe((state) => {
-  // Update session list when sessions change
-  if (ui.sessionList && ui.sessionStatus) {
-    const sessions = state.sessions || [];
-    const selectedFolder = ui.sessionFolderFilter?.value ?? "";
-    const visibleSessions = selectedFolder
-      ? sessions.filter((s) => (s.folderId || s.folder || "") === selectedFolder)
-      : sessions;
-    if (sessions.length > 0) {
-      renderSessionList(
-        ui.sessionList,
-        ui.sessionStatus,
-        visibleSessions,
-        {
-          onLoad: (session) => handleSessionLoadAction(session, "replace"),
-          onAdd: (session) => handleSessionLoadAction(session, "append"),
-          onOpen: (session) => openDetailModal(session, "session"),
-          onDelete: handleSessionDelete,
-          currentUser: getCurrentUser()?.uid ?? null,
-        },
-        rdfLinker
-      );
-    } else if (!state.isFetchingDashboard) {
-      ui.sessionStatus.textContent = state.currentUser ? "No sessions found." : "Sign in to load sessions.";
-      clearList(ui.sessionList);
+  // Session dropdowns and info panel
+  const sessions = state.sessions || [];
+  if (ui.sessionStatus) {
+    ui.sessionStatus.textContent = sessions.length
+      ? `${sessions.length} session${sessions.length > 1 ? "s" : ""}`
+      : state.isFetchingDashboard
+        ? "Loading sessions…"
+        : state.currentUser
+          ? "No sessions found."
+          : "Sign in to load sessions.";
+  }
+
+  const folderSelect = ui.sessionFolderFilter;
+  const dropdown = ui.sessionDropdown;
+  if (folderSelect && dropdown) {
+    const folders = Array.from(new Set(sessions.map((s) => s.folderId || s.folder).filter(Boolean)));
+    folderSelect.innerHTML = '<option value="">All folders</option>';
+    folders.forEach((folder) => {
+      const opt = document.createElement("option");
+      opt.value = folder;
+      opt.textContent = folder;
+      folderSelect.appendChild(opt);
+    });
+
+    dropdown.innerHTML = '<option value="">Select a session…</option>';
+    const grouped = sessions.reduce((acc, session) => {
+      const key = session.folderId || session.folder || "";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(session);
+      return acc;
+    }, {});
+    Object.entries(grouped).forEach(([folder, list]) => {
+      if (folder) {
+        const group = document.createElement("optgroup");
+        group.label = folder;
+        list.forEach((session) => {
+          const opt = document.createElement("option");
+          opt.value = session.id;
+          const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
+          const martigliCount = session.martigli?.oscillations?.length ?? 0;
+          opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+          group.appendChild(opt);
+        });
+        dropdown.appendChild(group);
+      } else {
+        list.forEach((session) => {
+          const opt = document.createElement("option");
+          opt.value = session.id;
+          const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
+          const martigliCount = session.martigli?.oscillations?.length ?? 0;
+          opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+          dropdown.appendChild(opt);
+        });
+      }
+    });
+    // Auto-select first session if none selected
+    if (!dropdown.dataset.selectedId && dropdown.options.length > 1) {
+      dropdown.selectedIndex = 1;
+      dropdown.dataset.selectedId = dropdown.value;
+      updateSessionInfoPanel((sessions || []).find((s) => s.id === dropdown.value));
     }
-
-    // Build folder filter and dropdown
-    const folderSelect = ui.sessionFolderFilter;
-    const dropdown = ui.sessionDropdown;
-    if (folderSelect && dropdown) {
-      const folders = Array.from(new Set(sessions.map((s) => s.folderId || s.folder).filter(Boolean)));
-      folderSelect.innerHTML = '<option value="">All folders</option>';
-      folders.forEach((folder) => {
-        const opt = document.createElement("option");
-        opt.value = folder;
-        opt.textContent = folder;
-        folderSelect.appendChild(opt);
-      });
-
-      dropdown.innerHTML = '<option value="">Select a session…</option>';
-      const grouped = sessions.reduce((acc, session) => {
-        const key = session.folderId || session.folder || "";
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(session);
-        return acc;
-      }, {});
-      Object.entries(grouped).forEach(([folder, list]) => {
-        if (folder) {
-          const group = document.createElement("optgroup");
-          group.label = folder;
-          list.forEach((session) => {
-            const opt = document.createElement("option");
-            opt.value = session.id;
-            opt.textContent = session.label ?? session.id;
-            group.appendChild(opt);
-          });
-          dropdown.appendChild(group);
-        } else {
-          list.forEach((session) => {
-            const opt = document.createElement("option");
-            opt.value = session.id;
-            opt.textContent = session.label ?? session.id;
-            dropdown.appendChild(opt);
-          });
-        }
-      });
+    // Preserve current selection if possible
+    if (dropdown.dataset.selectedId) {
+      dropdown.value = dropdown.dataset.selectedId;
     }
   }
+
+  // Update info panel for selected session
+  const selectedId = ui.sessionDropdown?.value ?? "";
+  const selectedSession = sessions.find((s) => s.id === selectedId) ?? null;
+  updateSessionInfoPanel(selectedSession);
 
   // Update auth UI when user changes
   renderAuthState(ui, state.currentUser);
@@ -856,13 +916,14 @@ const loadSessionTracks = (record, mode = "replace") => {
 
 const handleSessionLoadAction = async (record, mode = "replace") => {
   if (!record) return;
+  if (mode === "replace" && kernel.controlTracks?.clearAll) {
+    kernel.controlTracks.clearAll();
+  }
   setBusy(true);
   try {
     if (record.controlTracks?.controls?.length && kernel.structures?.load) {
       await kernel.structures.load();
-      kernel.controlTracks?.loadSnapshot?.(record.controlTracks, { mode });
-    } else if (mode === "replace" && kernel.controlTracks?.clearAll) {
-      kernel.controlTracks.clearAll();
+      kernel.controlTracks?.loadSnapshot?.(record.controlTracks, { mode: "append" });
     }
 
     if (record.martigli) {
@@ -1041,13 +1102,6 @@ const handleSessionSave = async () => {
 
   setBusy(true);
   try {
-    // Save to Firestore using session-manager
-    // If we have an ID, we should probably update, but createSession might handle it or we need updateSession
-    // For safety, let's create a new version if it's a "Save State" action to avoid overwriting without confirmation
-    // Or if the user expects "Save" to overwrite.
-    // Given the button says "Save current state", it implies a snapshot.
-
-    // Let's create a new session for now to be safe
     const savedSession = await createSession(user.uid, cleanDraft);
 
     // Update appState with new session
@@ -1805,38 +1859,98 @@ if (ui.snapshotDownload) {
   ui.snapshotDownload.addEventListener("click", downloadSnapshot);
 }
 
+if (ui.sessionLoadSelected) {
+  ui.sessionLoadSelected.addEventListener("click", () => {
+    const state = appState.snapshot();
+    const sessions = state.sessions || [];
+    const dropdown = ui.sessionDropdown;
+    const folderFilter = ui.sessionFolderFilter?.value ?? "";
+    let sessionId = dropdown?.value ?? "";
+
+    // If no explicit selection, default to first visible session
+    if (!sessionId && sessions.length) {
+      const filtered = folderFilter
+        ? sessions.filter((s) => (s.folderId || s.folder || "") === folderFilter)
+        : sessions;
+      if (filtered[0]) {
+        sessionId = filtered[0].id;
+        if (dropdown) {
+          dropdown.value = sessionId;
+          dropdown.dataset.selectedId = sessionId;
+        }
+      }
+    }
+
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      setMessage("Selected session not found.", "error");
+      return;
+    }
+    handleSessionLoadAction(session, "replace");
+  });
+}
+
 if (ui.sessionFolderFilter) {
   ui.sessionFolderFilter.addEventListener("change", () => {
     const state = appState.snapshot();
     const selectedFolder = ui.sessionFolderFilter.value;
     const sessions = state.sessions || [];
-    const visibleSessions = selectedFolder
-      ? sessions.filter((s) => (s.folderId || s.folder || "") === selectedFolder)
-      : sessions;
-    renderSessionList(
-      ui.sessionList,
-      ui.sessionStatus,
-      visibleSessions,
-      {
-        onLoad: (session) => handleSessionLoadAction(session, "replace"),
-        onAdd: (session) => handleSessionLoadAction(session, "append"),
-        onOpen: (session) => openDetailModal(session, "session"),
-        onDelete: handleSessionDelete,
-        currentUser: getCurrentUser()?.uid ?? null,
-      },
-      rdfLinker
-    );
+    if (ui.sessionDropdown) {
+      const filtered = selectedFolder
+        ? sessions.filter((s) => (s.folderId || s.folder || "") === selectedFolder)
+        : sessions;
+      ui.sessionDropdown.innerHTML = '<option value="">Select a session…</option>';
+      const grouped = filtered.reduce((acc, session) => {
+        const key = session.folderId || session.folder || "";
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(session);
+        return acc;
+      }, {});
+      Object.entries(grouped).forEach(([folder, list]) => {
+        if (folder) {
+          const group = document.createElement("optgroup");
+          group.label = folder;
+          list.forEach((session) => {
+            const opt = document.createElement("option");
+            opt.value = session.id;
+            const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
+            const martigliCount = session.martigli?.oscillations?.length ?? 0;
+            opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+            group.appendChild(opt);
+          });
+          ui.sessionDropdown.appendChild(group);
+        } else {
+          list.forEach((session) => {
+            const opt = document.createElement("option");
+            opt.value = session.id;
+            const trackCount = Array.isArray(session.tracks) ? session.tracks.length : 0;
+            const martigliCount = session.martigli?.oscillations?.length ?? 0;
+            opt.textContent = `${session.label ?? session.id} (${trackCount} tracks, ${martigliCount} martigli)`;
+            ui.sessionDropdown.appendChild(opt);
+          });
+        }
+      });
+      // Reset selection to first available after filtering
+      if (ui.sessionDropdown.options.length > 1) {
+        ui.sessionDropdown.selectedIndex = 1;
+        ui.sessionDropdown.dataset.selectedId = ui.sessionDropdown.value;
+      } else {
+        ui.sessionDropdown.selectedIndex = 0;
+        ui.sessionDropdown.dataset.selectedId = "";
+      }
+      const newlySelected = (state.sessions || []).find((s) => s.id === ui.sessionDropdown.value);
+      updateSessionInfoPanel(newlySelected);
+    }
   });
 }
 
 if (ui.sessionDropdown) {
   ui.sessionDropdown.addEventListener("change", (e) => {
     const sessionId = e.target.value;
+    ui.sessionDropdown.dataset.selectedId = sessionId;
     const state = appState.snapshot();
     const session = (state.sessions || []).find((s) => s.id === sessionId);
-    if (session) {
-      openDetailModal(session, "session");
-    }
+    updateSessionInfoPanel(session);
   });
 }
 

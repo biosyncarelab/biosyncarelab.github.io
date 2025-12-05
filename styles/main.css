@@ -246,10 +246,17 @@ body {
   padding: 0.65rem;
   background: rgba(15, 23, 42, 0.45);
   color: var(--text);
+  font-size: 0.9rem;
 }
 
 .session-info strong {
   color: #e2e8f0;
+}
+
+.session-info div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
 }
 
 .session-stack {
