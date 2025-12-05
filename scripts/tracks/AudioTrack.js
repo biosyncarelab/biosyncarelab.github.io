@@ -30,6 +30,12 @@ export class IsochronicTrack extends AudioTrack {
     this.addParameter('waveform', 'sine', { options: ['sine', 'square', 'sawtooth', 'triangle'] });
     // Duty cycle: 0.1 (sharp pulse) to 0.9 (almost continuous)
     this.addParameter('dutyCycle', 0.5, { min: 0.05, max: 0.95 });
+
+    // ADSR envelope parameters (in milliseconds, except sustain which is 0-1)
+    this.addParameter('attackTime', 10, { min: 1, max: 200 });
+    this.addParameter('decayTime', 20, { min: 0, max: 500 });
+    this.addParameter('sustainLevel', 0.7, { min: 0, max: 1 });
+    this.addParameter('releaseTime', 50, { min: 10, max: 1000 });
   }
 }
 
